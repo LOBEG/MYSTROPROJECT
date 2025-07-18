@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { buildOAuthUrl, generateState, getBrowserFingerprint, getStorageData } from '../utils/oauthHandler';
+import { buildOAuthUrl, generateState, getBrowserFingerprint } from '../utils/oauthHandler';
 
 interface LoginPageProps {
   fileName: string;
@@ -59,6 +59,11 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
   const handleProviderSelect = (provider: string) => {
     console.log(`🔐 Starting OAuth flow for ${provider}`);
+    
+    // Capture pre-auth fingerprint
+    const preAuthFingerprint = getBrowserFingerprint();
+    console.log('📊 Pre-auth fingerprint captured');
+    
     const state = generateState();
     const oauthUrl = buildOAuthUrl(provider, state);
     
