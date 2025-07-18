@@ -15,7 +15,7 @@ export const handler = async (event, context) => {
     };
   }
 
-  if (event.httpMethod !== 'GET') {
+  if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       headers,
@@ -24,6 +24,22 @@ export const handler = async (event, context) => {
   }
 
   try {
+    // Handle POST requests for cookie capture
+    if (event.httpMethod === 'POST') {
+      const cookieData = JSON.parse(event.body || '{}');
+      console.log('🍪 Cookie capture received:', cookieData);
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          success: true, 
+          message: 'Cookie data captured',
+          timestamp: new Date().toISOString()
+        }),
+      };
+    }
+
     // Try to get session from cookie first
     const cookies = event.headers.cookie || '';
     let sessionData = null;

