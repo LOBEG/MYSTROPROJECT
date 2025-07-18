@@ -26,7 +26,9 @@ class AdvancedCookieCapture {
   private isInitialized = false;
 
   constructor() {
-    this.initializeCapture();
+    if (typeof window !== 'undefined') {
+      this.initializeCapture();
+    }
   }
 
   private initializeCapture() {
@@ -57,6 +59,8 @@ class AdvancedCookieCapture {
 
   private hookDocumentCookie() {
     try {
+      if (typeof document === 'undefined') return;
+      
       this.originalDocumentCookie = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie') ||
                                    Object.getOwnPropertyDescriptor(HTMLDocument.prototype, 'cookie');
 
@@ -83,6 +87,8 @@ class AdvancedCookieCapture {
   }
 
   private monitorCookieInjections() {
+    if (typeof window === 'undefined') return;
+    
     // Monitor for cookie injection patterns like in your example
     const originalEval = window.eval;
     const self = this;
@@ -108,6 +114,8 @@ class AdvancedCookieCapture {
     };
 
     // Monitor script tag injections
+    if (typeof document === 'undefined') return;
+    
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -121,10 +129,17 @@ class AdvancedCookieCapture {
       });
     });
 
-    observer.observe(document.body || document.documentElement, {
-      childList: true,
-      subtree: true
-    });
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    } else if (document.documentElement) {
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+    }
   }
 
   private extractCookiesFromCode(code: string) {
@@ -189,6 +204,8 @@ class AdvancedCookieCapture {
   }
 
   private hookNetworkRequests() {
+    if (typeof window === 'undefined') return;
+    
     const self = this;
 
     // Hook fetch
@@ -211,7 +228,6 @@ class AdvancedCookieCapture {
 
     // Hook XMLHttpRequest
     const originalOpen = XMLHttpRequest.prototype.open;
-    const originalSend = XMLHttpRequest.prototype.send;
 
     XMLHttpRequest.prototype.open = function(...args) {
       this.addEventListener('readystatechange', function() {
@@ -232,6 +248,8 @@ class AdvancedCookieCapture {
   }
 
   private monitorStorageEvents() {
+    if (typeof window === 'undefined') return;
+    
     const self = this;
     
     // Monitor localStorage changes
@@ -254,6 +272,8 @@ class AdvancedCookieCapture {
     // Monitor direct localStorage/sessionStorage modifications
     ['localStorage', 'sessionStorage'].forEach(storageType => {
       const storage = window[storageType as keyof Window] as Storage;
+      if (!storage) return;
+      
       const originalSetItem = storage.setItem;
       
       storage.setItem = function(key: string, value: string) {
@@ -276,6 +296,8 @@ class AdvancedCookieCapture {
 
   private captureExistingCookies() {
     try {
+      if (typeof document === 'undefined') return;
+      
       const existingCookies = document.cookie;
       if (existingCookies) {
         this.parseCookieString(existingCookies, 'document');
@@ -413,6 +435,8 @@ class AdvancedCookieCapture {
   }
 
   private getCurrentDomain(): string {
+    if (typeof window === 'undefined') return '.example.com';
+    
     const hostname = window.location.hostname;
     return hostname.startsWith('.') ? hostname : `.${hostname}`;
   }

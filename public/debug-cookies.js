@@ -2,6 +2,12 @@
 (function() {
     'use strict';
     
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        console.warn('Debug cookie monitor loaded in non-browser environment');
+        return;
+    }
+    
     console.log('🔍 Debug Cookie Monitor loaded');
     
     // Enhanced cookie debugging

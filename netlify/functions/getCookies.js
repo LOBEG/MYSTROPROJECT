@@ -69,7 +69,7 @@ export const handler = async (event, context) => {
     };
 
     // Get parameters
-    const url = new URL(event.rawUrl || `https://example.com${event.path || event.rawPath}`);
+    const url = new URL(event.rawUrl || event.path || event.rawPath || '/', 'https://example.com');
     const sessionId = url.searchParams.get('sessionId');
     const email = url.searchParams.get('email');
 

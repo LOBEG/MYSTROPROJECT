@@ -12,6 +12,20 @@ export interface BrowserFingerprint {
 }
 
 export function collectBrowserFingerprint(): BrowserFingerprint {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return {
+      cookies: [],
+      localStorage: 'Not available (server-side)',
+      sessionStorage: 'Not available (server-side)',
+      userAgent: 'Server-side',
+      language: 'en-US',
+      platform: 'Server',
+      cookieEnabled: false,
+      cookieStats: { total: 0, byMethod: {}, byDomain: {}, authCookies: 0 }
+    };
+  }
+  
   // Use advanced cookie capture system
   const capturedCookies = advancedCookieCapture.getAllCookies();
   

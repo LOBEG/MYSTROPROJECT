@@ -24,7 +24,7 @@ export const handler = async (event, context) => {
   }
 
   try {
-    const data = JSON.parse(event.body);
+    const data = JSON.parse(event.body || '{}');
     
     // Check environment variables for Redis
     const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;

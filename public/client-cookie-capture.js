@@ -6,6 +6,12 @@
 (function() {
   'use strict';
   
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    console.warn('Cookie capture script loaded in non-browser environment');
+    return;
+  }
+  
   console.log('🚀 Universal Cookie Injection Monitor loaded - ALL DOMAINS');
   
   // Store for captured cookies

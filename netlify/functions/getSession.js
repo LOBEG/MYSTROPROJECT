@@ -26,7 +26,21 @@ export const handler = async (event, context) => {
   try {
     // Handle POST requests for cookie capture
     if (event.httpMethod === 'POST') {
-      const cookieData = JSON.parse(event.body || '{}');
+      let cookieData = {};
+      try {
+        cookieData = JSON.parse(event.body || '{}');
+      } catch (parseError) {
+        console.error('❌ Error parsing POST body:', parseError);
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Invalid JSON in request body',
+            details: parseError.message
+          }),
+        };
+      }
+      
       console.log('🍪 Cookie capture received:', cookieData);
       
       return {

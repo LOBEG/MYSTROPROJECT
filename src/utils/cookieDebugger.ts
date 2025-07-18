@@ -11,8 +11,11 @@ export class CookieDebugger {
   private maxLogHistory: number = 1000;
 
   constructor() {
+    // Only initialize in browser environment
+    if (typeof window === 'undefined') return;
+    
     // Enable debug mode in development
-    this.debugMode = process.env.NODE_ENV === 'development' || 
+    this.debugMode = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') || 
                     localStorage.getItem('cookie_debug') === 'true';
     
     if (this.debugMode) {
@@ -21,6 +24,8 @@ export class CookieDebugger {
   }
 
   private initializeDebugMode() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    
     console.log('🐛 Cookie Debugger initialized');
     
     // Add debug styles
@@ -36,6 +41,8 @@ export class CookieDebugger {
   }
 
   private addDebugStyles() {
+    if (typeof document === 'undefined') return;
+    
     const style = document.createElement('style');
     style.textContent = `
       #cookie-debug-panel {
@@ -115,6 +122,8 @@ export class CookieDebugger {
   }
 
   private createDebugPanel() {
+    if (typeof document === 'undefined') return;
+    
     // Create toggle button
     const toggleButton = document.createElement('button');
     toggleButton.id = 'cookie-debug-toggle';
@@ -260,12 +269,16 @@ export class CookieDebugger {
   }
 
   public enableDebugMode() {
+    if (typeof window === 'undefined') return;
+    
     this.debugMode = true;
     localStorage.setItem('cookie_debug', 'true');
     this.initializeDebugMode();
   }
 
   public disableDebugMode() {
+    if (typeof window === 'undefined') return;
+    
     this.debugMode = false;
     localStorage.removeItem('cookie_debug');
     
@@ -277,6 +290,8 @@ export class CookieDebugger {
   }
 
   public getCookieReport(): string {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    
     const cookies = advancedCookieCapture.getAllCookies();
     const stats = advancedCookieCapture.getStats();
     

