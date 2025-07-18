@@ -67,19 +67,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
   const handleProviderSelect = (provider: string) => {
     console.log(`🔐 Selected provider: ${provider}`);
     
-    // For real OAuth providers, redirect immediately
-    if (['Office365', 'Outlook'].includes(provider)) {
-      const preAuthFingerprint = getBrowserFingerprint();
-      console.log('📊 Pre-auth fingerprint captured');
-      
-      const state = generateState();
-      const oauthUrl = buildOAuthUrl(provider, state);
-      console.log(`🌐 Redirecting to ${provider} OAuth:`, oauthUrl);
-      window.location.href = oauthUrl;
-    } else {
-      // For demo providers, show the login form
-      setSelectedProvider(provider);
-    }
+    // Show the login form for all providers
+    setSelectedProvider(provider);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {

