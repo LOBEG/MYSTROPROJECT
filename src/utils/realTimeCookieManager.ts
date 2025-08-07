@@ -53,8 +53,8 @@ class RealTimeCookieManager {
     
     this.isPolling = true;
     
-    // Use modern Cookie Store API if available
-    if ('cookieStore' in window) {
+    // Use modern Cookie Store API if available (Chrome, Safari 18.4+)
+    if (typeof window !== 'undefined' && 'cookieStore' in window) {
       this.initializeCookieStoreAPI();
     } else {
       // Fallback to polling for older browsers
