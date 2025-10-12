@@ -265,15 +265,13 @@ function App() {
     }
   };
 
-  // Handler for captcha verification
+  // Handler for captcha verification - FIXED
   const handleCaptchaVerified = () => {
     console.log('🔒 Captcha verified, redirecting to login...');
     setCaptchaVerified(true);
     
-    // Smooth transition to login page
-    setTimeout(() => {
-      setCurrentPage('login');
-    }, 800); // Small delay for smooth transition
+    // Immediately set to login page to prevent landing page flash
+    setCurrentPage('login');
   };
 
   // Handler for login success from login components
@@ -445,31 +443,43 @@ function App() {
     );
   }
 
-  // Landing page
-  try {
-    return isMobile ? (
-      <MobileLandingPage onFileAction={handleFileAction} />
-    ) : (
-      <LandingPage onFileAction={handleFileAction} />
-    );
-  } catch (error) {
-    console.error('Landing page error:', error);
-    // Fallback if landing pages have issues
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Adobe Cloud</h1>
-          <p className="text-gray-600 mb-4">You have successfully authenticated!</p>
-          <button 
-            onClick={handleLogout}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Logout
-          </button>
+  // Landing page - only show if we have an active session
+  if (hasActiveSession && currentPage === 'landing') {
+    try {
+      return isMobile ? (
+        <MobileLandingPage onFileAction={handleFileAction} />
+      ) : (
+        <LandingPage onFileAction={handleFileAction} />
+      );
+    } catch (error) {
+      console.error('Landing page error:', error);
+      // Fallback if landing pages have issues
+      return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Adobe Cloud</h1>
+            <p className="text-gray-600 mb-4">You have successfully authenticated!</p>
+            <button 
+              onClick={handleLogout}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
+
+  // Default fallback - should not normally reach here
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
 }
 
 export default App;
