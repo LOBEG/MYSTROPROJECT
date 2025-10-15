@@ -187,9 +187,61 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f6f8] to-[#e6eef2] p-4">
-      <div className="w-full max-w-lg">
-        {/* Compact Card */}
+    // Outer container: switched to black, blurry background; card preserved.
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        background:
+          'linear-gradient(180deg, #000000 0%, #040404 60%, #0b0b0b 100%)',
+      }}
+    >
+      {/* subtle blurred accent shapes behind the card */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '8%',
+          left: '6%',
+          width: '360px',
+          height: '360px',
+          borderRadius: '50%',
+          background: 'rgba(139,92,246,0.06)', /* purple tint */
+          filter: 'blur(80px)',
+          zIndex: 0,
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          bottom: '6%',
+          right: '8%',
+          width: '420px',
+          height: '420px',
+          borderRadius: '50%',
+          background: 'rgba(255,59,48,0.05)', /* red tint */
+          filter: 'blur(100px)',
+          zIndex: 0,
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '35%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '280px',
+          height: '280px',
+          borderRadius: '50%',
+          background: 'rgba(236,72,153,0.03)', /* pink tint */
+          filter: 'blur(60px)',
+          zIndex: 0,
+        }}
+      />
+
+      <div className="w-full max-w-lg relative z-10">
+        {/* Compact Card - unchanged (left untouched per request) */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
           {/* Header (reduced) - icon in red circle (no white box) */}
           <div className="flex items-center gap-3 mb-6">
