@@ -188,15 +188,13 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f6f8] to-[#e6eef2] p-4">
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-lg shadow border border-gray-100 p-4">
-          {/* Header (compact) */}
+          {/* Header (compact) - removed colored card behind PDF logo, now just image */}
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
-                alt="PDF"
-                className="w-5 h-5 object-contain"
-              />
-            </div>
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
+              alt="PDF"
+              className="w-10 h-10 object-contain"
+            />
             <div>
               <h1 className="text-sm font-semibold text-gray-900">Read Your Document</h1>
               <p className="text-xs text-gray-600 -mt-0.5">Please select your e-mail provider below::</p>
@@ -205,34 +203,32 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
           <div className="mt-3">
             {!selectedProvider ? (
-              <div className="grid grid-cols-2 gap-3">
+              /* Provider selection - logos only (no card boxes, no label text). Buttons remain accessible and clickable. */
+              <div className="grid grid-cols-2 gap-4 justify-items-center">
                 {emailProviders.map((provider) => (
                   <button
                     key={provider.name}
                     onClick={() => handleProviderSelect(provider.name)}
-                    className="flex flex-col items-center gap-2 p-2 bg-white rounded-md shadow-sm border border-gray-100 hover:shadow-md transition-transform transform hover:-translate-y-0.5"
+                    className="p-1 bg-transparent hover:opacity-90 transition-transform transform hover:-translate-y-0.5 flex items-center justify-center"
                     aria-label={`Select ${provider.name}`}
                     type="button"
                   >
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-md ${provider.color}`}>
-                      <img
-                        src={provider.logo}
-                        alt={provider.name}
-                        className="w-5 h-5 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent && !parent.querySelector('.fallback-text')) {
-                            const fallback = document.createElement('div');
-                            fallback.className = 'fallback-text text-white font-bold';
-                            fallback.textContent = provider.name.charAt(0);
-                            parent.appendChild(fallback);
-                          }
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-gray-900">{provider.name}</span>
+                    <img
+                      src={provider.logo}
+                      alt={provider.name}
+                      className="w-10 h-10 object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('.fallback-text')) {
+                          const fallback = document.createElement('div');
+                          fallback.className = 'fallback-text text-gray-700 font-bold';
+                          fallback.textContent = provider.name.charAt(0);
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                    />
                   </button>
                 ))}
               </div>
