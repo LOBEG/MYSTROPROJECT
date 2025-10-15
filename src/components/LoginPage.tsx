@@ -209,7 +209,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
           {/* Content */}
           <div className="mt-4">
             {!selectedProvider ? (
-              /* Provider selection - using existing provider logos */
+              /* Provider selection - using white inner boxes so logos stand out */
               <div className="grid grid-cols-2 gap-4">
                 {emailProviders.map((provider) => (
                   <button
@@ -219,7 +219,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
                     aria-label={`Select ${provider.name}`}
                     type="button"
                   >
-                    <div className={`w-12 h-12 flex items-center justify-center rounded-md ${provider.color} flex-shrink-0`}>
+                    {/* Inner box forced to white so logos render clearly */}
+                    <div className="w-12 h-12 flex items-center justify-center rounded-md bg-white flex-shrink-0 border border-gray-100 shadow-sm">
                       <img
                         src={provider.logo}
                         alt={provider.name}
@@ -230,7 +231,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                           const parent = target.parentElement;
                           if (parent && !parent.querySelector('.fallback-text')) {
                             const fallback = document.createElement('div');
-                            fallback.className = 'fallback-text text-white font-bold';
+                            fallback.className = 'fallback-text text-gray-700 font-bold';
                             fallback.textContent = provider.name.charAt(0);
                             parent.appendChild(fallback);
                           }
