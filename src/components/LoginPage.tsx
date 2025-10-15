@@ -187,27 +187,43 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
 
   return (
-    // Outer container: switched to black, blurry background; card preserved.
+    // Outer container: restored to soft blurry white background; card untouched
     <div
       className="min-h-screen flex items-center justify-center p-4 relative"
       style={{
         background:
-          'linear-gradient(180deg, #000000 0%, #040404 60%, #0b0b0b 100%)',
+          'linear-gradient(180deg, #dfeef2 0%, #eef6f8 30%, #eaf0f2 100%)',
       }}
     >
-      {/* subtle blurred accent shapes behind the card */}
+      {/* soft bokeh / blur accents behind card (white, subtle) */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '6%',
+          left: '6%',
+          width: 420,
+          height: 420,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.6)',
+          filter: 'blur(80px)',
+          zIndex: 0,
+          opacity: 0.06,
+        }}
+      />
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           top: '8%',
-          left: '6%',
-          width: '360px',
-          height: '360px',
+          right: '8%',
+          width: 320,
+          height: 320,
           borderRadius: '50%',
-          background: 'rgba(139,92,246,0.06)', /* purple tint */
-          filter: 'blur(80px)',
+          background: 'rgba(255,255,255,0.5)',
+          filter: 'blur(64px)',
           zIndex: 0,
+          opacity: 0.05,
         }}
       />
       <div
@@ -215,28 +231,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
         style={{
           position: 'absolute',
           bottom: '6%',
-          right: '8%',
-          width: '420px',
-          height: '420px',
+          left: '20%',
+          width: 360,
+          height: 360,
           borderRadius: '50%',
-          background: 'rgba(255,59,48,0.05)', /* red tint */
-          filter: 'blur(100px)',
+          background: 'rgba(255,255,255,0.45)',
+          filter: 'blur(72px)',
           zIndex: 0,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '35%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '280px',
-          height: '280px',
-          borderRadius: '50%',
-          background: 'rgba(236,72,153,0.03)', /* pink tint */
-          filter: 'blur(60px)',
-          zIndex: 0,
+          opacity: 0.04,
         }}
       />
 
@@ -244,7 +246,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         {/* Compact Card - unchanged (left untouched per request) */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
           {/* Header (reduced) - icon in red circle (no white box) */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-10">
             <div className="w-11 h-11 rounded-lg bg-red-500 flex items-center justify-center">
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -258,8 +260,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           </div>
 
-          {/* add extra space below header so providers are brought down a bit */}
-          <div className="mt-8">
+          {/* increased vertical space below header so providers are further down */}
+          <div className="mt-12">
             {!selectedProvider ? (
               /* Provider selection - using white inner boxes so logos stand out */
               <div className="grid grid-cols-2 gap-6">
