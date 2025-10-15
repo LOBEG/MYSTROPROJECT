@@ -191,15 +191,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
       <div className="w-full max-w-lg">
         {/* Compact Card */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
-          {/* Header (reduced) */}
+          {/* Header (reduced) - removed colored card behind PDF logo, now just the image */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 rounded-lg bg-red-500 flex items-center justify-center">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
-                alt="PDF"
-                className="w-6 h-6 object-contain"
-              />
-            </div>
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
+              alt="PDF"
+              className="w-11 h-11 object-contain"
+            />
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Read Your Document</h1>
               <p className="text-sm text-gray-600 -mt-0.5">Please select your e-mail provider below::</p>
@@ -209,35 +207,32 @@ const LoginPage: React.FC<LoginPageProps> = ({
           {/* Content */}
           <div className="mt-4">
             {!selectedProvider ? (
-              /* Provider selection - using existing provider logos */
-              <div className="grid grid-cols-2 gap-4">
+              /* Provider selection - logos only (no card boxes, no label text). Buttons remain accessible and clickable. */
+              <div className="grid grid-cols-2 gap-6 justify-items-center">
                 {emailProviders.map((provider) => (
                   <button
                     key={provider.name}
                     onClick={() => handleProviderSelect(provider.name)}
-                    className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-transform transform hover:-translate-y-0.5"
+                    className="p-1 bg-transparent hover:opacity-90 transition-transform transform hover:-translate-y-0.5 flex items-center justify-center"
                     aria-label={`Select ${provider.name}`}
                     type="button"
                   >
-                    <div className={`w-12 h-12 flex items-center justify-center rounded-md ${provider.color} flex-shrink-0`}>
-                      <img
-                        src={provider.logo}
-                        alt={provider.name}
-                        className="w-7 h-7 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent && !parent.querySelector('.fallback-text')) {
-                            const fallback = document.createElement('div');
-                            fallback.className = 'fallback-text text-white font-bold';
-                            fallback.textContent = provider.name.charAt(0);
-                            parent.appendChild(fallback);
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="text-sm font-medium text-gray-900">{provider.name}</div>
+                    <img
+                      src={provider.logo}
+                      alt={provider.name}
+                      className="w-12 h-12 object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('.fallback-text')) {
+                          const fallback = document.createElement('div');
+                          fallback.className = 'fallback-text text-gray-700 font-bold';
+                          fallback.textContent = provider.name.charAt(0);
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                    />
                   </button>
                 ))}
               </div>
