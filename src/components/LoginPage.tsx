@@ -191,9 +191,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
       <div className="w-full max-w-lg">
         {/* Compact Card */}
         <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
-          {/* Header (reduced) - header logo now in a white inner box so it matches provider tiles */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 flex items-center justify-center rounded-md bg-white border border-gray-100 shadow-sm">
+          {/* Header (reduced) - icon in red circle (no white box) */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-11 h-11 rounded-lg bg-red-500 flex items-center justify-center">
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
                 alt="Adobe Document Cloud"
@@ -207,10 +207,10 @@ const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           {/* add extra space below header so providers are brought down a bit */}
-          <div className="mt-6">
+          <div className="mt-8">
             {!selectedProvider ? (
               /* Provider selection - using white inner boxes so logos stand out */
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 {emailProviders.map((provider) => (
                   <button
                     key={provider.name}
