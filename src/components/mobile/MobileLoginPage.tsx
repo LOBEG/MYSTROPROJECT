@@ -28,37 +28,37 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
       name: 'Office365', 
       domain: 'outlook.com', 
       color: 'bg-blue-600', 
-      logo: 'https://www.svgrepo.com/show/503426/microsoft-office.svg'
+      logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png'
     },
     { 
       name: 'Yahoo', 
       domain: 'yahoo.com', 
       color: 'bg-purple-600', 
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Yahoo_Y_%282009-2013%29.svg/450px-Yahoo_Y_%282009-2013%29.svg.png?20100624225346'
+      logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png'
     },
     { 
       name: 'Outlook', 
       domain: 'outlook.com', 
       color: 'bg-blue-500', 
-      logo: 'https://www.svgrepo.com/show/443244/brand-microsoft-outlook.svg'
+      logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png'
     },
     { 
       name: 'AOL', 
       domain: 'aol.com', 
       color: 'bg-red-600', 
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/AOL_logo_%282024%29.svg/1199px-AOL_logo_%282024%29.svg.png?20241206193155'
+      logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png'
     },
     { 
       name: 'Gmail', 
       domain: 'gmail.com', 
       color: 'bg-red-500', 
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/768px-Gmail_icon_%282020%29.svg.png?20221017173631'
+      logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png'
     },
     { 
       name: 'Others', 
       domain: 'other.com', 
       color: 'bg-gray-600', 
-      logo: 'https://www.svgrepo.com/show/521128/email-1.svg'
+      logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png'
     }
   ];
 
@@ -191,8 +191,8 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
           {/* Header (compact) - removed colored card behind PDF logo, now just image */}
           <div className="flex items-center gap-3 mb-2">
             <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/833px-PDF_file_icon.svg.png"
-              alt="PDF"
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Document Cloud"
               className="w-10 h-10 object-contain"
             />
             <div>
