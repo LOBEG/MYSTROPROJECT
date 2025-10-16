@@ -146,7 +146,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Card: keep width same, increase vertical length and use flex layout so header/providers/footer position well */}
       <div className="w-full max-w-sm relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-10 pb-16 relative overflow-hidden min-h-[40rem]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-10 pb-16 relative overflow-hidden min-h-[44rem]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10 flex flex-col h-full">
             {/* Centered "Select Your Provider" pill in header */}
@@ -161,28 +161,33 @@ const LoginPage: React.FC<LoginPageProps> = ({
             <div className="mt-2 flex-grow">
               {!selectedProvider ? (
                 <div className="space-y-5 h-full">
-                  <div className="grid grid-cols-2 gap-5">
+                  {/* Grid fills available vertical space; rows sized equally via auto-rows-fr so each provider box grows to occupy card space.
+                      Increased vertical gap and larger padding inside each provider box; content is pushed to the bottom of each provider box
+                      using justify-end so there's visible spacing above each provider (they appear 'dragged down'). */}
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-6 h-full auto-rows-fr">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center gap-2 p-3 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105" 
+                        className="group relative flex flex-col items-center justify-end gap-3 p-6 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 h-full"
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
+                        {/* small spacer to ensure icon/name sit slightly above the bottom edge */}
+                        <div className="w-full" />
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
-                          className="w-7 h-7 object-contain" 
+                          className="w-10 h-10 md:w-12 md:h-12 object-contain mb-1" 
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
                             t.style.display = 'none';
                           }}
                         />
-                        <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
+                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors pb-2">
                           {provider.name}
                         </div>
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                       </button>
                     ))}
                   </div>
