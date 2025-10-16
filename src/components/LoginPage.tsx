@@ -130,7 +130,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative left background (logo + text), kept subtle */}
+      {/* Decorative left background (logo + text), kept subtle.
+          Added "Securely access your PDFs" below "PDF and e-signing tools." per instruction. */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex items-center gap-3 opacity-90">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -140,6 +141,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="text-white drop-shadow-md">
           <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
           <div className="text-white/90 text-sm md:text-sm mt-1">PDF and e-signing tools.</div>
+          <div className="text-white/80 text-sm md:text-sm italic mt-1">Securely access your PDFs</div>
         </div>
       </div>
 
@@ -147,20 +149,18 @@ const LoginPage: React.FC<LoginPageProps> = ({
       <div className="w-full max-w-sm relative z-10">
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
-          <div className="px-6 py-5 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4">
+          <div className="px-6 py-5 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
+            {/* keep logo on the left but remove title/subtitle per instructions */}
             <div className="flex items-center gap-3">
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
                 alt="Adobe"
                 className="w-8 h-8 object-contain"
               />
-              <div>
-                <div className="text-sm font-semibold text-slate-800">Adobe Cloud Documents</div>
-                <div className="text-xs text-slate-500">Securely access your PDFs</div>
-              </div>
             </div>
 
-            <div className="ml-auto">
+            {/* Center the Select Your Provider pill in the header */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-100">
                 <Sparkles className="w-4 h-4 text-indigo-500" />
                 <span className="text-xs font-medium text-indigo-700">Select Your Provider</span>
@@ -170,11 +170,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Card body: providers and form */}
           <div className="px-6 py-6 flex flex-col gap-6">
-            {/* Providers area */}
+            {/* Providers area (removed the "Choose your email provider" label per instruction) */}
             {!selectedProvider ? (
               <div className="space-y-3">
-                <div className="text-sm text-slate-600 font-medium">Choose your email provider</div>
-
                 <div className="grid grid-cols-2 gap-4">
                   {emailProviders.map((provider) => (
                     <button
