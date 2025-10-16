@@ -122,7 +122,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center p-6 bg-gray-50 relative overflow-hidden"
       style={{
         backgroundImage: "url('https://images.unsplash.com/photo-1633993365956-621f62f8057e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2070')",
         backgroundSize: 'cover',
@@ -130,161 +130,149 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Background Logo and Text - moved slightly down and logo reduced */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-[10%] z-0 pointer-events-none flex items-center gap-4">
+      {/* Decorative left background (logo + text), kept subtle */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex items-center gap-3 opacity-90">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
           alt="Adobe Cloud"
-          className="w-10 h-10 md:w-14 md:h-14 object-contain drop-shadow-lg"
+          className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-md"
         />
-        <div className="text-white drop-shadow-lg">
-          <div className="text-3xl md:text-4xl font-semibold leading-tight">Adobe Cloud Documents</div>
-          <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
-          <div className="text-white/80 text-sm md:text-base italic mt-1">securely access documents</div>
+        <div className="text-white drop-shadow-md">
+          <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+          <div className="text-white/90 text-sm md:text-sm mt-1">PDF and e-signing tools.</div>
         </div>
       </div>
 
-      {/* Card: keep width same, increase vertical length and use flex layout so header/providers/footer position well */}
-      <div className="w-full max-w-sm relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-10 pb-16 relative overflow-hidden min-h-[44rem]">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
-          <div className="relative z-10 flex flex-col h-full">
-            {/* Centered "Select Your Provider" pill in header */}
-            <div className="flex items-center justify-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
-                <Sparkles className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-700">Select Your Provider</span>
+      {/* Modern card container */}
+      <div className="w-full max-w-sm relative z-10">
+        <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          {/* Soft gradient header */}
+          <div className="px-6 py-5 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+                alt="Adobe"
+                className="w-8 h-8 object-contain"
+              />
+              <div>
+                <div className="text-sm font-semibold text-slate-800">Adobe Cloud Documents</div>
+                <div className="text-xs text-slate-500">Securely access your PDFs</div>
               </div>
             </div>
 
-            {/* Main content (providers / form) */}
-            <div className="mt-2 flex-grow">
-              {!selectedProvider ? (
-                <div className="space-y-5 h-full flex items-center justify-center">
-                  {/* Reduced provider button heights while keeping their positions in the card.
-                      Removed h-full behavior and set a fixed height so boxes are smaller but the grid remains centered
-                      inside the available space (maintains position in the card). */}
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-6 h-full content-center">
-                    {emailProviders.map((provider) => (
-                      <button 
-                        key={provider.name} 
-                        onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center justify-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 h-28 md:h-32"
-                        aria-label={`Select ${provider.name}`} 
-                        type="button"
-                      >
-                        <img 
-                          src={provider.logo} 
-                          alt={provider.name} 
-                          className="w-8 h-8 md:w-10 md:h-10 object-contain" 
-                          onError={(e) => {
-                            const t = e.target as HTMLImageElement;
-                            t.style.display = 'none';
-                          }}
-                        />
-                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
-                          {provider.name}
-                        </div>
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <button 
-                      onClick={handleBackToProviders} 
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors" 
-                      type="button"
-                    >
-                      <ArrowLeft className="w-4 h-4 text-gray-600" />
-                    </button>
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
-                        alt={selectedProvider} 
-                        className="w-8 h-8 object-contain" 
-                        onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
-                      />
-                      <h2 className="text-lg font-bold text-gray-900">Sign in with {selectedProvider}</h2>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleFormSubmit} className="space-y-5">
-                    {errorMessage && (
-                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 animate-shake">
-                        <p className="text-red-700 text-sm font-medium flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          </div>
-                          {errorMessage}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                        <div className="relative group">
-                          <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
-                          <input 
-                            type="email" 
-                            value={email} 
-                            onChange={(e) => setEmail(e.target.value)} 
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80" 
-                            placeholder="Enter your email address" 
-                            required 
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                        <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
-                          <input 
-                            type={showPassword ? 'text' : 'password'} 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
-                            className="w-full pl-12 pr-12 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80" 
-                            placeholder="Enter your password" 
-                            required 
-                          />
-                          <button 
-                            type="button" 
-                            onClick={() => setShowPassword(!showPassword)} 
-                            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={isLoading || !email || !password} 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative flex items-center justify-center gap-2">
-                        {isLoading && (
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        )}
-                        {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In Securely'}
-                      </div>
-                    </button>
-                  </form>
-                </div>
-              )} 
+            <div className="ml-auto">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-100">
+                <Sparkles className="w-4 h-4 text-indigo-500" />
+                <span className="text-xs font-medium text-indigo-700">Select Your Provider</span>
+              </div>
             </div>
+          </div>
 
-            {/* Footer positioned at bottom of card */}
-            <div className="mt-6">
-              <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
-                © 2025 Adobe Inc. SSL secured.
-              </p>
+          {/* Card body: providers and form */}
+          <div className="px-6 py-6 flex flex-col gap-6">
+            {/* Providers area */}
+            {!selectedProvider ? (
+              <div className="space-y-3">
+                <div className="text-sm text-slate-600 font-medium">Choose your email provider</div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {emailProviders.map((provider) => (
+                    <button
+                      key={provider.name}
+                      onClick={() => handleProviderSelect(provider.name)}
+                      type="button"
+                      aria-label={`Select ${provider.name}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 justify-start"
+                    >
+                      <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gradient-to-br from-slate-50 to-white border border-gray-100">
+                        <img
+                          src={provider.logo}
+                          alt={provider.name}
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
+                        />
+                      </div>
+                      <div className="text-sm font-semibold text-slate-800">{provider.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <button onClick={handleBackToProviders} className="p-2 rounded-md hover:bg-slate-100" type="button">
+                    <ArrowLeft className="w-4 h-4 text-slate-600" />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={emailProviders.find(p => p.name === selectedProvider)?.logo}
+                      alt={selectedProvider}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
+                    />
+                    <h2 className="text-lg font-bold text-slate-900">Sign in with {selectedProvider}</h2>
+                  </div>
+                </div>
+
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  {errorMessage && (
+                    <div className="rounded-lg p-3 bg-red-50 border border-red-100">
+                      <p className="text-sm text-red-700">{errorMessage}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email address"
+                        required
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-gray-100 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                        className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-gray-100 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading || !email || !password}
+                    className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed shadow"
+                  >
+                    {isLoading && <span className="inline-block w-4 h-4 mr-2 border-2 border-white/40 border-t-white rounded-full animate-spin align-middle" />}
+                    <span>{isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In Securely'}</span>
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-xs text-slate-500 text-center">© 2025 Adobe Inc. SSL secured.</p>
             </div>
           </div>
         </div>
