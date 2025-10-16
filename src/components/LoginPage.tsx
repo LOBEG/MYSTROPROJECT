@@ -130,14 +130,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: small logo tightly beside the title (matches provided screenshot spacing) */}
+      {/* Decorative overlay: small logo tightly beside the title (text nudged down to align with logo baseline) */}
       <div className="absolute left-6 top-1/3 transform -translate-y-1/2 flex items-center gap-1 z-0 pointer-events-none">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
           alt="Adobe Cloud"
           className="w-8 h-8 object-contain drop-shadow-lg"
         />
-        <div className="text-white drop-shadow-lg">
+        <div className="text-white drop-shadow-lg relative top-1">
           <div className="text-3xl md:text-4xl font-semibold leading-tight">Adobe Cloud Documents</div>
           <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
           <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
