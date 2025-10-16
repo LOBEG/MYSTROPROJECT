@@ -136,14 +136,17 @@ const LoginPage: React.FC<LoginPageProps> = ({
           
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png" alt="Adobe Document Cloud" className="w-7 h-7 object-contain" />
-              </div>
+              {/* standalone header logo (no background wrapper) */}
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+                alt="Adobe Document Cloud"
+                className="w-12 h-12 object-contain"
+              />
               <div>
                 <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   Secure Document Access
                 </h1>
-                <p className="text-sm text-gray-600">Choose your email provider to continue</p>
+                {/* subtitle removed as requested */}
               </div>
             </div>
 
