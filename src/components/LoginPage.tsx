@@ -130,13 +130,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay (both desktop and mobile)
-          Desktop: left column (same as before)
-          Mobile: centered block above the card (copied from MobileLoginPage positioning)
-          This keeps the mobile placement identical to MobileLoginPage while preserving desktop layout. */}
-      <div className="absolute z-0 pointer-events-none opacity-90 inset-0">
-        {/* Desktop / larger screens: left column (unchanged) */}
-        <div className="hidden sm:flex absolute left-6 top-1/2 transform -translate-y-1/2 flex-col items-start">
+      {/* Card wrapper: relative so we can position the decorative block relative to the top of this card.
+          The decorative block will sit outside the header (above the card) on desktop (md+), matching MobileLoginPage visual
+          but placed outside the card header as requested. */}
+      <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
+        {/* Decorative block: placed ABOVE the card (outside header). 
+            It's absolutely positioned relative to the card wrapper and hidden on small screens (show on md+ only).
+            z-0 ensures it sits behind the card visually (on the background) while aligning to the card top. */}
+        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 hidden md:flex flex-col items-center z-0 pointer-events-none opacity-90">
           <div className="flex items-center gap-3">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -148,34 +149,12 @@ const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           </div>
 
-          <div className="mt-8 ml-12 md:ml-20 text-left">
+          <div className="mt-3 text-center">
             <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
             <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
           </div>
         </div>
 
-        {/* Mobile: centered above the card (matches MobileLoginPage position) */}
-        <div className="sm:hidden absolute inset-x-0 top-6 flex flex-col items-center gap-2 px-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-              alt="Adobe Cloud"
-              className="w-10 h-10 object-contain drop-shadow-md"
-            />
-            <div className="text-white drop-shadow-md">
-              <div className="text-lg font-semibold leading-tight">Adobe Cloud Documents</div>
-            </div>
-          </div>
-
-          <div className="mt-4 text-center">
-            <div className="text-white/90 text-xs">PDF and e-signing tools</div>
-            <div className="text-white/80 text-xs italic mt-1">Securely access your PDFs</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modern card container */}
-      <div className="w-full max-w-sm relative z-10">
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
