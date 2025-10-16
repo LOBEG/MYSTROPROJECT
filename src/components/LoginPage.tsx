@@ -130,44 +130,39 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Bottom-right subtitles pinned to the viewport (desktop only) */}
-      <div className="hidden md:flex absolute right-6 bottom-6 flex-col items-end z-20 pointer-events-none text-right">
-        <div className="text-white/90 text-sm">PDF and e-signing tools</div>
-        <div className="text-white/80 text-sm italic mt-1">Securely access your PDFs</div>
-      </div>
-
-      {/* Card wrapper: the decorative title/logo block is positioned ABOVE the card and centered horizontally.
-          User requested: move up by additional amount and shift right — implemented using inline styles so the block
-          sits higher above the card and is shifted to the right relative to the card center.
-          Visible on md+ screens (desktop) only.
-      */}
-      <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Centered title/logo above the card (desktop only).
-            Moved up further (now -top: -12rem) and shifted right by 4rem via left calc(50% + 4rem) while keeping translateX(-50%)
-            so the block is centered then offset to the right. */}
-        <div
-          className="hidden md:flex flex-row items-center z-30 pointer-events-none"
-          style={{
-            position: 'absolute',
-            top: '-12rem',                  // moved up further (approximately "2x" from earlier positions)
-            left: 'calc(50% + 4rem)',       // shifted right relative to card center by ~4rem
-            transform: 'translateX(-50%)',  // keep centered baseline then offset from calc()
-            whiteSpace: 'nowrap'
-          }}
-        >
+      {/* Decorative left background (logo + text)
+          Arranged as three stacked lines:
+          "Adobe Cloud Documents"
+          "PDF and e-signing tools"
+          "Securely access your PDFs"
+          Kept the vertical gap but moved the two lines up one step (mt-8). */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
+        {/* First row: logo + title inline */}
+        <div className="flex items-center gap-3">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
             alt="Adobe Cloud"
-            className="w-10 h-10 object-contain drop-shadow-md mr-3"
+            className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
           />
-          <div className="text-white drop-shadow-md tracking-wide text-lg md:text-xl font-semibold">
-            Adobe Cloud Documents
+          <div className="text-white drop-shadow-md">
+            <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
           </div>
         </div>
 
+        {/* Moved up one step: mt-8; horizontal shift preserved (ml-12 / md:ml-20) */}
+        <div className="mt-8 ml-12 md:ml-20 text-left">
+          <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
+          <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
+        </div>
+      </div>
+
+      {/* Modern card container */}
+      <div className="w-full max-w-sm relative z-10">
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
+          {/* Increased vertical padding to give the pill more room from the top */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
+            {/* left area unchanged (no sides modification) */}
             <div className="flex items-center gap-3">
             </div>
 
