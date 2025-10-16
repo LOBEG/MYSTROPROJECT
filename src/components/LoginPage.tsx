@@ -130,32 +130,29 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative elements for desktop (md+):
-          - Centered logo + "Adobe Cloud Documents" ABOVE the card (centered horizontally).
-          - Subtitles ("PDF and e-signing tools" / "Securely access your PDFs") pinned to bottom-right of viewport.
-          These are hidden on small screens so mobile layout is unchanged. */}
-      {/* Centered title/logo above the card (desktop only) */}
-      <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 -top-40 flex-col items-center z-20 pointer-events-none">
-        <div className="flex items-center gap-3">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-14 h-14 object-contain drop-shadow-md"
-          />
-          <div className="text-white drop-shadow-md">
-            <div className="text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-          </div>
-        </div>
-      </div>
-
       {/* Bottom-right subtitles pinned to the viewport (desktop only) */}
       <div className="hidden md:flex absolute right-6 bottom-6 flex-col items-end z-20 pointer-events-none text-right">
         <div className="text-white/90 text-sm">PDF and e-signing tools</div>
         <div className="text-white/80 text-sm italic mt-1">Securely access your PDFs</div>
       </div>
 
-      {/* Modern card container */}
+      {/* Card wrapper: we position the centered title/logo above the card (desktop only) by placing an absolute block
+          inside the wrapper. That ensures the title/logo is horizontally centered relative to the card and sits just above it. */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
+        {/* Centered title/logo above the card (desktop only). Not too far from the card; -top-10 keeps it close and visible. */}
+        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 hidden md:flex flex-col items-center z-30 pointer-events-none">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Cloud"
+              className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
+            />
+            <div className="text-white drop-shadow-md">
+              <div className="text-xl md:text-2xl font-semibold leading-tight">Adobe Cloud Documents</div>
+            </div>
+          </div>
+        </div>
+
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
