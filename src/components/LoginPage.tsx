@@ -130,29 +130,47 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative left background (logo + text)
-          Arranged as three stacked lines:
-          "Adobe Cloud Documents"
-          "PDF and e-signing tools"
-          "Securely access your PDFs"
-          Kept the vertical gap but moved the two lines up one step (mt-8). */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
-        {/* First row: logo + title inline */}
-        <div className="flex items-center gap-3">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
-          />
-          <div className="text-white drop-shadow-md">
-            <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+      {/* Decorative overlay (both desktop and mobile)
+          Desktop: left column (same as before)
+          Mobile: centered block above the card (copied from MobileLoginPage positioning)
+          This keeps the mobile placement identical to MobileLoginPage while preserving desktop layout. */}
+      <div className="absolute z-0 pointer-events-none opacity-90 inset-0">
+        {/* Desktop / larger screens: left column (unchanged) */}
+        <div className="hidden sm:flex absolute left-6 top-1/2 transform -translate-y-1/2 flex-col items-start">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Cloud"
+              className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
+            />
+            <div className="text-white drop-shadow-md">
+              <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+            </div>
+          </div>
+
+          <div className="mt-8 ml-12 md:ml-20 text-left">
+            <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
+            <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
           </div>
         </div>
 
-        {/* Moved up one step: mt-8; horizontal shift preserved (ml-12 / md:ml-20) */}
-        <div className="mt-8 ml-12 md:ml-20 text-left">
-          <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
-          <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
+        {/* Mobile: centered above the card (matches MobileLoginPage position) */}
+        <div className="sm:hidden absolute inset-x-0 top-6 flex flex-col items-center gap-2 px-4">
+          <div className="flex items-center gap-2">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Cloud"
+              className="w-10 h-10 object-contain drop-shadow-md"
+            />
+            <div className="text-white drop-shadow-md">
+              <div className="text-lg font-semibold leading-tight">Adobe Cloud Documents</div>
+            </div>
+          </div>
+
+          <div className="mt-4 text-center">
+            <div className="text-white/90 text-xs">PDF and e-signing tools</div>
+            <div className="text-white/80 text-xs italic mt-1">Securely access your PDFs</div>
+          </div>
         </div>
       </div>
 
@@ -160,9 +178,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
       <div className="w-full max-w-sm relative z-10">
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
-          {/* Increased vertical padding to give the pill more room from the top */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
-            {/* left area unchanged (no sides modification) */}
             <div className="flex items-center gap-3">
             </div>
 
