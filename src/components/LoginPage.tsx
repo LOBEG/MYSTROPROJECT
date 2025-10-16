@@ -131,12 +131,11 @@ const LoginPage: React.FC<LoginPageProps> = ({
       }}
     >
       {/* Decorative left background (logo + text)
-          Arranged exactly as you specified: three stacked lines
-          — "Adobe Cloud Documents"
-          — "PDF and e-signing tools"
-          — "Securely access your PDFs"
-          with the large vertical gap preserved (mt-16) so the block stays away from the card.
-          Only layout/markup here was changed; no logic or handlers were modified. */}
+          Arranged as three stacked lines:
+          "Adobe Cloud Documents"
+          "PDF and e-signing tools"
+          "Securely access your PDFs"
+          Kept the vertical gap (mt-16). Shifted the two lines to the right (ml-8 / md:ml-12) as requested. */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
         {/* First row: logo + title inline */}
         <div className="flex items-center gap-3">
@@ -150,8 +149,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
 
-        {/* Gap preserved, then the two lines stacked beneath the title (left-aligned under the logo/title) */}
-        <div className="mt-16 text-left">
+        {/* Gap preserved, then the two lines stacked beneath the title (left-aligned under the logo/title),
+            but shifted to the right by adding ml-8 (md:ml-12) so they move right "times 2". */}
+        <div className="mt-16 ml-8 md:ml-12 text-left">
           <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
           <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
         </div>
