@@ -163,11 +163,6 @@ const LoginPage: React.FC<LoginPageProps> = ({
           <div className="px-6 py-5 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
             {/* keep logo on the left but remove title/subtitle per instructions */}
             <div className="flex items-center gap-3">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-                alt="Adobe"
-                className="w-8 h-8 object-contain"
-              />
             </div>
 
             {/* Center the Select Your Provider pill in the header */}
