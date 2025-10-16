@@ -135,7 +135,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
           "Adobe Cloud Documents"
           "PDF and e-signing tools"
           "Securely access your PDFs"
-          Kept the vertical gap (mt-16). Shifted the two lines to the right (ml-8 / md:ml-12) as requested. */}
+          Kept the vertical gap (mt-12). Shifted the two lines slightly to the right (ml-4 / md:ml-6) and moved them up (mt-12). */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
         {/* First row: logo + title inline */}
         <div className="flex items-center gap-3">
@@ -149,9 +149,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
 
-        {/* Gap preserved, then the two lines stacked beneath the title (left-aligned under the logo/title),
-            but shifted to the right by adding ml-8 (md:ml-12) so they move right "times 2". */}
-        <div className="mt-16 ml-8 md:ml-12 text-left">
+        {/* Adjusted gap and horizontal shift: mt-12 and ml-4 (md:ml-6) */}
+        <div className="mt-12 ml-4 md:ml-6 text-left">
           <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
           <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
         </div>
