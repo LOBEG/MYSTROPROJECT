@@ -130,13 +130,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: logo + text positioned left-center of the background */}
-      <div className="absolute left-8 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-3 z-0 pointer-events-none">
+      {/* Decorative overlay: smaller logo + text positioned left-center of the background */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-2 z-0 pointer-events-none">
         <div className="flex items-center gap-3">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
             alt="Adobe Cloud"
-            className="w-10 h-10 md:w-16 md:h-16 object-contain drop-shadow-lg"
+            className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-lg"
           />
           <div className="text-white drop-shadow-lg">
             <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
@@ -146,19 +146,16 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="text-white/80 drop-shadow-md text-sm md:text-base italic">securely access documents</div>
       </div>
 
-      {/* Card moved to the right (increased left margin) */}
+      {/* Card (kept width same as before and position as previously moved right) */}
       <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-4 justify-between">
-              {/* header title removed; we place the Select provider pill here */}
-              <div />
-              <div className="ml-auto">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
-                  <Sparkles className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-medium text-blue-700">Select Your Provider</span>
-                </div>
+            {/* Centered "Select Your Provider" pill in header */}
+            <div className="flex items-center justify-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
+                <Sparkles className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium text-blue-700">Select Your Provider</span>
               </div>
             </div>
 
