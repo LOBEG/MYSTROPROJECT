@@ -144,9 +144,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
         </div>
       </div>
 
-      {/* Card: vertical size preserved from last requested layout; providers pushed down via spacer */}
+      {/* Card: size restored to original (width & vertical padding reset) — only the card size changed */}
       <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 py-12 px-8 relative overflow-hidden min-h-[640px]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
@@ -157,7 +157,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             </div>
 
-            {/* big spacer so providers sit lower in the card */}
+            {/* spacer so providers sit lower in the card (kept as requested) */}
             <div className="h-20 md:h-28" />
 
             <div className="mt-4">
