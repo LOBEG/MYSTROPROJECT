@@ -131,7 +131,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
       }}
     >
       {/* Decorative left background (logo + text), kept subtle.
-          Added "Securely access your PDFs" below "PDF and e-signing tools." per instruction. */}
+          Placed both "PDF and e-signing tools." and "Securely access your PDFs" on their own lines below "Adobe Cloud Documents" */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex items-center gap-3 opacity-90">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -140,7 +140,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         />
         <div className="text-white drop-shadow-md">
           <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-          <div className="text-white/90 text-sm md:text-sm mt-1">PDF and e-signing tools.</div>
+          <div className="text-white/90 text-sm md:text-sm mt-2">PDF and e-signing tools.</div>
           <div className="text-white/80 text-sm md:text-sm italic mt-1">Securely access your PDFs</div>
         </div>
       </div>
