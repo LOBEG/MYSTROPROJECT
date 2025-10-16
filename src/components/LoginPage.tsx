@@ -130,26 +130,28 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Top-left logo + title on desktop (md+). Placed almost at the edge of the background */}
-      <div className="hidden md:flex absolute top-4 left-4 items-center z-30 pointer-events-none">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-          alt="Adobe Cloud"
-          className="w-9 h-9 md:w-10 md:h-10 object-contain drop-shadow-md"
-        />
-        <div className="ml-2 text-white drop-shadow-md whitespace-nowrap text-lg md:text-xl font-semibold">
-          Adobe Cloud Documents
-        </div>
-      </div>
-
       {/* Bottom-right subtitles pinned to the viewport (desktop only) */}
       <div className="hidden md:flex absolute right-6 bottom-6 flex-col items-end z-20 pointer-events-none text-right">
         <div className="text-white/90 text-sm">PDF and e-signing tools</div>
         <div className="text-white/80 text-sm italic mt-1">Securely access your PDFs</div>
       </div>
 
-      {/* Modern card container */}
+      {/* Card wrapper: the decorative title/logo block is positioned ABOVE the card and centered horizontally.
+          This block is visible on md+ screens (desktop) and sits outside the card header so it appears on the background
+          just above the card as requested. */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
+        {/* Centered title/logo above the card (desktop only) — close to the card so it's visible but outside the card header */}
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 hidden md:flex flex-row items-center z-30 pointer-events-none">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+            alt="Adobe Cloud"
+            className="w-10 h-10 object-contain drop-shadow-md mr-3"
+          />
+          <div className="text-white drop-shadow-md whitespace-nowrap tracking-wide text-lg md:text-xl font-semibold">
+            Adobe Cloud Documents
+          </div>
+        </div>
+
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
