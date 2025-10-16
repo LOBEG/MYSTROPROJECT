@@ -128,7 +128,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + combined subtitle lines */}
+      {/* Decorative overlay: smaller logo + stacked subtitle lines (logo beside the title) */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
         <div className="flex items-center gap-2">
           <img
@@ -144,9 +144,9 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         </div>
       </div>
 
-      {/* Card reverted to previous (mobile) size but slightly taller */}
-      <div className="w-full max-w-sm relative z-10 ml-4 md:ml-12 lg:ml-24">
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden min-h-[520px]">
+      {/* Card moved slightly closer to the left (reduced left offset) */}
+      <div className="w-full max-w-sm relative z-10 ml-3 md:ml-12 lg:ml-20">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden min-h-[520px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
