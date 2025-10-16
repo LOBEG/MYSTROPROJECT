@@ -139,17 +139,15 @@ const LoginPage: React.FC<LoginPageProps> = ({
       {/* Card wrapper: we position the centered title/logo above the card (desktop only) by placing an absolute block
           inside the wrapper. That ensures the title/logo is horizontally centered relative to the card and sits just above it. */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Centered title/logo above the card (desktop only). Not too far from the card; -top-10 keeps it close and visible. */}
-        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 hidden md:flex flex-col items-center z-30 pointer-events-none">
-          <div className="flex items-center gap-3">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-              alt="Adobe Cloud"
-              className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
-            />
-            <div className="text-white drop-shadow-md">
-              <div className="text-xl md:text-2xl font-semibold leading-tight">Adobe Cloud Documents</div>
-            </div>
+        {/* Centered title/logo above the card (desktop only). Slightly raised (-top-16) and the text will not wrap. */}
+        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 hidden md:flex flex-row items-center z-30 pointer-events-none">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+            alt="Adobe Cloud"
+            className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md mr-3"
+          />
+          <div className="text-white drop-shadow-md whitespace-nowrap tracking-wide text-2xl md:text-3xl font-semibold">
+            Adobe&nbsp;Cloud&nbsp;Documents
           </div>
         </div>
 
