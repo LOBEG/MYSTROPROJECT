@@ -139,12 +139,12 @@ const LoginPage: React.FC<LoginPageProps> = ({
       {/* Card wrapper: decorative title/logo positioned above the card and slightly left of center (desktop only) */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
         {/* Above-card logo/title (desktop only).
-            Moved up slightly more (now -top: -4rem) and shifted left a bit further (translateX calc(-50% - 1.5rem)). */}
+            Moved up slightly more (now -top: -5rem) and shifted left a bit further (translateX calc(-50% - 1.5rem)). */}
         <div
           className="hidden md:flex flex-row items-center z-30 pointer-events-none"
           style={{
             position: 'absolute',
-            top: '-4rem',                     // moved up a bit more
+            top: '-5rem',                     // moved up a bit more as requested
             left: '50%',
             transform: 'translateX(calc(-50% - 1.5rem))', // shifted left ~1.5rem from center
             whiteSpace: 'nowrap'
