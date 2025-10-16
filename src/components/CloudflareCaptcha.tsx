@@ -1,16 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 interface CloudflareCaptchaProps {
   onVerified: () => void;
   verificationDelay?: number;
 }
 
-// Cloudflare logo (kept as an image so it sits above the captcha)
+// Cloudflare logo (kept above the captcha)
 const CloudflareLogo: React.FC = () => (
   <img
     src="https://static.cdnlogo.com/logos/c/93/cloudflare-thumb.png"
     alt="Cloudflare"
-    className="w-20 h-20 object-contain drop-shadow-lg"
+    className="w-20 h-20 object-contain drop-shadow-lg pointer-events-none"
   />
 );
 
@@ -22,8 +22,8 @@ const Spinner: React.FC<{ size?: 'sm' | 'md'; className?: string }> = ({
 
   return (
     <div
-      className={`${sizeClasses} border-2 border-blue-500 border-t-transparent rounded-full animate-spin ${className}`}
-      aria-label="Loading"
+      className={`${sizeClasses} border-2 border-white/70 border-t-transparent rounded-full animate-spin ${className}`}
+      aria-hidden="true"
     />
   );
 };
@@ -32,31 +32,41 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
   onVerified,
   verificationDelay = 1500,
 }) => {
-  const [isChecked, setIsChecked] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [liveMessage, setLiveMessage] = useState<string>('');
 
-  const handleCheckboxClick = useCallback(() => {
-    if (isVerified || isVerifying) return;
+  useEffect(() => {
+    setLiveMessage('Please verify that you are not a robot.');
+  }, []);
 
-    setIsChecked(true);
+  const handleVerify = useCallback(() => {
+    if (isVerifying || isVerified) return;
+
     setIsVerifying(true);
+    setLiveMessage('Verifying...');
 
     setTimeout(() => {
       setIsVerifying(false);
       setIsVerified(true);
+      setLiveMessage('Verified. Redirecting...');
+      // small delay so the check appears briefly before navigation
       setTimeout(() => {
         onVerified();
       }, 300);
     }, verificationDelay);
-  }, [isVerified, isVerifying, onVerified, verificationDelay]);
+  }, [isVerifying, isVerified, onVerified, verificationDelay]);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleCheckboxClick();
-    }
-  }, [handleCheckboxClick]);
+  // allow keyboard activation on the entire control
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleVerify();
+      }
+    },
+    [handleVerify]
+  );
 
   return (
     <div
@@ -69,41 +79,47 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Background logo placed near the top center */}
+      {/* Background logo placed near the top center (visual only) */}
       <div className="mt-[8vh] flex items-center justify-center pointer-events-none">
         <CloudflareLogo />
       </div>
 
-      {/* Captcha only: positioned below the logo, minimal wrapper so no visible card edges show.
-          Uses subtle backdrop blur and transparent background so it blends into the photo; only the checkbox + text remain visually distinct. */}
+      {/* Captcha control: below the logo.
+          The wrapper is intentionally minimal and translucent with blur so no hard card edges show —
+          only the control (checkbox + label) appears to float on the photo. */}
       <div className="mt-6 flex items-center flex-col">
-        <div
-          className="flex items-center space-x-3 p-1 rounded-md"
-          // subtle translucent/blur wrapper to improve readability while avoiding hard edges
+        {/* Accessible live region for screen readers */}
+        <div className="sr-only" aria-live="polite">
+          {liveMessage}
+        </div>
+
+        {/* Entire clickable area is a button so the user can click/activate the label or checkbox and proceed.
+            This makes the "I'm not a robot" control obvious and ensures activation navigates (onVerified). */}
+        <button
+          type="button"
+          onClick={handleVerify}
+          onKeyDown={handleKeyDown}
+          disabled={isVerifying || isVerified}
+          aria-pressed={isVerified}
+          aria-label="Verify you are human"
+          className={`flex items-center gap-3 px-3 py-2 rounded-md transition-opacity duration-150 focus:outline-none focus:ring-2 focus:ring-white/50 select-none`}
+          // subtle translucent/blur wrapper to improve legibility without showing hard edges
           style={{
-            background: 'rgba(255,255,255,0.04)',
+            background: 'rgba(255,255,255,0.03)',
             WebkitBackdropFilter: 'blur(6px)',
             backdropFilter: 'blur(6px)'
           }}
         >
-          <div
-            className={`w-6 h-6 flex items-center justify-center rounded cursor-pointer transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
-              isVerified
-                ? `bg-green-500`
-                : isVerifying
-                ? `border-2 border-blue-400 bg-white/6`
-                : `border-2 border-white/10 bg-white/6 hover:bg-white/10`
+          <span
+            className={`flex items-center justify-center rounded ${
+              isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/10' : 'bg-white/8'
             }`}
-            onClick={handleCheckboxClick}
-            onKeyDown={handleKeyDown}
-            tabIndex={0}
-            role="checkbox"
-            aria-checked={isVerified}
-            aria-label="Verify you are human"
-            aria-live="polite"
+            style={{ width: 24, height: 24 }}
+            aria-hidden="true"
           >
-            {isVerifying && <Spinner size="sm" />}
-            {isVerified && (
+            {isVerifying ? (
+              <Spinner size="sm" />
+            ) : isVerified ? (
               <svg
                 className="w-4 h-4 text-white"
                 fill="none"
@@ -114,11 +130,11 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-            )}
-          </div>
+            ) : null}
+          </span>
 
-          <span className="text-sm text-white/90 select-none">I'm not a robot</span>
-        </div>
+          <span className="text-sm text-white/90">I'm not a robot</span>
+        </button>
       </div>
     </div>
   );
