@@ -131,10 +131,10 @@ const LoginPage: React.FC<LoginPageProps> = ({
       }}
     >
       {/* Decorative left background (logo + text) —
-          Modified so "Adobe Cloud Documents" is inline with the logo,
-          and the two background lines are placed below the logo/title and spaced farther away. */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex items-start gap-4 opacity-90">
-        {/* logo + title inline */}
+          "Adobe Cloud Documents" inline with the logo, with the two lines placed below the logo/title
+          and dragged down using mt-16 so they are not close to the card. */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
+        {/* Row: logo and title inline */}
         <div className="flex items-center gap-3">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -146,8 +146,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
 
-        {/* place these two lines on their own block below the logo/title, with extra top margin to 'drag' them down */}
-        <div className="flex flex-col ml-0 mt-8">
+        {/* Block below the logo/title with larger top margin to 'drag' these lines down */}
+        <div className="mt-16">
           <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
           <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
         </div>
