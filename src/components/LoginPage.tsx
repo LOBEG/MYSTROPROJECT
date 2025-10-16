@@ -131,13 +131,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
       }}
     >
       {/* Card wrapper: relative so we can position the decorative block relative to the top of this card.
-          The decorative block will sit outside the header (above the card) on desktop (md+), matching MobileLoginPage visual
-          but placed outside the card header as requested. */}
+          The decorative block will sit outside the header (above the card) on desktop (md+), positioned further away
+          so the background content remains visible and unobstructed. */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Decorative block: placed ABOVE the card (outside header). 
-            It's absolutely positioned relative to the card wrapper and hidden on small screens (show on md+ only).
-            z-0 ensures it sits behind the card visually (on the background) while aligning to the card top. */}
-        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 hidden md:flex flex-col items-center z-0 pointer-events-none opacity-90">
+        {/* Decorative block: positioned well above the card so it doesn't cover background content.
+            Visible only on md+ (desktop) and placed behind the card (z-0). Adjusted negative top to move it farther away
+            from the card; you can tweak the -top values if you'd like it even farther. */}
+        <div className="absolute -top-56 md:-top-56 lg:-top-64 left-1/2 transform -translate-x-1/2 hidden md:flex flex-col items-center z-0 pointer-events-none opacity-75">
           <div className="flex items-center gap-3">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
