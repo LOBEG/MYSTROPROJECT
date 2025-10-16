@@ -130,28 +130,18 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative left background (logo + text)
-          Arranged as three stacked lines:
-          "Adobe Cloud Documents"
-          "PDF and e-signing tools"
-          "Securely access your PDFs"
-          Kept the vertical gap but moved the two lines up one step (mt-8). */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
-        {/* First row: logo + title inline */}
-        <div className="flex items-center gap-3">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
-          />
-          <div className="text-white drop-shadow-md">
-            <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-          </div>
-        </div>
-
-        {/* Moved up one step: mt-8; horizontal shift preserved (ml-12 / md:ml-20) */}
-        <div className="mt-8 ml-12 md:ml-20 text-left">
-          <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
+      {/* Decorative left background (logo + text), kept subtle.
+          Placed both "PDF and e-signing tools." and "Securely access your PDFs" on their own lines below "Adobe Cloud Documents",
+          and increased vertical spacing so they sit further away from the title. */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex items-center gap-3 opacity-90">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+          alt="Adobe Cloud"
+          className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-md"
+        />
+        <div className="text-white drop-shadow-md">
+          <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+          <div className="text-white/90 text-sm md:text-sm mt-6">PDF and e-signing tools.</div>
           <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
         </div>
       </div>
@@ -161,14 +151,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
           <div className="px-6 py-5 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
-            {/* keep logo on the left but remove title/subtitle per instructions */}
-            <div className="flex items-center gap-3">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-                alt="Adobe"
-                className="w-8 h-8 object-contain"
-              />
-            </div>
+            {/* removed adobe cloud logo from header as requested */}
 
             {/* Center the Select Your Provider pill in the header */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -181,7 +164,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Card body: providers and form */}
           <div className="px-6 py-6 flex flex-col gap-6">
-            {/* Providers area */}
+            {/* Providers area (removed the "Choose your email provider" label per instruction) */}
             {!selectedProvider ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
