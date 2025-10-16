@@ -136,13 +136,19 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="text-white/80 text-sm italic mt-1">Securely access your PDFs</div>
       </div>
 
-      {/* Card wrapper: the decorative title/logo block is positioned ABOVE the card and centered horizontally.
-          This block is visible on md+ screens (desktop) and sits outside the card header so it appears on the background
-          just above the card as requested. */}
+      {/* Card wrapper: decorative title/logo positioned above the card and slightly left of center (desktop only) */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Centered title/logo above the card (desktop only).
-            Moved up further (double the previous offset): -top-16 so it's higher above the card but still centered. */}
-        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 hidden md:flex flex-row items-center z-30 pointer-events-none">
+        {/* Above-card logo/title (desktop only). Moved up slightly (close to the card) and shifted left a bit. */}
+        <div
+          className="hidden md:flex flex-row items-center z-30 pointer-events-none"
+          style={{
+            position: 'absolute',
+            top: '-3rem',                     // a bit above the card (not too far)
+            left: '50%',
+            transform: 'translateX(calc(-50% - 1rem))', // shift left by ~1rem from center
+            whiteSpace: 'nowrap'
+          }}
+        >
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
             alt="Adobe Cloud"
