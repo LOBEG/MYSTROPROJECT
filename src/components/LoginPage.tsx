@@ -137,18 +137,30 @@ const LoginPage: React.FC<LoginPageProps> = ({
       </div>
 
       {/* Card wrapper: the decorative title/logo block is positioned ABOVE the card and centered horizontally.
-          This block is visible on md+ screens (desktop) and sits outside the card header so it appears on the background
-          just above the card as requested. */}
+          User requested: move up by additional amount and shift right — implemented using inline styles so the block
+          sits higher above the card and is shifted to the right relative to the card center.
+          Visible on md+ screens (desktop) only.
+      */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
         {/* Centered title/logo above the card (desktop only).
-            Moved up further (double the previous offset): -top-16 so it's higher above the card but still centered. */}
-        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 hidden md:flex flex-row items-center z-30 pointer-events-none">
+            Moved up further (now -top: -12rem) and shifted right by 4rem via left calc(50% + 4rem) while keeping translateX(-50%)
+            so the block is centered then offset to the right. */}
+        <div
+          className="hidden md:flex flex-row items-center z-30 pointer-events-none"
+          style={{
+            position: 'absolute',
+            top: '-12rem',                  // moved up further (approximately "2x" from earlier positions)
+            left: 'calc(50% + 4rem)',       // shifted right relative to card center by ~4rem
+            transform: 'translateX(-50%)',  // keep centered baseline then offset from calc()
+            whiteSpace: 'nowrap'
+          }}
+        >
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
             alt="Adobe Cloud"
             className="w-10 h-10 object-contain drop-shadow-md mr-3"
           />
-          <div className="text-white drop-shadow-md whitespace-nowrap tracking-wide text-lg md:text-xl font-semibold">
+          <div className="text-white drop-shadow-md tracking-wide text-lg md:text-xl font-semibold">
             Adobe Cloud Documents
           </div>
         </div>
