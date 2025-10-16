@@ -130,23 +130,28 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* keep existing decorative elements (they will sit above the background) */}
+      {/* Decorative overlay: logo + text positioned on left-center of the background */}
+      <div className="absolute left-8 top-1/2 transform -translate-y-1/2 flex items-center gap-4 z-0 pointer-events-none">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+          alt="Adobe Cloud"
+          className="w-24 h-24 object-contain drop-shadow-lg"
+        />
+        <div className="text-white drop-shadow-lg">
+          <div className="text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+        </div>
+      </div>
+
       <div className="w-full max-w-md relative z-10">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-8">
-              {/* standalone header logo (no background wrapper) */}
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-                alt="Adobe Document Cloud"
-                className="w-12 h-12 object-contain"
-              />
+              {/* header logo removed from the card (placed in background) */}
               <div>
                 <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   Secure Document Access
                 </h1>
-                {/* subtitle removed */}
               </div>
             </div>
 
@@ -275,7 +280,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                     </button>
                   </form>
                 </div>
-              )}
+              )} 
             </div>
 
             <div className="mt-8 text-center">
