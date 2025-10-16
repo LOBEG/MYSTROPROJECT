@@ -128,8 +128,8 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + stacked subtitle lines (logo beside the title) */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
+      {/* Decorative overlay: smaller logo + stacked subtitle lines (logo placed inline beside the title) */}
+      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
         <div className="flex items-center gap-2">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -144,9 +144,9 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
         </div>
       </div>
 
-      {/* Card moved slightly closer to the left (reduced left offset) */}
-      <div className="w-full max-w-sm relative z-10 ml-3 md:ml-12 lg:ml-20">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden min-h-[520px]">
+      {/* Card moved slightly closer to the left (reduced left offset so it sits nearer to overlay but not covering it) */}
+      <div className="w-full max-w-sm relative z-10 ml-6 md:ml-12 lg:ml-20">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden min-h-[480px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
@@ -260,7 +260,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                     <button 
                       type="submit" 
                       disabled={isLoading || !email || !password} 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group text-sm"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden group"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       <div className="relative flex items-center justify-center gap-2">
