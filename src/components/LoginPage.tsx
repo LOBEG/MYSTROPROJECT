@@ -130,17 +130,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Background Logo - standalone */}
-      <div className="absolute left-6 top-1/4 transform -translate-y-1/2 z-0 pointer-events-none">
+      {/* Background Logo and Text - side-by-side */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none flex items-center gap-4">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
           alt="Adobe Cloud"
-          className="w-16 h-16 object-contain drop-shadow-lg"
+          className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-lg"
         />
-      </div>
-
-      {/* Background Text - standalone */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none">
         <div className="text-white drop-shadow-lg">
           <div className="text-3xl md:text-4xl font-semibold leading-tight">Adobe Cloud Documents</div>
           <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
@@ -148,13 +144,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
         </div>
       </div>
 
-      {/* Card: reduced size and padding */}
+      {/* Card: reduced size and padding, slightly increased length */}
       <div className="w-full max-w-sm relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 pb-10 relative overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 pb-12 relative overflow-hidden min-h-[28rem]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
-            <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center justify-center mb-4">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-100">
                 <Sparkles className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium text-blue-700">Select Your Provider</span>
