@@ -130,24 +130,26 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative overlay: smaller logo + stacked subtitle lines */}
+      {/* Decorative overlay: smaller logo + stacked subtitle lines (logo placed inline beside the title) */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col items-start gap-1 z-0 pointer-events-none">
         <div className="flex items-center gap-3">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-lg"
-          />
-          <div className="text-white drop-shadow-lg">
-            <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-            <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
-            <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
+          <div className="flex items-center gap-3">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+              alt="Adobe Cloud"
+              className="w-10 h-10 md:w-12 md:h-12 object-contain drop-shadow-lg"
+            />
+            <div className="text-white drop-shadow-lg">
+              <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
+              <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
+              <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Card reverted to previous (smaller) dimensions */}
-      <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
+      {/* Card moved slightly closer to the left (reduced left offset) */}
+      <div className="w-full max-w-md relative z-10 ml-3 md:ml-12 lg:ml-20">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
