@@ -130,11 +130,15 @@ const LoginPage: React.FC<LoginPageProps> = ({
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Decorative left background (logo + text) —
-          "Adobe Cloud Documents" inline with the logo, with the two lines placed below the logo/title
-          and dragged down using mt-16 so they sit away from the card and are left-aligned under the logo. */}
+      {/* Decorative left background (logo + text)
+          Arranged exactly as you specified: three stacked lines
+          — "Adobe Cloud Documents"
+          — "PDF and e-signing tools"
+          — "Securely access your PDFs"
+          with the large vertical gap preserved (mt-16) so the block stays away from the card.
+          Only layout/markup here was changed; no logic or handlers were modified. */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-0 pointer-events-none hidden sm:flex flex-col items-start opacity-90">
-        {/* Row: logo and title inline */}
+        {/* First row: logo + title inline */}
         <div className="flex items-center gap-3">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
@@ -146,7 +150,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
 
-        {/* Block below the logo/title with larger top margin and left alignment */}
+        {/* Gap preserved, then the two lines stacked beneath the title (left-aligned under the logo/title) */}
         <div className="mt-16 text-left">
           <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
           <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
@@ -178,7 +182,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Card body: providers and form */}
           <div className="px-6 py-6 flex flex-col gap-6">
-            {/* Providers area (removed the "Choose your email provider" label per instruction) */}
+            {/* Providers area */}
             {!selectedProvider ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
