@@ -131,22 +131,22 @@ const LoginPage: React.FC<LoginPageProps> = ({
       }}
     >
       {/* Decorative overlay: small logo tightly beside the title (text nudged down to align with logo baseline) */}
-      <div className="absolute left-6 top-1/3 transform -translate-y-1/2 flex items-center gap-1 z-0 pointer-events-none">
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/6 flex items-center gap-6 z-0 pointer-events-none">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
           alt="Adobe Cloud"
           className="w-8 h-8 object-contain drop-shadow-lg"
         />
-        <div className="text-white drop-shadow-lg relative top-1">
+        <div className="text-white drop-shadow-lg">
           <div className="text-3xl md:text-4xl font-semibold leading-tight">Adobe Cloud Documents</div>
           <div className="text-white/90 text-sm md:text-base mt-1">PDF and e-signing tools.</div>
           <div className="text-white/80 text-sm md:text-base italic">securely access documents</div>
         </div>
       </div>
 
-      {/* Card: size restored to original (width & vertical padding reset) — only the card size changed */}
-      <div className="w-full max-w-md relative z-10 ml-6 md:ml-24 lg:ml-40">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
+      {/* Card: adjusted size for better proportions */}
+      <div className="w-full max-w-xl relative z-10 ml-6 md:ml-24 lg:ml-40">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
