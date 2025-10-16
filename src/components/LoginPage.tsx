@@ -160,13 +160,14 @@ const LoginPage: React.FC<LoginPageProps> = ({
       <div className="w-full max-w-sm relative z-10">
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
-          <div className="px-6 py-5 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
-            {/* keep logo on the left but remove title/subtitle per instructions */}
+          {/* Increased vertical padding to give the pill more room from the top */}
+          <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
+            {/* left area unchanged (no sides modification) */}
             <div className="flex items-center gap-3">
             </div>
 
-            {/* Center the Select Your Provider pill in the header */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
+            {/* Center the Select Your Provider pill and vertically center it in the header */}
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-100">
                 <Sparkles className="w-4 h-4 text-indigo-500" />
                 <span className="text-xs font-medium text-indigo-700">Select Your Provider</span>
