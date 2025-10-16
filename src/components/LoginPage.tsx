@@ -160,31 +160,29 @@ const LoginPage: React.FC<LoginPageProps> = ({
             {/* Main content (providers / form) */}
             <div className="mt-2 flex-grow">
               {!selectedProvider ? (
-                <div className="space-y-5 h-full">
-                  {/* Grid fills available vertical space; rows sized equally via auto-rows-fr so each provider box grows to occupy card space.
-                      Increased vertical gap and larger padding inside each provider box; content is pushed to the bottom of each provider box
-                      using justify-end so there's visible spacing above each provider (they appear 'dragged down'). */}
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-6 h-full auto-rows-fr">
+                <div className="space-y-5 h-full flex items-center justify-center">
+                  {/* Reduced provider button heights while keeping their positions in the card.
+                      Removed h-full behavior and set a fixed height so boxes are smaller but the grid remains centered
+                      inside the available space (maintains position in the card). */}
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-6 h-full content-center">
                     {emailProviders.map((provider) => (
                       <button 
                         key={provider.name} 
                         onClick={() => handleProviderSelect(provider.name)} 
-                        className="group relative flex flex-col items-center justify-end gap-3 p-6 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 h-full"
+                        className="group relative flex flex-col items-center justify-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 hover:shadow-lg hover:bg-white/80 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 h-28 md:h-32"
                         aria-label={`Select ${provider.name}`} 
                         type="button"
                       >
-                        {/* small spacer to ensure icon/name sit slightly above the bottom edge */}
-                        <div className="w-full" />
                         <img 
                           src={provider.logo} 
                           alt={provider.name} 
-                          className="w-10 h-10 md:w-12 md:h-12 object-contain mb-1" 
+                          className="w-8 h-8 md:w-10 md:h-10 object-contain" 
                           onError={(e) => {
                             const t = e.target as HTMLImageElement;
                             t.style.display = 'none';
                           }}
                         />
-                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors pb-2">
+                        <div className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
                           {provider.name}
                         </div>
                         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
