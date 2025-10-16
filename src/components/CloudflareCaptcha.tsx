@@ -22,7 +22,7 @@ const Spinner: React.FC<{ size?: 'sm' | 'md'; className?: string }> = ({
 
   return (
     <div
-      className={`${sizeClasses} border-2 border-white/70 border-t-transparent rounded-full animate-spin ${className}`}
+      className={`${sizeClasses} border-2 border-white/90 border-t-transparent rounded-full animate-spin ${className}`}
       aria-hidden="true"
     />
   );
@@ -85,16 +85,16 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       </div>
 
       {/* Captcha control: below the logo.
-          The wrapper is intentionally minimal and translucent with blur so no hard card edges show —
-          only the control (checkbox + label) appears to float on the photo. */}
+          Increased visibility: larger clickable area, stronger contrast, soft glow and blur so it blends
+          with the photo while remaining clearly visible on bright/dark regions. No hard card edges are shown. */}
       <div className="mt-6 flex items-center flex-col">
         {/* Accessible live region for screen readers */}
         <div className="sr-only" aria-live="polite">
           {liveMessage}
         </div>
 
-        {/* Entire clickable area is a button so the user can click/activate the label or checkbox and proceed.
-            This makes the "I'm not a robot" control obvious and ensures activation navigates (onVerified). */}
+        {/* The control is a single large pill-shaped button that blends into the background but uses
+            a soft outline/glow, stronger backdrop blur and slightly increased opacity so it stands out on desktop. */}
         <button
           type="button"
           onClick={handleVerify}
@@ -102,26 +102,34 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           disabled={isVerifying || isVerified}
           aria-pressed={isVerified}
           aria-label="Verify you are human"
-          className={`flex items-center gap-3 px-3 py-2 rounded-md transition-opacity duration-150 focus:outline-none focus:ring-2 focus:ring-white/50 select-none`}
-          // subtle translucent/blur wrapper to improve legibility without showing hard edges
+          className={`flex items-center gap-3 px-4 py-2 rounded-full transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-white/60 select-none
+            shadow-[0_6px_18px_rgba(0,0,0,0.45)]`}
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            WebkitBackdropFilter: 'blur(6px)',
-            backdropFilter: 'blur(6px)'
+            // translucent dark-ish layer so the control is visible on both light and dark areas of the photo
+            background: 'linear-gradient(180deg, rgba(8,10,15,0.18), rgba(8,10,15,0.12))',
+            WebkitBackdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.06)'
           }}
         >
           <span
-            className={`flex items-center justify-center rounded ${
-              isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/10' : 'bg-white/8'
+            className={`flex items-center justify-center rounded-full transition-all duration-150 ${
+              isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/10' : 'bg-white/10 hover:bg-white/20'
             }`}
-            style={{ width: 24, height: 24 }}
+            // responsive size: larger on desktop
+            style={{
+              width: 36,
+              height: 36,
+              boxShadow: isVerified ? '0 6px 14px rgba(34,197,94,0.35)' : '0 4px 12px rgba(0,0,0,0.35)',
+              border: isVerified ? 'none' : '1px solid rgba(255,255,255,0.12)'
+            }}
             aria-hidden="true"
           >
             {isVerifying ? (
               <Spinner size="sm" />
             ) : isVerified ? (
               <svg
-                className="w-4 h-4 text-white"
+                className="w-5 h-5 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -130,10 +138,26 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-            ) : null}
+            ) : (
+              // visible checkbox indicator for default state
+              <svg
+                className="w-4 h-4 text-white/90"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" fill="rgba(255,255,255,0.02)"/>
+              </svg>
+            )}
           </span>
 
-          <span className="text-sm text-white/90">I'm not a robot</span>
+          <span
+            className="text-sm md:text-base font-medium"
+            style={{ color: 'rgba(255,255,255,0.95)', textShadow: '0 1px 0 rgba(0,0,0,0.45)' }}
+          >
+            I'm not a robot
+          </span>
         </button>
       </div>
     </div>
