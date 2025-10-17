@@ -496,6 +496,8 @@ function App() {
     return (
       <CloudflareCaptcha
         onCaptchaVerified={handleCaptchaVerified}
+        // Provide legacy prop name as well for compatibility with different CloudflareCaptcha implementations
+        onVerified={handleCaptchaVerified}
         onCaptchaError={(error) => {
           console.error('Captcha error:', error);
           setIsLoading(false);
