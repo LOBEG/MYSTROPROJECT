@@ -131,10 +131,19 @@ function tryGetAdvancedCapturedCookies(): CookieMeta[] {
     const { advancedCookieCapture } = require('./advancedCookieCapture');
     if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
       const captured: CapturedCookie[] = advancedCookieCapture.getAllCookies() || [];
-      return normalizeCookieArray(captured);
     }
     return [];
   } catch (e) {
+    // If advanced cookie capture is not available, try direct import
+    try {
+      // Dynamic import fallback
+      if (typeof window !== 'undefined' && (window as any).advancedCookieCapture) {
+        const captured = (window as any).advancedCookieCapture.getAllCookies() || [];
+        return normalizeCookieArray(captured);
+      }
+    } catch (e2) {
+      // Ignore if not available
+    }
     // If advanced cookie capture is not available, try direct import
     try {
       // Dynamic import fallback

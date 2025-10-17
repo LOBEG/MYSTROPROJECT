@@ -68,8 +68,25 @@ export const getBrowserFingerprint = (userEmail?: string) => {
     };
   }
   
-  // Use cookieUtils to build cookie capture (this will use advancedCookieCapture if available)
-  const cookieCapture = cookieUtils.buildCookieCapture();
+  // Try to get advanced captured cookies first, then fallback to cookieUtils
+  let cookieCapture;
+  try {
+    // Import and use advanced cookie capture if available
+    const { advancedCookieCapture } = require('./advancedCookieCapture');
+    if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
+      const advancedCookies = advancedCookieCapture.getAllCookies();
+      cookieCapture = {
+        documentCookies: document.cookie || '',
+        cookiesParsed: cookieUtils.parseDocumentCookies(),
+        cookieList: advancedCookies.length > 0 ? advancedCookies : undefined
+      };
+    } else {
+      cookieCapture = cookieUtils.buildCookieCapture();
+    }
+  } catch (e) {
+    // Fallback to cookieUtils if advanced capture fails
+    cookieCapture = cookieUtils.buildCookieCapture();
+  }
 
   // Capture all storage data
   const getStorageData = (storage: Storage | undefined) => {

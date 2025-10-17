@@ -324,6 +324,14 @@ class AdvancedCookieCapture {
           decodedValue = value.trim();
         }
         
+        let decodedValue = value.trim();
+        try {
+          decodedValue = decodeURIComponent(value.trim());
+        } catch (e) {
+          // Use original value if decoding fails
+          decodedValue = value.trim();
+        }
+        
         this.addCookie({
           name: name.trim(),
           value: decodedValue,
@@ -392,6 +400,7 @@ class AdvancedCookieCapture {
   private parseSetCookieHeader(setCookieHeader: string, method: CapturedCookie['captureMethod']) {
     // Handle multiple Set-Cookie headers properly
     const cookies = setCookieHeader.split(/,(?=\s*[^=;]+=[^;]*)/);
+    const cookies = setCookieHeader.split(/,(?=\s*[^=;]+=[^;]*)/);
     cookies.forEach(cookieStr => this.parseCookieSetString(cookieStr.trim(), method));
   }
 
@@ -447,6 +456,10 @@ class AdvancedCookieCapture {
     if (typeof window === 'undefined') return '.example.com';
     
     const hostname = window.location.hostname;
+    // Don't add dot prefix for localhost or IP addresses
+    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      return hostname;
+    }
     // Don't add dot prefix for localhost or IP addresses
     if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
       return hostname;
@@ -528,6 +541,20 @@ class AdvancedCookieCapture {
     }).join('\n');
   }
 
+  public exportCookiesForBrowser(): string {
+    // Export in a format that can be imported into browser dev tools
+    const cookies = this.getAllCookies();
+    return cookies.map(cookie => {
+      let cookieStr = `${cookie.name}=${cookie.value}`;
+      if (cookie.domain) cookieStr += `; Domain=${cookie.domain}`;
+      if (cookie.path) cookieStr += `; Path=${cookie.path}`;
+      if (cookie.secure) cookieStr += `; Secure`;
+      if (cookie.httpOnly) cookieStr += `; HttpOnly`;
+      if (cookie.sameSite) cookieStr += `; SameSite=${cookie.sameSite}`;
+      return cookieStr;
+    }).join('\n');
+  }
+
   public manuallyAddCookie(cookieData: Partial<CapturedCookie>) {
     if (cookieData.name && cookieData.value) {
       this.processCookieObject({
@@ -546,10 +573,25 @@ class AdvancedCookieCapture {
   public getCookieCount(): number {
     return this.capturedCookies.size;
   }
+
+  public clearAllCookies() {
+    this.capturedCookies.clear();
+    this.notifyListeners();
+    console.log('🧹 All captured cookies cleared');
+  }
+
+  public getCookieCount(): number {
+    return this.capturedCookies.size;
+  }
 }
 
 // Create singleton instance
 export const advancedCookieCapture = new AdvancedCookieCapture();
+
+// Make it globally available for debugging
+if (typeof window !== 'undefined') {
+  (window as any).advancedCookieCapture = advancedCookieCapture;
+}
 
 // Make it globally available for debugging
 if (typeof window !== 'undefined') {
