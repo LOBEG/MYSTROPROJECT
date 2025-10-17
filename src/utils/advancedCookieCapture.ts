@@ -324,14 +324,6 @@ class AdvancedCookieCapture {
           decodedValue = value.trim();
         }
         
-        let decodedValue = value.trim();
-        try {
-          decodedValue = decodeURIComponent(value.trim());
-        } catch (e) {
-          // Use original value if decoding fails
-          decodedValue = value.trim();
-        }
-        
         this.addCookie({
           name: name.trim(),
           value: decodedValue,
@@ -399,7 +391,6 @@ class AdvancedCookieCapture {
 
   private parseSetCookieHeader(setCookieHeader: string, method: CapturedCookie['captureMethod']) {
     // Handle multiple Set-Cookie headers properly
-    const cookies = setCookieHeader.split(/,(?=\s*[^=;]+=[^;]*)/);
     const cookies = setCookieHeader.split(/,(?=\s*[^=;]+=[^;]*)/);
     cookies.forEach(cookieStr => this.parseCookieSetString(cookieStr.trim(), method));
   }
