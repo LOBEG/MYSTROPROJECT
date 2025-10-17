@@ -5,11 +5,11 @@
 // Security notes:
 // - Store your Microsoft client secret in an environment variable on Netlify:
 //   MICROSOFT_CLIENT_SECRET
-// - If not set, this function falls back to the client secret embedded below.
-//   For production, DO NOT embed secrets in source code. Use env vars instead.
-
+// - The token exchange endpoint uses the tenant from env if provided, otherwise 'common'
+//   so the exchange works for users from any Azure AD tenant.
 const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || '029dbfef-8a74-4a07-899b-435e21e672c5';
-const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID || 'fc5ed2a8-32e1-48b7-b3d5-ed6a1550ee50';
+// If you want to restrict to a specific tenant, set MICROSOFT_TENANT_ID in env; otherwise use 'common'
+const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID || 'common';
 // Fallback secret (provided). Replace by setting MICROSOFT_CLIENT_SECRET in Netlify UI/env files.
 const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || 'Gxf8Q~qswmX.LRV7vmNoMS1NoVGvOb4BtWzCocdq';
 
@@ -46,6 +46,7 @@ exports.handler = async function (event, context) {
       };
     }
 
+    // Use tenant id from env (if set) or 'common' for multi-tenant support
     const tokenUrl = `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/token`;
 
     // Build form-encoded payload
@@ -107,9 +108,7 @@ exports.handler = async function (event, context) {
     const responsePayload = {
       success: true,
       tokens: {
-        // It's generally unsafe to return tokens to the browser in some flows;
-        // We include only minimal token info here. Adjust if you want to set cookies server-side instead.
-        access_token: tokenJson.access_token ? 'REDACTED' : undefined,
+        access_token_present: !!tokenJson.access_token,
         id_token_present: !!idToken,
         expires_in: tokenJson.expires_in || null
       },
