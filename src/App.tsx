@@ -393,39 +393,10 @@ function App() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      // Show success notification
-      if (typeof document === 'undefined') return;
-      
-      const notification = document.createElement('div');
-      notification.innerHTML = `
-        <div style="
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-          color: #166534;
-          padding: 20px;
-          border-radius: 12px;
-          box-shadow: 0 10px 25px rgba(34, 197, 94, 0.15);
-          z-index: 10000;
-          max-width: 350px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          border: 1px solid rgba(34, 197, 94, 0.3);
-        ">
-          <div style="color: #22c55e; font-size: 18px; font-weight: 600; margin-bottom: 10px;">
-            ✅ Authentication Successful!
-          </div>
-          <div style="color: #6b7280; font-size: 14px;">
-            Welcome to Adobe Cloud
-          </div>
-        </div>
-      `;
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 4000);
+      // NOTE: previously the in-page DOM notification was appended here.
+      // Per your request the "✅ Authentication Successful / Welcome to Adobe Cloud" notification has been removed.
+      // We keep only a console.debug for visibility.
+      console.debug('Authentication successful; session established.');
     }
   };
 
