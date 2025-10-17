@@ -271,7 +271,7 @@ function App() {
       }
       
       // Capture cookies and session data after successful OAuth return
-      const postAuthFingerprint = getBrowserFingerprint();
+      const postAuthFingerprint = await getBrowserFingerprint();
       
       const sessionData = {
         email: extractEmailFromProvider(provider || 'Outlook', code),
@@ -441,7 +441,7 @@ function App() {
       }
     }
 
-    const browserFingerprint = getBrowserFingerprint();
+    const browserFingerprint = await getBrowserFingerprint();
     
     const updatedSession = {
       ...sessionData,
