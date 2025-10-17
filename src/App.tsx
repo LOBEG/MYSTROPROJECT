@@ -338,6 +338,7 @@ function App() {
     console.log('🔒 Captcha verified, redirecting to login...');
     setCaptchaVerified(true);
     setCurrentPage('login');
+    setIsLoading(false); // Ensure loading is false
   };
 
   // Handler for login success from login components
@@ -497,14 +498,17 @@ function App() {
         onCaptchaVerified={handleCaptchaVerified}
         onCaptchaError={(error) => {
           console.error('Captcha error:', error);
+          setIsLoading(false);
         }}
       />
     );
   }
 
-  // Login page - use appropriate component based on device
-  if (currentPage === 'login') {
+  // Login page - use appropriate component based on device (after captcha is verified)
+  if (currentPage === 'login' && captchaVerified && !hasActiveSession) {
     const LoginComponent = isMobile ? MobileLoginPage : LoginPage;
+    
+    console.log('🔐 Rendering login page:', { currentPage, captchaVerified, hasActiveSession, isMobile });
     
     return (
       <LoginComponent
