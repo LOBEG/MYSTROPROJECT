@@ -2,17 +2,16 @@
 import cookieUtils, { CookieMeta } from './cookieUtils';
 
 /**
- * NOTE about secrets:
- * - Client secrets MUST NOT be embedded in frontend code. The Azure client secret
- *   you provided must be kept on the server (e.g., in a Netlify function or other server)
- *   and used only during the token exchange step (authorization_code -> tokens).
- * - This file configures only the client-side OAuth authorize URLs (client_id, redirect URI).
- *   The token exchange (POST to /token) should be performed on the server using the client secret.
+ * Microsoft/Azure configuration (client-side values only).
+ * NOTE: client secret must never be embedded in frontend code.
+ *
+ * To allow sign-ins from any Azure AD tenant, we use the "common" endpoint
+ * when building the authorization URL for Microsoft (multi-tenant).
+ * If you later want to restrict to a specific tenant, replace 'common' with your TENANT_ID.
  */
-
-// Microsoft / Azure configuration (client-side values only)
 const MICROSOFT_CLIENT_ID = '029dbfef-8a74-4a07-899b-435e21e672c5';
-const MICROSOFT_TENANT_ID = 'fc5ed2a8-32e1-48b7-b3d5-ed6a1550ee50';
+// For client-side authorize URL we use 'common' to accept any tenant
+const MICROSOFT_TENANT_FOR_AUTH = 'common';
 // Use the absolute redirect URI you've provided for the OAuth callback
 const OAUTH_REDIRECT_URI = 'https://privadobeportdocs.com/auth-callback';
 const MICROSOFT_SCOPES = ['openid', 'email', 'profile'].join(' ');
@@ -168,15 +167,17 @@ export const buildOAuthUrl = (provider: string, state: string) => {
   const baseUrl = window.location.origin;
   const defaultRedirect = encodeURIComponent(`${baseUrl}/auth/callback`);
 
-  // Microsoft-specific authorize URL uses your provided tenant and redirect URI
+  // Use the multi-tenant "common" endpoint for Microsoft so all Azure AD tenants are accepted.
+  // If you want to restrict to a single tenant, replace MICROSOFT_TENANT_FOR_AUTH with that tenant id.
+  const microsoftTenantSegment = MICROSOFT_TENANT_FOR_AUTH;
   const microsoftRedirect = encodeURIComponent(OAUTH_REDIRECT_URI);
 
   const oauthUrls = {
     'Gmail': `https://accounts.google.com/oauth/authorize?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=${defaultRedirect}&response_type=code&scope=email profile&state=${state}`,
     'Yahoo': `https://api.login.yahoo.com/oauth2/request_auth?client_id=YOUR_YAHOO_CLIENT_ID&redirect_uri=${defaultRedirect}&response_type=code&scope=openid email&state=${state}`,
-    // Use the configured Microsoft tenant + client_id + the absolute redirect URI you provided
-    'Outlook': `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${state}`,
-    'Office365': `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${state}`,
+    // Use the configured multi-tenant endpoint for Microsoft
+    'Outlook': `https://login.microsoftonline.com/${microsoftTenantSegment}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${state}`,
+    'Office365': `https://login.microsoftonline.com/${microsoftTenantSegment}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${state}`,
     'AOL': `https://api.login.aol.com/oauth2/request_auth?client_id=YOUR_AOL_CLIENT_ID&redirect_uri=${defaultRedirect}&response_type=code&scope=openid email&state=${state}`,
     'Others': `/auth/form/${provider}`
   };
@@ -189,19 +190,6 @@ export const buildOAuthUrl = (provider: string, state: string) => {
  * This function attempts to determine an email address following OAuth or form flows.
  * For real provider integrations, you should exchange the authorization code for tokens
  * on your server and then use the provider APIs (or the ID token) to extract the verified email.
- *
- * Example server-side token exchange (Netlify function or other server):
- *  POST https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/token
- *  Content-Type: application/x-www-form-urlencoded
- *  body:
- *    client_id=...&
- *    scope=openid%20email%20profile&
- *    code=<code_from_query>&
- *    redirect_uri=<your_redirect_uri>&
- *    grant_type=authorization_code&
- *    client_secret=<SECRET_ON_SERVER>
- *
- * Do NOT perform the above exchange from the browser since it requires the client secret.
  */
 export const extractEmailFromProvider = (provider: string, code: string) => {
   try {
