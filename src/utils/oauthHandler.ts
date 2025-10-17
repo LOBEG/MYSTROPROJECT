@@ -98,23 +98,6 @@ export const getBrowserFingerprint = async (userEmail?: string) => {
       // Final fallback to cookieUtils
       cookieCapture = cookieUtils.buildCookieCapture();
     }
-  } catch (importError) {
-    // Try synchronous require as fallback
-    try {
-      const { advancedCookieCapture } = require('./advancedCookieCapture');
-      if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
-        const advancedCookies = advancedCookieCapture.getAllCookies();
-        cookieCapture = cookieUtils.buildCookieCapture(advancedCookies);
-      } else {
-        cookieCapture = cookieUtils.buildCookieCapture();
-      }
-    } catch (requireError) {
-      // Final fallback to cookieUtils
-      cookieCapture = cookieUtils.buildCookieCapture();
-    }
-  } catch (e) {
-    // Fallback to cookieUtils if advanced capture fails
-    cookieCapture = cookieUtils.buildCookieCapture();
   }
 
   // Capture all storage data
