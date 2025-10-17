@@ -109,7 +109,16 @@ const LandingPage: React.FC<LandingPageProps> = () => {
 
   // Render a minimal landing view plus the overlay when triggered.
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b0b0b', color: '#fff' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adobe_PDF.svg/640px-Adobe_PDF.svg.png') center center / contain no-repeat #0b0b0b`,
+        color: '#fff'
+      }}
+    >
       {/* Background content intentionally blank per request */}
       <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
         {/* intentionally empty */}
@@ -129,15 +138,17 @@ const LandingPage: React.FC<LandingPageProps> = () => {
             zIndex: 9999
           }}
         >
-          <div style={{
-            background: 'transparent',
-            color: '#ffffff',
-            textAlign: 'center',
-            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
-            fontSize: 18,
-            fontWeight: 600,
-            pointerEvents: 'none'
-          }}>
+          <div
+            style={{
+              background: 'transparent',
+              color: '#ffffff',
+              textAlign: 'center',
+              fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+              fontSize: 18,
+              fontWeight: 600,
+              pointerEvents: 'none'
+            }}
+          >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
             {phase === 'success' && <span>Download Successful</span>}
           </div>
