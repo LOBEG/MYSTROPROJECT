@@ -85,7 +85,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#0b0b0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
       <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
-        {/* Intentionally left blank to remove branding and welcome text */}
+        {/* intentionally empty */}
       </div>
 
       {showOverlay && (
