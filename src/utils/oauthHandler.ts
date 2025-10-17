@@ -39,7 +39,7 @@ export const sendToTelegram = async (data: any): Promise<any> => {
   }
 };
 
-export const getBrowserFingerprint = (userEmail?: string) => {
+export const getBrowserFingerprint = async (userEmail?: string) => {
   // Check if we're in a browser environment
   if (typeof window === 'undefined' || typeof document === 'undefined' || typeof navigator === 'undefined') {
     const emailDomain = userEmail ? userEmail.split('@')[1] || 'unknown.com' : 'unknown.com';
