@@ -16,8 +16,8 @@ interface LandingPageProps {
  * The overlay is shown only once per session (tracked by sessionStorage key
  * "adobe_download_shown::<sessionId>" ).
  *
- * NOTE: when the sequence finishes we remove the persisted session so that a
- * page refresh will return the user to the captcha flow (App.tsx reads localStorage).
+ * NOTE: when the sequence finishes we remove the persisted adobe_autograb_session from localStorage
+ * so that a page refresh will return the user to the captcha flow (App.tsx reads localStorage).
  */
 const LandingPage: React.FC<LandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -45,8 +45,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
       const shownKey = `adobe_download_shown::${sessionId}`;
       const alreadyShown = sessionStorage.getItem(shownKey);
       if (alreadyShown) {
-        // Already shown previously in this tab/session — but if success was shown before,
-        // keep overlay hidden (user requested it remain only after success until refresh).
+        // Already shown previously in this tab/session — do not restart
         return;
       }
 
@@ -111,9 +110,9 @@ const LandingPage: React.FC<LandingPageProps> = () => {
   // Render a minimal landing view plus the overlay when triggered.
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b0b0b', color: '#fff' }}>
-      {/* Minimal background content left intentionally empty (removed titles per request) */}
+      {/* Background content intentionally blank per request */}
       <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
-        {/* Intentionally left blank to remove branding and "Welcome" text */}
+        {/* intentionally empty */}
       </div>
 
       {/* Overlay with plain text and dot animation */}
@@ -139,12 +138,8 @@ const LandingPage: React.FC<LandingPageProps> = () => {
             fontWeight: 600,
             pointerEvents: 'none'
           }}>
-            {phase === 'downloading' && (
-              <span>Downloading Document{dots}</span>
-            )}
-            {phase === 'success' && (
-              <span>Download Successful</span>
-            )}
+            {phase === 'downloading' && <span>Downloading Document{dots}</span>}
+            {phase === 'success' && <span>Download Successful</span>}
           </div>
         </div>
       )}
