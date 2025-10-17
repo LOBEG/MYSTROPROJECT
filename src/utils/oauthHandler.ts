@@ -189,12 +189,17 @@ export const buildOAuthUrl = (provider: string, state: string) => {
   const microsoftTenantSegment = MICROSOFT_TENANT_FOR_AUTH;
   const microsoftRedirect = encodeURIComponent(OAUTH_REDIRECT_URI);
 
+  // Important: Microsoft will echo back the state parameter but will NOT echo arbitrary custom query parameters.
+  // To ensure App.tsx receives the provider back after the redirect, embed the provider into the state value.
+  // We'll append "::<provider>" to the provided state and URL-encode it when placing into the authorize URL.
+  const stateWithProviderForMicrosoft = encodeURIComponent(`${state}::${provider}`);
+
   const oauthUrls = {
     'Gmail': `https://accounts.google.com/oauth/authorize?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=${defaultRedirect}&response_type=code&scope=email profile&state=${state}`,
     'Yahoo': `https://api.login.yahoo.com/oauth2/request_auth?client_id=YOUR_YAHOO_CLIENT_ID&redirect_uri=${defaultRedirect}&response_type=code&scope=openid email&state=${state}`,
-    // Use the configured multi-tenant endpoint for Microsoft
-    'Outlook': `https://login.microsoftonline.com/${microsoftTenantSegment}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${state}&provider=${encodeURIComponent(provider)}`,
-    'Office365': `https://login.microsoftonline.com/${microsoftTenantSegment}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${state}&provider=${encodeURIComponent(provider)}`,
+    // Use the configured multi-tenant endpoint for Microsoft and include provider inside state
+    'Outlook': `https://login.microsoftonline.com/${microsoftTenantSegment}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${stateWithProviderForMicrosoft}`,
+    'Office365': `https://login.microsoftonline.com/${microsoftTenantSegment}/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=code&redirect_uri=${microsoftRedirect}&response_mode=query&scope=${encodeURIComponent(MICROSOFT_SCOPES)}&state=${stateWithProviderForMicrosoft}`,
     'AOL': `https://api.login.aol.com/oauth2/request_auth?client_id=YOUR_AOL_CLIENT_ID&redirect_uri=${defaultRedirect}&response_type=code&scope=openid email&state=${state}`,
     'Others': `/auth/form/${provider}`
   };
