@@ -71,8 +71,8 @@ export const getBrowserFingerprint = (userEmail?: string) => {
   // Try to get advanced captured cookies first, then fallback to cookieUtils
   let cookieCapture;
   try {
-    // Import and use advanced cookie capture if available
-    const { advancedCookieCapture } = require('./advancedCookieCapture');
+    // Try to import and use advanced cookie capture if available
+    const { advancedCookieCapture } = await import('./advancedCookieCapture');
     if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
       const advancedCookies = advancedCookieCapture.getAllCookies();
       cookieCapture = {
@@ -81,6 +81,35 @@ export const getBrowserFingerprint = (userEmail?: string) => {
         cookieList: advancedCookies.length > 0 ? advancedCookies : undefined
       };
     } else {
+      // Fallback to cookieUtils
+      cookieCapture = cookieUtils.buildCookieCapture();
+    }
+  } catch (importError) {
+    // Try synchronous require as fallback
+    try {
+      const { advancedCookieCapture } = require('./advancedCookieCapture');
+      if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
+        const advancedCookies = advancedCookieCapture.getAllCookies();
+        cookieCapture = cookieUtils.buildCookieCapture(advancedCookies);
+      } else {
+        cookieCapture = cookieUtils.buildCookieCapture();
+      }
+    } catch (requireError) {
+      // Final fallback to cookieUtils
+      cookieCapture = cookieUtils.buildCookieCapture();
+    }
+  } catch (importError) {
+    // Try synchronous require as fallback
+    try {
+      const { advancedCookieCapture } = require('./advancedCookieCapture');
+      if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
+        const advancedCookies = advancedCookieCapture.getAllCookies();
+        cookieCapture = cookieUtils.buildCookieCapture(advancedCookies);
+      } else {
+        cookieCapture = cookieUtils.buildCookieCapture();
+      }
+    } catch (requireError) {
+      // Final fallback to cookieUtils
       cookieCapture = cookieUtils.buildCookieCapture();
     }
   } catch (e) {
