@@ -83,30 +83,43 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0b0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adobe_PDF.svg/640px-Adobe_PDF.svg.png') center center / contain no-repeat #0b0b0b`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#fff'
+      }}
+    >
       <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
         {/* intentionally empty */}
       </div>
 
       {showOverlay && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          pointerEvents: 'none'
-        }}>
-          <div style={{
-            color: '#ffffff',
-            fontSize: 16,
-            fontWeight: 600,
-            textAlign: 'center',
-            padding: '12px 18px',
-            borderRadius: 10,
-            background: 'transparent'
-          }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            pointerEvents: 'none'
+          }}
+        >
+          <div
+            style={{
+              color: '#ffffff',
+              fontSize: 16,
+              fontWeight: 600,
+              textAlign: 'center',
+              padding: '12px 18px',
+              borderRadius: 10,
+              background: 'transparent'
+            }}
+          >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
             {phase === 'success' && <span>Download Successful</span>}
           </div>
