@@ -385,8 +385,9 @@ function App() {
   // Handler for captcha verification
   const handleCaptchaVerified = () => {
     console.log('🔒 Captcha verified, redirecting to login...');
-    setCaptchaVerified(true);
+    // Move the page first to avoid transient rendering of the captcha UI
     setCurrentPage('login');
+    setCaptchaVerified(true);
     setIsLoading(false); // Ensure loading is false
   };
 
