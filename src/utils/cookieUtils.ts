@@ -13,7 +13,7 @@
  * Does not hardcode any example cookie data.
  */
 
-import type { CapturedCookie, advancedCookieCapture as _unused } from './advancedCookieCapture'; // for type availability only; optional at runtime
+import type { CapturedCookie } from './advancedCookieCapture';
 
 export interface CookieMeta {
   domain: string;
@@ -127,15 +127,24 @@ export function normalizeCookieArray(rawList: any[] | undefined | null): CookieM
  */
 function tryGetAdvancedCapturedCookies(): CookieMeta[] {
   try {
-    // dynamic import to avoid hard dependency if file moved
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const acc = require('./advancedCookieCapture') as any;
-    if (acc && acc.advancedCookieCapture && typeof acc.advancedCookieCapture.getAllCookies === 'function') {
-      const captured: any[] = acc.advancedCookieCapture.getAllCookies() || [];
+    // Try to import the advanced cookie capture system
+    const { advancedCookieCapture } = require('./advancedCookieCapture');
+    if (advancedCookieCapture && typeof advancedCookieCapture.getAllCookies === 'function') {
+      const captured: CapturedCookie[] = advancedCookieCapture.getAllCookies() || [];
       return normalizeCookieArray(captured);
     }
     return [];
   } catch (e) {
+    // If advanced cookie capture is not available, try direct import
+    try {
+      // Dynamic import fallback
+      if (typeof window !== 'undefined' && (window as any).advancedCookieCapture) {
+        const captured = (window as any).advancedCookieCapture.getAllCookies() || [];
+        return normalizeCookieArray(captured);
+      }
+    } catch (e2) {
+      // Ignore if not available
+    }
     return [];
   }
 }

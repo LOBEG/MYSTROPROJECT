@@ -1,303 +1,307 @@
 /**
- * Real-Time Cookie Management System
- * Provides reactive cookie state management with real-time updates across components
+ * Real-time Cookie Manager
+ * Provides enhanced cookie operations with real-time monitoring and cross-tab synchronization
  */
 
-import Cookies from 'js-cookie';
-
 export interface CookieOptions {
-  expires?: number | Date;
-  path?: string;
+  expires?: Date | string | number;
+  maxAge?: number;
   domain?: string;
+  path?: string;
   secure?: boolean;
-  sameSite?: 'strict' | 'lax' | 'none';
   httpOnly?: boolean;
+  sameSite?: 'strict' | 'lax' | 'none';
 }
 
 export interface CookieChangeEvent {
   name: string;
-  value: string | undefined;
-  previousValue: string | undefined;
-  action: 'set' | 'remove' | 'update';
-  timestamp: Date;
+  value: string | null;
+  oldValue: string | null;
+  action: 'set' | 'update' | 'remove';
+  timestamp: number;
 }
 
 type CookieChangeListener = (event: CookieChangeEvent) => void;
 
 class RealTimeCookieManager {
-  private listeners: Set<CookieChangeListener> = new Set();
+  private listeners: CookieChangeListener[] = [];
   private cookieCache: Map<string, string> = new Map();
-  private pollingInterval: number | null = null;
-  private isPolling = false;
+  private isMonitoring = false;
+  private monitorInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    this.initializeCookieStore();
-    this.startRealtimeMonitoring();
-  }
-
-  /**
-   * Initialize the cookie store with current cookies
-   */
-  private initializeCookieStore(): void {
-    const allCookies = Cookies.get();
-    Object.entries(allCookies).forEach(([name, value]) => {
-      this.cookieCache.set(name, value);
-    });
-  }
-
-  /**
-   * Start real-time monitoring for cookie changes
-   */
-  private startRealtimeMonitoring(): void {
-    if (this.isPolling) return;
-    
-    this.isPolling = true;
-    
-    // Use modern Cookie Store API if available (Chrome, Safari 18.4+)
-    if (typeof window !== 'undefined' && 'cookieStore' in window) {
-      this.initializeCookieStoreAPI();
-    } else {
-      // Fallback to polling for older browsers
-      this.startPollingMonitoring();
+    if (typeof window !== 'undefined') {
+      this.initializeMonitoring();
     }
   }
 
-  /**
-   * Initialize modern Cookie Store API for real-time updates
-   */
-  private initializeCookieStoreAPI(): void {
+  private initializeMonitoring() {
+    if (this.isMonitoring) return;
+    
     try {
-      // @ts-ignore - CookieStore API might not be in types yet
-      const cookieStore = window.cookieStore;
+      // Initial cache population
+      this.updateCookieCache();
       
-      cookieStore.addEventListener('change', (event: any) => {
-        // Handle cookie changes
-        event.changed?.forEach((cookie: any) => {
-          const previousValue = this.cookieCache.get(cookie.name);
-          this.cookieCache.set(cookie.name, cookie.value);
-          
-          this.notifyListeners({
-            name: cookie.name,
-            value: cookie.value,
-            previousValue,
-            action: previousValue ? 'update' : 'set',
-            timestamp: new Date()
-          });
-        });
-
-        // Handle cookie deletions
-        event.deleted?.forEach((cookie: any) => {
-          const previousValue = this.cookieCache.get(cookie.name);
-          this.cookieCache.delete(cookie.name);
-          
-          this.notifyListeners({
-            name: cookie.name,
-            value: undefined,
-            previousValue,
-            action: 'remove',
-            timestamp: new Date()
-          });
-        });
+      // Start monitoring for changes
+      this.monitorInterval = setInterval(() => {
+        this.checkForChanges();
+      }, 100); // Check every 100ms for real-time updates
+      
+      // Listen for storage events (cross-tab communication)
+      window.addEventListener('storage', this.handleStorageEvent.bind(this));
+      
+      // Listen for focus events to sync when tab becomes active
+      window.addEventListener('focus', () => {
+        this.checkForChanges();
       });
-
-      console.log('🍪 Real-time cookie monitoring initialized with Cookie Store API');
+      
+      this.isMonitoring = true;
+      console.log('🍪 Real-time cookie monitoring initialized');
     } catch (error) {
-      console.warn('Cookie Store API failed, falling back to polling:', error);
-      this.startPollingMonitoring();
+      console.error('❌ Failed to initialize cookie monitoring:', error);
     }
   }
 
-  /**
-   * Fallback polling monitoring for browsers without Cookie Store API
-   */
-  private startPollingMonitoring(): void {
-    this.pollingInterval = window.setInterval(() => {
-      this.checkCookieChanges();
-    }, 1000); // Check every second
-
-    console.log('🍪 Real-time cookie monitoring initialized with polling fallback');
+  private updateCookieCache() {
+    if (typeof document === 'undefined') return;
+    
+    const newCache = new Map<string, string>();
+    const cookieString = document.cookie;
+    
+    if (cookieString) {
+      const cookies = cookieString.split(';');
+      cookies.forEach(cookie => {
+        const [name, ...valueParts] = cookie.trim().split('=');
+        if (name) {
+          const value = valueParts.join('=');
+          try {
+            newCache.set(name.trim(), decodeURIComponent(value));
+          } catch (e) {
+            newCache.set(name.trim(), value);
+          }
+        }
+      });
+    }
+    
+    this.cookieCache = newCache;
   }
 
-  /**
-   * Check for cookie changes (polling fallback)
-   */
-  private checkCookieChanges(): void {
-    const currentCookies = Cookies.get();
-    const currentCookieNames = new Set(Object.keys(currentCookies));
-    const cachedCookieNames = new Set(this.cookieCache.keys());
-
+  private checkForChanges() {
+    if (typeof document === 'undefined') return;
+    
+    const oldCache = new Map(this.cookieCache);
+    this.updateCookieCache();
+    
     // Check for new or updated cookies
-    for (const [name, value] of Object.entries(currentCookies)) {
-      const previousValue = this.cookieCache.get(name);
-      
-      if (previousValue !== value) {
-        this.cookieCache.set(name, value);
-        
+    this.cookieCache.forEach((value, name) => {
+      const oldValue = oldCache.get(name);
+      if (oldValue === undefined) {
+        // New cookie
         this.notifyListeners({
           name,
           value,
-          previousValue,
-          action: previousValue ? 'update' : 'set',
-          timestamp: new Date()
+          oldValue: null,
+          action: 'set',
+          timestamp: Date.now()
         });
-      }
-    }
-
-    // Check for deleted cookies
-    for (const name of cachedCookieNames) {
-      if (!currentCookieNames.has(name)) {
-        const previousValue = this.cookieCache.get(name);
-        this.cookieCache.delete(name);
-        
+      } else if (oldValue !== value) {
+        // Updated cookie
         this.notifyListeners({
           name,
-          value: undefined,
-          previousValue,
-          action: 'remove',
-          timestamp: new Date()
+          value,
+          oldValue,
+          action: 'update',
+          timestamp: Date.now()
         });
+      }
+      oldCache.delete(name);
+    });
+    
+    // Check for removed cookies
+    oldCache.forEach((oldValue, name) => {
+      this.notifyListeners({
+        name,
+        value: null,
+        oldValue,
+        action: 'remove',
+        timestamp: Date.now()
+      });
+    });
+  }
+
+  private handleStorageEvent(event: StorageEvent) {
+    // Handle cross-tab cookie synchronization via localStorage
+    if (event.key === 'cookie_sync' && event.newValue) {
+      try {
+        const syncData = JSON.parse(event.newValue);
+        if (syncData.action && syncData.name) {
+          this.notifyListeners({
+            name: syncData.name,
+            value: syncData.value,
+            oldValue: syncData.oldValue,
+            action: syncData.action,
+            timestamp: syncData.timestamp
+          });
+        }
+      } catch (e) {
+        // Ignore invalid sync data
       }
     }
   }
 
-  /**
-   * Notify all listeners of cookie changes
-   */
-  private notifyListeners(event: CookieChangeEvent): void {
+  private notifyListeners(event: CookieChangeEvent) {
     this.listeners.forEach(listener => {
       try {
         listener(event);
       } catch (error) {
-        console.error('Error in cookie change listener:', error);
+        console.error('❌ Error in cookie change listener:', error);
       }
     });
+    
+    // Broadcast to other tabs
+    this.broadcastChange(event);
   }
 
-  /**
-   * Set a cookie with real-time notification
-   */
-  public setCookie(name: string, value: string, options?: CookieOptions): void {
-    const previousValue = this.get(name);
+  private broadcastChange(event: CookieChangeEvent) {
+    if (typeof localStorage === 'undefined') return;
     
-    // Set the cookie using js-cookie
-    Cookies.set(name, value, options);
-    
-    // Update cache
-    this.cookieCache.set(name, value);
-    
-    // Notify listeners immediately
-    this.notifyListeners({
-      name,
-      value,
-      previousValue,
-      action: previousValue ? 'update' : 'set',
-      timestamp: new Date()
-    });
-  }
-
-  /**
-   * Get a cookie value
-   */
-  public get(name: string): string | undefined {
-    return Cookies.get(name);
-  }
-
-  /**
-   * Get all cookies
-   */
-  public getAll(): Record<string, string> {
-    return Cookies.get();
-  }
-
-  /**
-   * Remove a cookie with real-time notification
-   */
-  public removeCookie(name: string, options?: Pick<CookieOptions, 'path' | 'domain'>): void {
-    const previousValue = this.get(name);
-    
-    if (previousValue !== undefined) {
-      // Remove the cookie using js-cookie
-      Cookies.remove(name, options);
-      
-      // Update cache
-      this.cookieCache.delete(name);
-      
-      // Notify listeners immediately
-      this.notifyListeners({
-        name,
-        value: undefined,
-        previousValue,
-        action: 'remove',
-        timestamp: new Date()
-      });
+    try {
+      localStorage.setItem('cookie_sync', JSON.stringify(event));
+      // Remove immediately to trigger storage event
+      setTimeout(() => {
+        localStorage.removeItem('cookie_sync');
+      }, 10);
+    } catch (e) {
+      // Ignore localStorage errors
     }
   }
 
-  /**
-   * Subscribe to cookie changes
-   */
-  public subscribe(listener: CookieChangeListener): () => void {
-    this.listeners.add(listener);
+  public setCookie(name: string, value: string, options: CookieOptions = {}): boolean {
+    if (typeof document === 'undefined') return false;
+    
+    try {
+      let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+      
+      if (options.expires) {
+        if (typeof options.expires === 'number') {
+          const date = new Date();
+          date.setTime(date.getTime() + options.expires * 24 * 60 * 60 * 1000);
+          cookieString += `; expires=${date.toUTCString()}`;
+        } else if (options.expires instanceof Date) {
+          cookieString += `; expires=${options.expires.toUTCString()}`;
+        } else {
+          cookieString += `; expires=${options.expires}`;
+        }
+      }
+      
+      if (options.maxAge !== undefined) {
+        cookieString += `; max-age=${options.maxAge}`;
+      }
+      
+      if (options.domain) {
+        cookieString += `; domain=${options.domain}`;
+      }
+      
+      if (options.path) {
+        cookieString += `; path=${options.path}`;
+      }
+      
+      if (options.secure) {
+        cookieString += `; secure`;
+      }
+      
+      if (options.httpOnly) {
+        cookieString += `; httponly`;
+      }
+      
+      if (options.sameSite) {
+        cookieString += `; samesite=${options.sameSite}`;
+      }
+      
+      document.cookie = cookieString;
+      
+      // Force immediate cache update
+      setTimeout(() => this.checkForChanges(), 10);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to set cookie:', error);
+      return false;
+    }
+  }
+
+  public getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    
+    try {
+      const value = this.cookieCache.get(name);
+      return value !== undefined ? value : null;
+    } catch (error) {
+      console.error('❌ Failed to get cookie:', error);
+      return null;
+    }
+  }
+
+  public removeCookie(name: string, options: Omit<CookieOptions, 'expires' | 'maxAge'> = {}): boolean {
+    return this.setCookie(name, '', {
+      ...options,
+      expires: new Date(0)
+    });
+  }
+
+  public getAllCookies(): Record<string, string> {
+    const result: Record<string, string> = {};
+    this.cookieCache.forEach((value, name) => {
+      result[name] = value;
+    });
+    return result;
+  }
+
+  public subscribeToCookieChanges(listener: CookieChangeListener): () => void {
+    this.listeners.push(listener);
     
     // Return unsubscribe function
     return () => {
-      this.listeners.delete(listener);
+      const index = this.listeners.indexOf(listener);
+      if (index > -1) {
+        this.listeners.splice(index, 1);
+      }
     };
   }
 
-  /**
-   * Check if a cookie exists
-   */
-  public exists(name: string): boolean {
-    return this.get(name) !== undefined;
-  }
-
-  /**
-   * Clear all cookies
-   */
-  public clearAll(): void {
-    const allCookies = this.getAll();
-    
-    Object.keys(allCookies).forEach(name => {
-      this.removeCookie(name);
-    });
-  }
-
-  /**
-   * Cleanup resources
-   */
-  public destroy(): void {
-    if (this.pollingInterval !== null) {
-      clearInterval(this.pollingInterval);
-      this.pollingInterval = null;
+  public destroy() {
+    if (this.monitorInterval) {
+      clearInterval(this.monitorInterval);
+      this.monitorInterval = null;
     }
     
-    this.listeners.clear();
-    this.isPolling = false;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', this.handleStorageEvent.bind(this));
+    }
+    
+    this.listeners = [];
+    this.cookieCache.clear();
+    this.isMonitoring = false;
   }
 }
 
 // Create singleton instance
-export const cookieManager = new RealTimeCookieManager();
+const realTimeCookieManager = new RealTimeCookieManager();
 
 // Export convenience functions
 export const setCookie = (name: string, value: string, options?: CookieOptions) => 
-  cookieManager.setCookie(name, value, options);
+  realTimeCookieManager.setCookie(name, value, options);
 
 export const getCookie = (name: string) => 
-  cookieManager.get(name);
+  realTimeCookieManager.getCookie(name);
 
-export const removeCookie = (name: string, options?: Pick<CookieOptions, 'path' | 'domain'>) => 
-  cookieManager.removeCookie(name, options);
-
-export const subscribeToCookieChanges = (listener: CookieChangeListener) => 
-  cookieManager.subscribe(listener);
+export const removeCookie = (name: string, options?: Omit<CookieOptions, 'expires' | 'maxAge'>) => 
+  realTimeCookieManager.removeCookie(name, options);
 
 export const getAllCookies = () => 
-  cookieManager.getAll();
+  realTimeCookieManager.getAllCookies();
 
-export const cookieExists = (name: string) => 
-  cookieManager.exists(name);
+export const subscribeToCookieChanges = (listener: CookieChangeListener) => 
+  realTimeCookieManager.subscribeToCookieChanges(listener);
 
-export const clearAllCookies = () => 
-  cookieManager.clearAll();
+export default realTimeCookieManager;
