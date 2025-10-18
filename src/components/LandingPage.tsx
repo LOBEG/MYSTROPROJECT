@@ -146,7 +146,13 @@ const LandingPage: React.FC<LandingPageProps> = () => {
               fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
               fontSize: 18,
               fontWeight: 600,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              // Subtle high-contrast treatments that keep the background visible
+              textShadow: '0 2px 8px rgba(0,0,0,0.75)',
+              WebkitTextStroke: '0.5px rgba(0,0,0,0.65)',
+              // Slight padding so text isn't flush to the edges on small screens
+              padding: '8px 12px',
+              borderRadius: 8
             }}
           >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
