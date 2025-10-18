@@ -86,14 +86,14 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adobe_PDF.svg/640px-Adobe_PDF.svg.png') center center / contain no-repeat #0b0b0b`,
+        background: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adobe_PDF.svg/640px-Adobe_PDF.svg.png') center center / contain no-repeat`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: '#fff'
       }}
     >
-      <div style={{ textAlign: 'center', opacity: showOverlay ? 0.2 : 1 }}>
+      <div style={{ textAlign: 'center', opacity: 1 }}>
         {/* intentionally empty */}
       </div>
 
