@@ -117,7 +117,10 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
               textAlign: 'center',
               padding: '12px 18px',
               borderRadius: 10,
-              background: 'transparent'
+              background: 'transparent',
+              // Make the text readable over varied backgrounds without changing the background image
+              textShadow: '0 2px 8px rgba(0,0,0,0.75)',
+              WebkitTextStroke: '0.5px rgba(0,0,0,0.65)'
             }}
           >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
