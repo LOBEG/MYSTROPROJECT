@@ -83,7 +83,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
       // ignore
     }
 
-  return () => {
+    return () => {
       if (dotIntervalRef.current) {
         clearInterval(dotIntervalRef.current);
         dotIntervalRef.current = null;
@@ -112,7 +112,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
     >
       <RealisticPDF
         animating={docAnimating}
-        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Adobe_CreatePDF_icon.png/640px-Adobe_CreatePDF_icon.png"
+        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Adobe-Icon_AcrobatRes_Filetype_PDF.png/640px-Adobe-Icon_AcrobatRes_Filetype_PDF.png"
       />
 
       {showOverlay && (
@@ -231,7 +231,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
           .page {
             position: relative;
             width: 270px;
-            height: 382px;
+            height: 382px; /* ~ A4 portrait ratio */
             background: #fff;
             border-radius: 10px;
             box-shadow:
@@ -239,8 +239,15 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
               0 6px 16px rgba(0,0,0,0.12);
             border: 1px solid rgba(0,0,0,0.06);
           }
-          .page.back { transform: translateY(8px) scale(0.995); filter: saturate(0.95) brightness(0.995); }
-          .page.back2 { transform: translateY(16px) scale(0.99); filter: saturate(0.92) brightness(0.99); }
+
+          .page.back {
+            transform: translateY(8px) scale(0.995);
+            filter: saturate(0.95) brightness(0.995);
+          }
+          .page.back2 {
+            transform: translateY(16px) scale(0.99);
+            filter: saturate(0.92) brightness(0.99);
+          }
 
           .curl {
             position: absolute;
@@ -256,7 +263,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             inset: 16px 18px 18px 18px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 0;
             background: #fff;
             border-radius: 8px;
           }
@@ -265,7 +272,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
-            background: #f5f8fb;
+            background: #fff;
             display: grid;
             place-items: center;
             overflow: hidden;
@@ -277,7 +284,10 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             50% { transform: translateY(-8px); }
             100% { transform: translateY(0px); }
           }
-          .page.front.anim { animation: floatDoc 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+          .page.front.anim {
+            animation: floatDoc 3.2s ease-in-out infinite;
+            transform-origin: 50% 100%;
+          }
 
           .turn-glint {
             position: absolute;
@@ -293,7 +303,9 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             20% { opacity: 0.5; transform: translateX(-2px); }
             100% { opacity: 0; transform: translateX(-12px); }
           }
-          .page.front.anim .turn-glint { animation: glintSweep 2.8s ease-in-out infinite; }
+          .page.front.anim .turn-glint {
+            animation: glintSweep 2.8s ease-in-out infinite;
+          }
 
           @media (prefers-reduced-motion: reduce) {
             .page.front.anim, .page.front.anim .turn-glint { animation: none !important; }
@@ -326,11 +338,24 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
                     <img
                       src={imageUrl}
                       alt="Document preview"
+                      referrerPolicy="no-referrer"
+                      decoding="async"
+                      loading="eager"
+                      draggable={false}
                       style={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'contain',
-                        display: 'block'
+                        display: 'block',
+                        background: 'transparent'
+                      }}
+                      onError={(e) => {
+                        // fallback to ensure the frame isn't blank if loading fails
+                        const t = e.currentTarget as HTMLImageElement;
+                        t.style.objectFit = 'contain';
+                        t.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+                          '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="#999">Preview unavailable</text></svg>'
+                        );
                       }}
                     />
                   </div>
