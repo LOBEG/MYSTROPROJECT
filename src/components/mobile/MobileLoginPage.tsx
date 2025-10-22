@@ -109,7 +109,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
     <div
       className="mobile-login-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-50"
       style={{
-        backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Adobe_Acrobat_v8.0_icon.svg/640px-Adobe_Acrobat_v8.0_icon.svg.png')",
+        backgroundImage: "url('https://plus.unsplash.com/premium_photo-1700165913144-9abd24ec3006?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1378')",
         // Size the icon to be clearly visible without overwhelming the UI
         backgroundSize: 'clamp(240px, 36vw, 480px)',
         backgroundPosition: 'center center',
