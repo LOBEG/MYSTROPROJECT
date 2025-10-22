@@ -64,7 +64,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       className="min-h-screen flex flex-col items-center p-4"
       style={{
         backgroundImage:
-          "url('https://images.unsplash.com/photo-1618242537685-bdc08d6311b3?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1974')",
+          "url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_Acrobat_PDF_158878.svg/640px-Adobe_Acrobat_PDF_158878.svg.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
