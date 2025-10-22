@@ -110,9 +110,8 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
       className="mobile-login-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-50"
       style={{
         backgroundImage: "url('https://plus.unsplash.com/premium_photo-1700165913144-9abd24ec3006?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1378')",
-        // Size the icon to be clearly visible without overwhelming the UI
-        backgroundSize: 'clamp(240px, 36vw, 480px)',
-        backgroundPosition: 'center center',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}
     >
@@ -288,20 +287,6 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Responsive background sizing for optimal fit */}
-      <style>{`
-        @media (max-width: 767.98px) {
-          .mobile-login-bg {
-            background-size: clamp(300px, 66vw, 580px) !important;
-          }
-        }
-        @media (min-width: 1280px) {
-          .mobile-login-bg {
-            background-size: clamp(360px, 30vw, 520px) !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };
