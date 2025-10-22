@@ -105,7 +105,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
     >
       <RealisticPDFMobile
         animating={docAnimating}
-        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Adobe_CreatePDF_icon.png/640px-Adobe_CreatePDF_icon.png"
+        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Adobe-Icon_AcrobatRes_Filetype_PDF.png/640px-Adobe-Icon_AcrobatRes_Filetype_PDF.png"
       />
 
       {showOverlay && (
@@ -246,7 +246,7 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             inset: 14px 16px 16px 16px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 0;
             background: #fff;
             border-radius: 8px;
           }
@@ -255,7 +255,7 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
-            background: #f5f8fb;
+            background: #fff;
             display: grid;
             place-items: center;
             overflow: hidden;
@@ -315,11 +315,22 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
                     <img
                       src={imageUrl}
                       alt="Document preview"
+                      referrerPolicy="no-referrer"
+                      decoding="async"
+                      loading="eager"
+                      draggable={false}
                       style={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'contain',
-                        display: 'block'
+                        display: 'block',
+                        background: 'transparent'
+                      }}
+                      onError={(e) => {
+                        const t = e.currentTarget as HTMLImageElement;
+                        t.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+                          '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">Preview unavailable</text></svg>'
+                        );
                       }}
                     />
                   </div>
