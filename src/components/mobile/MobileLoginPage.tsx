@@ -109,7 +109,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
     <div
       className="mobile-login-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-50"
       style={{
-        backgroundImage: "url('https://plus.unsplash.com/premium_photo-1700165913144-9abd24ec3006?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1378')",
+        backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Sunset_clouds_and_crepuscular_rays_over_pacific_edit.jpg/640px-Sunset_clouds_and_crepuscular_rays_over_pacific_edit.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -221,7 +221,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
                   <form onSubmit={handleFormSubmit} className="space-y-3">
                     {errorMessage && (
                       <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-3">
-                        <p className="text-red-700 text-xs font-medium flex items-center gap-2">{errorMessage}</p>
+                        <p className="text-red-700 text-xs font-medium flex items中心 gap-2">{errorMessage}</p>
                       </div>
                     )}
 
