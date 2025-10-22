@@ -127,30 +127,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="text-white/80 text-sm italic mt-1">Securely access your PDFs</div>
       </div>
 
-      {/* Card wrapper: decorative title/logo positioned above the card and slightly left of center (desktop only) */}
+      {/* Card wrapper */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        {/* Above-card logo/title (desktop only).
-            Moved up slightly more (now -top: -5rem) and shifted left a bit further (translateX calc(-50% - 1.5rem)). */}
-        <div
-          className="hidden md:flex flex-row items-center z-30 pointer-events-none"
-          style={{
-            position: 'absolute',
-            top: '-5rem',
-            left: '50%',
-            transform: 'translateX(calc(-50% - 1.5rem))',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-            alt="Adobe Cloud"
-            className="w-10 h-10 object-contain drop-shadow-md mr-3"
-          />
-          <div className="text-white drop-shadow-md whitespace-nowrap tracking-wide text-lg md:text-xl font-semibold">
-            Adobe Cloud Documents
-          </div>
-        </div>
-
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
