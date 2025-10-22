@@ -73,7 +73,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       }}
     >
       {/* Captcha control */}
-      <div className="mt-[22vh] md:mt-[8vh] flex items-center justify-center w-full md:-translate-x-8">
+      <div className="mt-[30vh] md:mt-[8vh] flex items-center justify-center w-full md:-translate-x-8">
         {/* Accessible live region */}
         <div className="sr-only" aria-live="polite">
           {liveMessage}
