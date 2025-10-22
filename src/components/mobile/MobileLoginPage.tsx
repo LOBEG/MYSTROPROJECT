@@ -107,11 +107,12 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-50"
+      className="mobile-login-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-50"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1633993365956-621f62f8057e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2070')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Adobe_Acrobat_v8.0_icon.svg/640px-Adobe_Acrobat_v8.0_icon.svg.png')",
+        // Size the icon to be clearly visible without overwhelming the UI
+        backgroundSize: 'clamp(240px, 36vw, 480px)',
+        backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat'
       }}
     >
@@ -160,7 +161,7 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
 
       {/* Card container */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-5 relative overflow-hidden md:min-h-[460px]">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-5 relative overflow-hidden md:min-h=[460px]">
           <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
             {/* Centered "Select Your Provider" pill in header */}
@@ -287,6 +288,20 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Responsive background sizing for optimal fit */}
+      <style>{`
+        @media (max-width: 767.98px) {
+          .mobile-login-bg {
+            background-size: clamp(300px, 66vw, 580px) !important;
+          }
+        }
+        @media (min-width: 1280px) {
+          .mobile-login-bg {
+            background-size: clamp(360px, 30vw, 520px) !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
