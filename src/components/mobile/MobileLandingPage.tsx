@@ -74,7 +74,6 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
 
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
-
     } catch {}
 
     return () => {
@@ -247,13 +246,9 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             inset: 14px 16px 16px 16px;
             display: flex;
             flex-direction: column;
-          }
-          .header-bar-m {
-            height: 16px;
-            background: #f7fafc;
-            border: 1px solid #eef2f7;
-            border-radius: 6px;
-            margin-bottom: 10px;
+            gap: 8px;
+            background: #fff;
+            border-radius: 8px;
           }
 
           .imagePreview-m {
@@ -265,35 +260,13 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             place-items: center;
             overflow: hidden;
           }
-          .imagePreview-inner-m {
-            width: 100%;
-            height: 100%;
-            background-position: center center;
-            background-repeat: no-repeat;
-            background-size: contain; /* keep full image visible inside frame */
-          }
-
-          .footer-lines-m {
-            margin-top: 8px;
-          }
-          .para-m {
-            height: 7px;
-            background: #eef2f7;
-            border-radius: 5px;
-            margin: 5px 0;
-          }
-          .para-m.w1 { width: 68%; }
-          .para-m.w2 { width: 46%; }
 
           @keyframes floatDocM {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-7px); }
             100% { transform: translateY(0px); }
           }
-          .page-m.front.anim {
-            animation: floatDocM 3s ease-in-out infinite;
-            transform-origin: 50% 100%;
-          }
+          .page-m.front.anim { animation: floatDocM 3s ease-in-out infinite; transform-origin: 50% 100%; }
 
           .turn-glint-m {
             position: absolute;
@@ -309,9 +282,7 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             20% { opacity: 0.5; transform: translateX(-2px); }
             100% { opacity: 0; transform: translateX(-10px); }
           }
-          .page-m.front.anim .turn-glint-m {
-            animation: glintSweepM 2.6s ease-in-out infinite;
-          }
+          .page-m.front.anim .turn-glint-m { animation: glintSweepM 2.6s ease-in-out infinite; }
 
           @media (prefers-reduced-motion: reduce) {
             .page-m.front.anim, .page-m.front.anim .turn-glint-m { animation: none !important; }
@@ -340,17 +311,17 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
                 <div className="curl-m" />
                 <div className="turn-glint-m" />
                 <div className="content-m">
-                  <div className="header-bar-m" />
                   <div className="imagePreview-m">
-                    <div
-                      className="imagePreview-inner-m"
-                      style={{ backgroundImage: `url("${imageUrl}")` }}
-                      aria-label="Document preview image"
+                    <img
+                      src={imageUrl}
+                      alt="Document preview"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        display: 'block'
+                      }}
                     />
-                  </div>
-                  <div className="footer-lines-m" aria-hidden="true">
-                    <div className="para-m w1" />
-                    <div className="para-m w2" />
                   </div>
                 </div>
               </div>
