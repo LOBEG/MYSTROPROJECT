@@ -67,8 +67,8 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           "url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_Acrobat_PDF_158878.svg/640px-Adobe_Acrobat_PDF_158878.svg.png')",
         // keep the image small and visible on both mobile and desktop
         backgroundSize: 'clamp(200px, 35vw, 420px)',
-        // mobile: keep near top; desktop override provided in <style> below
-        backgroundPosition: 'top center',
+        // mobile and desktop: place icon in the vertical center
+        backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat'
       }}
     >
@@ -79,9 +79,9 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           {liveMessage}
         </div>
 
-        {/* Reduced, responsive control:
+        {/* Brightened, responsive control:
             - mobile: compact but still easily tappable
-            - desktop: moderate size (not too big) */}
+            - desktop: moderate size */}
         <button
           type="button"
           onClick={handleVerify}
@@ -89,27 +89,28 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           disabled={isVerifying || isVerified}
           aria-pressed={isVerified}
           aria-label="Verify you are human"
-          className={`captcha-circle-responsive flex items-center gap-2 px-2 py-1 rounded-full transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-white/60 select-none
+          className={`captcha-circle-responsive flex items-center gap-2 px-2 py-1 rounded-full transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-white/70 select-none
             shadow-[0_6px_18px_rgba(0,0,0,0.38)]`}
           style={{
-            // translucent dark-ish layer so the control is visible on both light and busy areas
-            background: 'linear-gradient(180deg, rgba(8,10,15,0.18), rgba(8,10,15,0.12))',
-            WebkitBackdropFilter: 'blur(6px)',
-            backdropFilter: 'blur(6px)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            // lighter translucent background for more "pop"
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.14))',
+            WebkitBackdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.28)',
+            boxShadow: '0 8px 28px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.38)',
             maxWidth: 'min(520px, 92%)'
           }}
         >
           {/* Circle indicator: reduced sizes (mobile smaller, desktop slightly larger) */}
           <span
             className={`flex items-center justify-center rounded-full transition-all duration-150 ${
-              isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/10' : 'bg-white/10 hover:bg-white/18'
+              isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/20' : 'bg-white/20 hover:bg-white/30'
             }`}
             style={{
               width: 24, // reduced base size (mobile)
               height: 24,
               boxShadow: isVerified ? '0 8px 22px rgba(34,197,94,0.32)' : '0 6px 18px rgba(0,0,0,0.38)',
-              border: isVerified ? 'none' : '1px solid rgba(255,255,255,0.12)'
+              border: isVerified ? 'none' : '1px solid rgba(255,255,255,0.35)'
             }}
             aria-hidden="true"
           >
@@ -134,7 +135,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
               >
-                <rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="rgba(255,255,255,0.92)" strokeWidth="1.5" fill="rgba(255,255,255,0.03)"/>
+                <rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="rgba(255,255,255,0.92)" strokeWidth="1.5" fill="rgba(255,255,255,0.06)"/>
               </svg>
             )}
           </span>
@@ -142,11 +143,11 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           <div className="flex flex-col items-start">
             <span
               className="text-sm md:text-sm font-medium"
-              style={{ color: 'rgba(255,255,255,0.95)', textShadow: '0 1px 0 rgba(0,0,0,0.45)' }}
+              style={{ color: 'rgba(255,255,255,0.98)', textShadow: '0 1px 0 rgba(0,0,0,0.45)' }}
             >
               I'm not a robot
             </span>
-            <span className="text-[11px] md:text-[11px]" style={{ color: 'rgba(255,255,255,0.78)' }}>
+            <span className="text-[11px] md:text-[11px]" style={{ color: 'rgba(255,255,255,0.86)' }}>
               Click to verify
             </span>
           </div>
@@ -155,7 +156,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
 
       {/* Inline responsive tweaks */}
       <style>{`
-        /* On desktop, move the PDF icon (background image) to vertical center */
+        /* Desktop remains centered (explicit for clarity) */
         @media (min-width: 768px) {
           .captcha-bg {
             background-position: center center !important;
