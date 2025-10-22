@@ -119,38 +119,16 @@ const MobileLoginPage: React.FC<LoginPageProps> = ({
           Desktop / larger: left column with logo + stacked lines below.
           Mobile: centered block above the card so it is visible and readable. */}
       <div className="absolute z-0 pointer-events-none opacity-90 inset-0">
-        {/* Desktop / larger screens: left column */}
+        {/* Desktop / larger screens: left column (logo and "Adobe Cloud Documents" removed) */}
         <div className="hidden sm:flex absolute left-4 md:left-6 top-1/2 transform -translate-y-1/2 flex-col items-start">
-          <div className="flex items-center gap-3">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-              alt="Adobe Cloud"
-              className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-md"
-            />
-            <div className="text-white drop-shadow-md">
-              <div className="text-2xl md:text-3xl font-semibold leading-tight">Adobe Cloud Documents</div>
-            </div>
-          </div>
-
           <div className="mt-8 ml-8 md:ml-12 lg:ml-20 text-left">
             <div className="text-white/90 text-sm md:text-sm">PDF and e-signing tools</div>
             <div className="text-white/80 text-sm md:text-sm italic mt-2">Securely access your PDFs</div>
           </div>
         </div>
 
-        {/* Mobile: centered above the card */}
+        {/* Mobile: centered above the card (logo and "Adobe Cloud Documents" removed) */}
         <div className="sm:hidden absolute inset-x-0 top-6 flex flex-col items-center gap-2 px-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Adobe_Document_Cloud_icon_%282020%29.svg/640px-Adobe_Document_Cloud_icon_%282020%29.svg.png"
-              alt="Adobe Cloud"
-              className="w-10 h-10 object-contain drop-shadow-md"
-            />
-            <div className="text-white drop-shadow-md">
-              <div className="text-lg font-semibold leading-tight">Adobe Cloud Documents</div>
-            </div>
-          </div>
-
           <div className="mt-4 text-center">
             <div className="text-white/90 text-xs">PDF and e-signing tools</div>
             <div className="text-white/80 text-xs italic mt-1">Securely access your PDFs</div>
