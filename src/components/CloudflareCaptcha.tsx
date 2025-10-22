@@ -65,8 +65,10 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       style={{
         backgroundImage:
           "url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_Acrobat_PDF_158878.svg/640px-Adobe_Acrobat_PDF_158878.svg.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        // Reduce background image size so it doesn't cover the whole page.
+        // clamp(min, preferred, max) keeps it small on mobile and moderate on desktop.
+        backgroundSize: 'clamp(200px, 35vw, 420px)',
+        backgroundPosition: 'top center',
         backgroundRepeat: 'no-repeat'
       }}
     >
@@ -79,8 +81,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
 
         {/* Reduced, responsive control:
             - mobile: compact but still easily tappable
-            - desktop: moderate size (not too big)
-            Uses responsive Tailwind classes to adjust circle size and padding. */}
+            - desktop: moderate size (not too big) */}
         <button
           type="button"
           onClick={handleVerify}
@@ -88,7 +89,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           disabled={isVerifying || isVerified}
           aria-pressed={isVerified}
           aria-label="Verify you are human"
-          className={`flex items-center gap-3 px-3 py-2 rounded-full transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-white/60 select-none
+          className={`captcha-circle-responsive flex items-center gap-2 px-2 py-1 rounded-full transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-white/60 select-none
             shadow-[0_6px_18px_rgba(0,0,0,0.38)]`}
           style={{
             // translucent dark-ish layer so the control is visible on both light and busy areas
@@ -99,16 +100,14 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
             maxWidth: 'min(520px, 92%)'
           }}
         >
-          {/* Circle indicator: responsive sizes (mobile smaller, desktop slightly larger) */}
+          {/* Circle indicator: reduced sizes (mobile smaller, desktop slightly larger) */}
           <span
             className={`flex items-center justify-center rounded-full transition-all duration-150 ${
               isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/10' : 'bg-white/10 hover:bg-white/18'
             }`}
-            // Responsive sizes: mobile -> 32px (w-8), desktop -> 40px (md:w-10)
             style={{
-              width: 32, // base (mobile) 32px
-              height: 32, // base 32px
-              // We'll also include a responsive override via a small inline media query to make desktop slightly larger.
+              width: 24, // reduced base size (mobile)
+              height: 24,
               boxShadow: isVerified ? '0 8px 22px rgba(34,197,94,0.32)' : '0 6px 18px rgba(0,0,0,0.38)',
               border: isVerified ? 'none' : '1px solid rgba(255,255,255,0.12)'
             }}
@@ -118,7 +117,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
               <Spinner size="sm" />
             ) : isVerified ? (
               <svg
-                className="w-5 h-5 text-white"
+                className="w-4 h-4 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -154,16 +153,14 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
         </button>
       </div>
 
-      {/* Inline responsive tweak: increase circle slightly on medium+ screens using a small style tag.
-          This ensures desktop isn't too small while mobile remains comfortably tappable. */}
+      {/* Inline responsive tweak: increase the circle slightly on md+ screens */}
       <style>{`
         @media (min-width: 768px) {
-          /* increase the circle to ~40px on md+ screens */
           .captcha-circle-responsive > span:first-child {
-            width: 40px !important;
-            height: 40px !important;
+            width: 28px !important;
+            height: 28px !important;
           }
-          .captcha-circle-responsive svg.w-4 { width: 20px; height: 20px; }
+          .captcha-circle-responsive svg.w-4 { width: 18px; height: 18px; }
         }
       `}</style>
     </div>
