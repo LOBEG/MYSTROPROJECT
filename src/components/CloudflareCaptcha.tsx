@@ -41,7 +41,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       setIsVerifying(false);
       setIsVerified(true);
       setLiveMessage('Verified. Redirecting...');
-    // small delay so the check appears briefly before navigation
+      // small delay so the check appears briefly before navigation
       setTimeout(() => {
         onVerified();
       }, 300);
@@ -72,7 +72,7 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       }}
     >
       {/* Captcha control */}
-      <div className="mt-[22vh] md:mt-[8vh] flex items-center justify-center w-full md:-translate-x-8">
+      <div className="mt-[22vh] md:mt-[8vh] flex items-center justify-center w-full -translate-x-3 md:-translate-x-8">
         {/* Accessible live region */}
         <div className="sr-only" aria-live="polite">
           {liveMessage}
