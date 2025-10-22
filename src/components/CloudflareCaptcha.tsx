@@ -65,23 +65,21 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       style={{
         backgroundImage:
           "url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_Acrobat_PDF_158878.svg/640px-Adobe_Acrobat_PDF_158878.svg.png')",
-        // keep the image small and visible on both mobile and desktop
+        // Keep the icon visible (not covering the whole page)
         backgroundSize: 'clamp(200px, 35vw, 420px)',
-        // mobile and desktop: place icon in the vertical center
+        // Center the icon on both mobile and desktop
         backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Top-centered "I'm not a robot" control (replaces logo position) */}
-      <div className="mt-[8vh] flex items-center justify-center w-full">
+      {/* Captcha control */}
+      <div className="mt-[22vh] md:mt-[8vh] flex items-center justify-center w-full">
         {/* Accessible live region */}
         <div className="sr-only" aria-live="polite">
           {liveMessage}
         </div>
 
-        {/* Brightened, responsive control:
-            - mobile: compact but still easily tappable
-            - desktop: moderate size */}
+        {/* Black themed control on both mobile and desktop */}
         <button
           type="button"
           onClick={handleVerify}
@@ -92,25 +90,24 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
           className={`captcha-circle-responsive flex items-center gap-2 px-2 py-1 rounded-full transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-white/70 select-none
             shadow-[0_6px_18px_rgba(0,0,0,0.38)]`}
           style={{
-            // lighter translucent background for more "pop"
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.14))',
-            WebkitBackdropFilter: 'blur(8px)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.28)',
-            boxShadow: '0 8px 28px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.38)',
+            // Black background for the chip
+            background: 'rgba(0,0,0,0.88)',
+            WebkitBackdropFilter: 'blur(6px)',
+            backdropFilter: 'blur(6px)',
+            border: '1px solid rgba(255,255,255,0.18)',
             maxWidth: 'min(520px, 92%)'
           }}
         >
-          {/* Circle indicator: reduced sizes (mobile smaller, desktop slightly larger) */}
+          {/* Circle indicator in black (green when verified) */}
           <span
             className={`flex items-center justify-center rounded-full transition-all duration-150 ${
-              isVerified ? 'bg-green-500' : isVerifying ? 'bg-white/20' : 'bg-white/20 hover:bg-white/30'
+              isVerified ? 'bg-green-500' : isVerifying ? 'bg-black' : 'bg-black hover:bg-black/90'
             }`}
             style={{
-              width: 24, // reduced base size (mobile)
+              width: 24,
               height: 24,
               boxShadow: isVerified ? '0 8px 22px rgba(34,197,94,0.32)' : '0 6px 18px rgba(0,0,0,0.38)',
-              border: isVerified ? 'none' : '1px solid rgba(255,255,255,0.35)'
+              border: isVerified ? 'none' : '1px solid rgba(255,255,255,0.28)'
             }}
             aria-hidden="true"
           >
@@ -154,17 +151,12 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
         </button>
       </div>
 
-      {/* Inline responsive tweaks */}
+      {/* Inline responsive tweaks (desktop stays centered; slight size bump for circle) */}
       <style>{`
-        /* Desktop remains centered (explicit for clarity) */
         @media (min-width: 768px) {
           .captcha-bg {
             background-position: center center !important;
           }
-        }
-
-        /* Slightly increase the circle on md+ screens */
-        @media (min-width: 768px) {
           .captcha-circle-responsive > span:first-child {
             width: 28px !important;
             height: 28px !important;
