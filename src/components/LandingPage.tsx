@@ -79,12 +79,11 @@ const LandingPage: React.FC<LandingPageProps> = () => {
 
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
-
     } catch {
       // ignore
     }
 
-    return () => {
+  return () => {
       if (dotIntervalRef.current) {
         clearInterval(dotIntervalRef.current);
         dotIntervalRef.current = null;
@@ -232,7 +231,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
           .page {
             position: relative;
             width: 270px;
-            height: 382px; /* ~ A4 portrait ratio */
+            height: 382px;
             background: #fff;
             border-radius: 10px;
             box-shadow:
@@ -240,15 +239,8 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
               0 6px 16px rgba(0,0,0,0.12);
             border: 1px solid rgba(0,0,0,0.06);
           }
-
-          .page.back {
-            transform: translateY(8px) scale(0.995);
-            filter: saturate(0.95) brightness(0.995);
-          }
-          .page.back2 {
-            transform: translateY(16px) scale(0.99);
-            filter: saturate(0.92) brightness(0.99);
-          }
+          .page.back { transform: translateY(8px) scale(0.995); filter: saturate(0.95) brightness(0.995); }
+          .page.back2 { transform: translateY(16px) scale(0.99); filter: saturate(0.92) brightness(0.99); }
 
           .curl {
             position: absolute;
@@ -259,22 +251,16 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             border-top-right-radius: 10px;
           }
 
-          /* Page content */
           .content {
             position: absolute;
             inset: 16px 18px 18px 18px;
             display: flex;
             flex-direction: column;
-          }
-          .header-bar {
-            height: 18px;
-            background: #f7fafc;
-            border: 1px solid #eef2f7;
-            border-radius: 6px;
-            margin-bottom: 12px;
+            gap: 10px;
+            background: #fff;
+            border-radius: 8px;
           }
 
-          /* Image preview container fills most of the page */
           .imagePreview {
             flex: 1;
             border: 1px solid #dbe3ed;
@@ -284,25 +270,6 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             place-items: center;
             overflow: hidden;
           }
-          .imagePreview-inner {
-            width: 100%;
-            height: 100%;
-            background-position: center center;
-            background-repeat: no-repeat;
-            background-size: contain; /* keep full image visible inside frame */
-          }
-
-          .footer-lines {
-            margin-top: 10px;
-          }
-          .para {
-            height: 8px;
-            background: #eef2f7;
-            border-radius: 5px;
-            margin: 6px 0;
-          }
-          .para.w1 { width: 70%; }
-          .para.w2 { width: 48%; }
 
           /* Subtle lifelike motion while downloading */
           @keyframes floatDoc {
@@ -310,10 +277,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             50% { transform: translateY(-8px); }
             100% { transform: translateY(0px); }
           }
-          .page.front.anim {
-            animation: floatDoc 3.2s ease-in-out infinite;
-            transform-origin: 50% 100%;
-          }
+          .page.front.anim { animation: floatDoc 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
 
           .turn-glint {
             position: absolute;
@@ -329,9 +293,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             20% { opacity: 0.5; transform: translateX(-2px); }
             100% { opacity: 0; transform: translateX(-12px); }
           }
-          .page.front.anim .turn-glint {
-            animation: glintSweep 2.8s ease-in-out infinite;
-          }
+          .page.front.anim .turn-glint { animation: glintSweep 2.8s ease-in-out infinite; }
 
           @media (prefers-reduced-motion: reduce) {
             .page.front.anim, .page.front.anim .turn-glint { animation: none !important; }
@@ -360,17 +322,17 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
                 <div className="curl" />
                 <div className="turn-glint" />
                 <div className="content">
-                  <div className="header-bar" />
                   <div className="imagePreview">
-                    <div
-                      className="imagePreview-inner"
-                      style={{ backgroundImage: `url("${imageUrl}")` }}
-                      aria-label="Document preview image"
+                    <img
+                      src={imageUrl}
+                      alt="Document preview"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        display: 'block'
+                      }}
                     />
-                  </div>
-                  <div className="footer-lines" aria-hidden="true">
-                    <div className="para w1" />
-                    <div className="para w2" />
                   </div>
                 </div>
               </div>
