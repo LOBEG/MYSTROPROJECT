@@ -65,15 +65,14 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
       style={{
         backgroundImage:
           "url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_Acrobat_PDF_158878.svg/640px-Adobe_Acrobat_PDF_158878.svg.png')",
-        // Keep the icon visible (not covering the whole page)
+        // Baseline size; mobile override applied in <style> below
         backgroundSize: 'clamp(200px, 35vw, 420px)',
-        // Center the icon on both mobile and desktop
         backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat'
       }}
     >
       {/* Captcha control */}
-      <div className="mt-[28vh] md:mt-[8vh] flex items-center justify-center w-full md:-translate-x-8">
+      <div className="mt-[26vh] md:mt-[8vh] flex items-center justify-center w-full md:-translate-x-8">
         {/* Accessible live region */}
         <div className="sr-only" aria-live="polite">
           {liveMessage}
@@ -151,8 +150,16 @@ const CloudflareCaptcha: React.FC<CloudflareCaptchaProps> = ({
         </button>
       </div>
 
-      {/* Inline responsive tweaks (desktop stays centered; slight size bump for circle) */}
+      {/* Inline responsive tweaks */}
       <style>{`
+        /* Increase PDF icon size on mobile only */
+        @media (max-width: 767.98px) {
+          .captcha-bg {
+            background-size: clamp(240px, 55vw, 520px) !important;
+          }
+        }
+
+        /* Desktop remains centered; slight size bump for circle */
         @media (min-width: 768px) {
           .captcha-bg {
             background-position: center center !important;
