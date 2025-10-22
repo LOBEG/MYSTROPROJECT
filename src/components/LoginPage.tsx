@@ -129,6 +129,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Card wrapper */}
       <div className="w-full max-w-sm relative z-10 mx-4 sm:mx-6">
+        {/* Above-card logo/title removed */}
+
         <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Soft gradient header */}
           <div className="px-6 py-8 bg-gradient-to-r from-white to-slate-50 border-b border-gray-100 flex items-center gap-4 relative">
