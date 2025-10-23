@@ -269,6 +269,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
           }
 
           .imagePreview {
+            position: relative; /* enable absolute positioning for end icon */
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
@@ -276,6 +277,20 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             display: grid;
             place-items: center;
             overflow: hidden;
+          }
+
+          /* End-of-frame icon (fills the bottom whitespace) */
+          .pdf-end-icon {
+            position: absolute;
+            left: 50%;
+            bottom: 10px;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            opacity: 0.95;
+            z-index: 2;
+            pointer-events: none;
           }
 
           /* Subtle lifelike motion while downloading */
@@ -357,6 +372,14 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
                           '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="#999">Preview unavailable</text></svg>'
                         );
                       }}
+                    />
+                    {/* End-of-frame icon overlay */}
+                    <img
+                      className="pdf-end-icon"
+                      src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"
+                      alt=""
+                      aria-hidden="true"
+                      decoding="async"
                     />
                   </div>
                 </div>
