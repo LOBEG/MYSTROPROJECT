@@ -103,10 +103,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
         color: '#111'
       }}
     >
-      <RealisticPDFMobile
-        animating={docAnimating}
-        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Adobe-Icon_AcrobatRes_Filetype_PDF.png/640px-Adobe-Icon_AcrobatRes_Filetype_PDF.png"
-      />
+      {/* Document.pdf card removed as requested */}
 
       {showOverlay && (
         <div
@@ -143,6 +140,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
   );
 };
 
+// Keeping RealisticPDFMobile definition unchanged below (not rendered).
 function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; imageUrl: string }) {
   return (
     <div style={{ position: 'relative' }} aria-hidden="true">
@@ -193,7 +191,6 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             font-size: 9px;
             padding: 3px 7px;
             border-radius: 999px;
-            letter-spacing: 0.6px;
           }
 
           .pdf-viewport-m {
@@ -204,19 +201,8 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             padding: 14px 0;
           }
 
-          .pages-track-m {
-            position: relative;
-            width: 220px;
-            height: 100%;
-            perspective: 700px;
-          }
-
-          .page-stack-m {
-            position: absolute;
-            inset: 0;
-            display: grid;
-            place-items: center;
-          }
+          .pages-track-m { position: relative; width: 220px; height: 100%; perspective: 700px; }
+          .page-stack-m { position: absolute; inset: 0; display: grid; place-items: center; }
 
           .page-m {
             position: relative;
@@ -252,7 +238,6 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
           }
 
           .imagePreview-m {
-            position: relative; /* enable pseudo-element overlay */
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
@@ -260,24 +245,6 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             display: grid;
             place-items: center;
             overflow: hidden;
-          }
-
-          /* End-of-frame icon overlay (bottom-centered) */
-          .imagePreview-m::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            bottom: 10px;            /* nudge to taste */
-            transform: translateX(-50%);
-            width: 32px;             /* mobile size */
-            height: 32px;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
-            opacity: 0.95;
-            pointer-events: none;
-            z-index: 3;
           }
 
           @keyframes floatDocM {
@@ -347,9 +314,11 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
                       }}
                       onError={(e) => {
                         const t = e.currentTarget as HTMLImageElement;
-                        t.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
-                          '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">Preview unavailable</text></svg>'
-                        );
+                        t.src =
+                          'data:image/svg+xml;charset=utf-8,' +
+                          encodeURIComponent(
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">Preview unavailable</text></svg>'
+                          );
                       }}
                     />
                   </div>
