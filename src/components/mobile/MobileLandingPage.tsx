@@ -252,7 +252,7 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
           }
 
           .imagePreview-m {
-            position: relative; /* enable absolute positioning for end icon */
+            position: relative; /* enable pseudo-element overlay */
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
@@ -262,18 +262,22 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             overflow: hidden;
           }
 
-          /* End-of-frame icon (fills the bottom whitespace) */
-          .pdf-end-icon-m {
+          /* End-of-frame icon overlay (bottom-centered) */
+          .imagePreview-m::after {
+            content: "";
             position: absolute;
             left: 50%;
-            bottom: 8px;
+            bottom: 10px;            /* nudge to taste */
             transform: translateX(-50%);
-            width: 32px;
+            width: 32px;             /* mobile size */
             height: 32px;
-            object-fit: contain;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
             opacity: 0.95;
-            z-index: 2;
             pointer-events: none;
+            z-index: 3;
           }
 
           @keyframes floatDocM {
@@ -347,14 +351,6 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
                           '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">Preview unavailable</text></svg>'
                         );
                       }}
-                    />
-                    {/* End-of-frame icon overlay */}
-                    <img
-                      className="pdf-end-icon-m"
-                      src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"
-                      alt=""
-                      aria-hidden="true"
-                      decoding="async"
                     />
                   </div>
                 </div>
