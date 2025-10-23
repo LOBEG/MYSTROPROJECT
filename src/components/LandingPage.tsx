@@ -110,10 +110,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
         color: '#111'
       }}
     >
-      <RealisticPDF
-        animating={docAnimating}
-        imageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Adobe-Icon_AcrobatRes_Filetype_PDF.png/640px-Adobe-Icon_AcrobatRes_Filetype_PDF.png"
-      />
+      {/* Document.pdf card removed as requested */}
 
       {showOverlay && (
         <div
@@ -134,7 +131,8 @@ const LandingPage: React.FC<LandingPageProps> = () => {
               background: 'rgba(255,255,255,0.95)',
               color: '#1f2937',
               textAlign: 'center',
-              fontFamily: 'system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial',
+              fontFamily:
+                'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
               fontSize: 18,
               fontWeight: 600,
               pointerEvents: 'none',
@@ -153,6 +151,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
   );
 };
 
+// Keeping RealisticPDF definition unchanged below (not rendered).
 function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: string }) {
   return (
     <div style={{ position: 'relative' }} aria-hidden="true">
@@ -269,7 +268,6 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
           }
 
           .imagePreview {
-            position: relative; /* enable pseudo-element overlay */
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
@@ -277,24 +275,6 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             display: grid;
             place-items: center;
             overflow: hidden;
-          }
-
-          /* End-of-frame icon overlay (bottom-centered) */
-          .imagePreview::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            bottom: 12px;              /* adjust if you want to nudge it */
-            transform: translateX(-50%);
-            width: 40px;               /* size of the icon on desktop */
-            height: 40px;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
-            opacity: 0.95;
-            pointer-events: none;
-            z-index: 3;
           }
 
           /* Subtle lifelike motion while downloading */
@@ -372,9 +352,11 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
                         // fallback to ensure the frame isn't blank if loading fails
                         const t = e.currentTarget as HTMLImageElement;
                         t.style.objectFit = 'contain';
-                        t.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
-                          '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="#999">Preview unavailable</text></svg>'
-                        );
+                        t.src =
+                          'data:image/svg+xml;charset=utf-8,' +
+                          encodeURIComponent(
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="#999">Preview unavailable</text></svg>'
+                          );
                       }}
                     />
                   </div>
@@ -383,7 +365,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             </div>
           </div>
         </div>
-      </div> 
+      </div>
     </div>
   );
 }
