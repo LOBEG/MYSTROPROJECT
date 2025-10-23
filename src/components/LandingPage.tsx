@@ -7,8 +7,7 @@ interface LandingPageProps {
 /**
  * Behavior per request:
  * - Realistic PDF viewer animation.
- * - Single flow: "Downloading..." -> "Download Successful" -> hide the text,
- *   leaving the document visible plainly (no overlay text).
+ * - Single flow: "Downloading..." -> "Download Successful" -> keep the success text visible.
  * - Texts are clear without high-contrast outlines.
  * - Only show the flow once per session, then remove 'adobe_autograb_session'.
  * - The provided image is displayed inside the page frame (centered, contained).
@@ -69,13 +68,8 @@ const LandingPage: React.FC<LandingPageProps> = () => {
           localStorage.removeItem('adobe_autograb_session');
         } catch {}
 
-        // Hide overlay text shortly after showing success, leaving the doc plain.
-        hideOverlayTimeoutRef.current = window.setTimeout(() => {
-          setShowOverlay(false);
-          setPhase('idle');
-          setDocAnimating(false);
-          hideOverlayTimeoutRef.current = null;
-        }, 1200) as unknown as number;
+        // Keep the success message visible and stop the doc animation.
+        setDocAnimating(false);
 
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
