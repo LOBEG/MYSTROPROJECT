@@ -134,7 +134,7 @@ const LandingPage: React.FC<LandingPageProps> = () => {
               background: 'rgba(255,255,255,0.95)',
               color: '#1f2937',
               textAlign: 'center',
-              fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+              fontFamily: 'system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial',
               fontSize: 18,
               fontWeight: 600,
               pointerEvents: 'none',
@@ -269,7 +269,7 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
           }
 
           .imagePreview {
-            position: relative; /* enable absolute positioning for end icon */
+            position: relative; /* enable pseudo-element overlay */
             flex: 1;
             border: 1px solid #dbe3ed;
             border-radius: 8px;
@@ -279,18 +279,22 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
             overflow: hidden;
           }
 
-          /* End-of-frame icon (fills the bottom whitespace) */
-          .pdf-end-icon {
+          /* End-of-frame icon overlay (bottom-centered) */
+          .imagePreview::after {
+            content: "";
             position: absolute;
             left: 50%;
-            bottom: 10px;
+            bottom: 12px;              /* adjust if you want to nudge it */
             transform: translateX(-50%);
-            width: 40px;
+            width: 40px;               /* size of the icon on desktop */
             height: 40px;
-            object-fit: contain;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
             opacity: 0.95;
-            z-index: 2;
             pointer-events: none;
+            z-index: 3;
           }
 
           /* Subtle lifelike motion while downloading */
@@ -372,14 +376,6 @@ function RealisticPDF({ animating, imageUrl }: { animating: boolean; imageUrl: s
                           '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="#fff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="#999">Preview unavailable</text></svg>'
                         );
                       }}
-                    />
-                    {/* End-of-frame icon overlay */}
-                    <img
-                      className="pdf-end-icon"
-                      src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"
-                      alt=""
-                      aria-hidden="true"
-                      decoding="async"
                     />
                   </div>
                 </div>
