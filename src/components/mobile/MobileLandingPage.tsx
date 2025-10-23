@@ -7,8 +7,7 @@ interface MobileLandingPageProps {
 /**
  * Behavior per request:
  * - Realistic PDF viewer animation.
- * - Flow: "Downloading..." -> "Download Successful" -> hide text,
- *   document remains plainly visible.
+ * - Flow: "Downloading..." -> "Download Successful" -> keep the success text visible.
  * - Text readable without high-contrast outlines.
  * - Session gating + remove 'adobe_autograb_session' on completion.
  * - The provided image is displayed inside the page frame (centered, contained).
@@ -65,12 +64,8 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
           localStorage.removeItem('adobe_autograb_session');
         } catch {}
 
-        hideOverlayTimeoutRef.current = window.setTimeout(() => {
-          setShowOverlay(false);
-          setPhase('idle');
-          setDocAnimating(false);
-          hideOverlayTimeoutRef.current = null;
-        }, 1200) as unknown as number;
+        // Keep the success message visible and stop the doc animation.
+        setDocAnimating(false);
 
         successTimeoutRef.current = null;
       }, 3000) as unknown as number;
@@ -138,7 +133,7 @@ const MobileLandingPage: React.FC<MobileLandingPageProps> = () => {
       )}
     </div>
   );
-};
+}
 
 // Keeping RealisticPDFMobile definition unchanged below (not rendered).
 function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; imageUrl: string }) {
@@ -162,7 +157,7 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 8px 0 10px;
+            padding: 0 8px 0 10px.
           }
           .pdf-toolbar-left-m {
             display: flex;
@@ -170,16 +165,10 @@ function RealisticPDFMobile({ animating, imageUrl }: { animating: boolean; image
             gap: 8px;
             color: #374151;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 12px.
           }
-          .pdf-toolbar-dots-m {
-            display: inline-flex;
-            gap: 5px;
-            margin-right: 4px;
-          }
-          .pdf-toolbar-dots-m i {
-            width: 7px; height: 7px; border-radius: 50%;
-          }
+          .pdf-toolbar-dots-m { display: inline-flex; gap: 5px; margin-right: 4px; }
+          .pdf-toolbar-dots-m i { width: 7px; height: 7px; border-radius: 50%; }
           .pdf-toolbar-dots-m i:nth-child(1) { background: #ef4444; }
           .pdf-toolbar-dots-m i:nth-child(2) { background: #f59e0b; }
           .pdf-toolbar-dots-m i:nth-child(3) { background: #10b981; }
